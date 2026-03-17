@@ -851,31 +851,43 @@ async function doSignup() {
   const errEl = document.getElementById('signupErr');
   errEl.style.display = 'none';
 
-  if (!token || !name || !email || !pw) {
+  if (!name || !email || !pw) {
     errEl.style.display = 'block';
     errEl.textContent = 'Bitte alle Felder ausfüllen.';
     return;
   }
 
-  // Check invitation
-  const { data: inv, error: invErr } = await sb.from('invitations')
-    .select('*').eq('token', token).eq('used', false).single();
+  // Check if any users exist yet (first user = admin, no token needed)
+  const { count } = await sb.from('profiles').select('*', { count: 'exact', head: true });
+  const isFirstUser = count === 0;
 
-  if (invErr || !inv) {
+  if (!isFirstUser && !token) {
     errEl.style.display = 'block';
-    errEl.textContent = 'Ungültiger oder bereits verwendeter Einladungscode.';
+    errEl.textContent = 'Bitte Einladungscode eingeben.';
     return;
   }
 
-  if (inv.email && inv.email.toLowerCase() !== email.toLowerCase()) {
-    errEl.style.display = 'block';
-    errEl.textContent = 'Diese E-Mail stimmt nicht mit der Einladung überein.';
-    return;
+  // If token provided, validate it
+  if (token) {
+    const { data: inv, error: invErr } = await sb.from('invitations')
+      .select('*').eq('token', token).eq('used', false).single();
+
+    if (invErr || !inv) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'Ungültiger oder bereits verwendeter Einladungscode.';
+      return;
+    }
+
+    if (inv.email && inv.email.toLowerCase() !== email.toLowerCase()) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'Diese E-Mail stimmt nicht mit der Einladung überein.';
+      return;
+    }
   }
 
   const { data, error } = await sb.auth.signUp({
     email, password: pw,
-    options: { data: { full_name: name, role: 'vp' } }
+    options: { data: { full_name: name, role: isFirstUser ? 'admin' : 'vp' } }
   });
 
   if (error) {
@@ -884,10 +896,17 @@ async function doSignup() {
     return;
   }
 
-  // Mark invitation as used
-  await sb.from('invitations').update({ used: true, used_at: new Date().toISOString() }).eq('id', inv.id);
+  // Mark invitation as used if token was provided
+  if (token) {
+    const { data: inv } = await sb.from('invitations').select('id').eq('token', token).single();
+    if (inv) await sb.from('invitations').update({ used: true, used_at: new Date().toISOString() }).eq('id', inv.id);
+  }
 
-  notify('Account erstellt! Bitte E-Mail bestätigen und dann einloggen.', 'success');
+  if (isFirstUser) {
+    notify('Admin-Account erstellt! Bitte E-Mail bestätigen und dann einloggen.', 'success');
+  } else {
+    notify('Account erstellt! Bitte E-Mail bestätigen und dann einloggen.', 'success');
+  }
   showLogin();
 }
 
