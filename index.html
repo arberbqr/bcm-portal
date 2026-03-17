@@ -922,25 +922,45 @@ async function doLogout() {
 async function onLogin(user) {
   currentUser = user;
 
-  // Load profile
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
-  if (!profile) {
-    notify('Profil nicht gefunden. Bitte wende dich an den Administrator.', 'error');
+  // Kurz warten damit RLS Session sich aufbaut
+  await new Promise(r => setTimeout(r, 500));
+
+  // Profil laden
+  const { data: profile, error } = await sb
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error || !profile) {
+    // Nochmal versuchen nach 1 Sekunde
+    await new Promise(r => setTimeout(r, 1000));
+    const { data: profile2, error: error2 } = await sb
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (error2 || !profile2) {
+      notify('Profil nicht gefunden. Fehler: ' + (error2?.message || 'unbekannt'), 'error');
+      await sb.auth.signOut();
+      return;
+    }
+    currentProfile = profile2;
+  } else {
+    currentProfile = profile;
+  }
+
+  if (!currentProfile.active) {
+    notify('Ihr Account wurde deaktiviert.', 'error');
     await sb.auth.signOut();
     return;
   }
 
-  if (!profile.active) {
-    notify('Ihr Account wurde deaktiviert. Bitte wenden Sie sich an Beqiri Capital.', 'error');
-    await sb.auth.signOut();
-    return;
-  }
-
-  currentProfile = profile;
   hide('loginScreen');
   show('appShell');
   setupAppShell();
-  loadView(profile.role === 'admin' ? 'objects' : 'vp-objects');
+  loadView(currentProfile.role === 'admin' ? 'objects' : 'vp-objects');
 }
 
 // ══════════════════════════════════════════════════════
