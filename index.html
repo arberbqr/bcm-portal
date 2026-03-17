@@ -1671,10 +1671,11 @@ async function openCalcForObject(id) {
   document.getElementById('calcModalAddr').textContent = o.address || '';
 
   // Fill calc inputs from object
-  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val??''; };
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val !== null && val !== undefined ? val : ''; };
   set('c-loanr', o.loan_rate); set('c-repayr', o.repay_rate);
   set('c-equity', 0); set('c-taxr', o.tax_rate);
   set('c-vg', o.value_growth); set('c-rg', o.rent_growth);
+  set('c-vac', o.vacancy || 0);
 
   if (o.kfw_active) {
     document.getElementById('c-kfw-card').style.display = '';
