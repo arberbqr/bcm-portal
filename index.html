@@ -1567,7 +1567,11 @@ async function updateRes(id, status) {
 // ══════════════════════════════════════════════════════
 async function loadPartners() {
   const { data: partners } = await sb.from('profiles').select('*').eq('role', 'vp').order('created_at');
-  const { data: invitations } = await sb.from('invitations').select('*').eq('used', false).order('created_at', {ascending:false});
+  const { data: invitations } = await sb.from('invitations')
+    .select('*')
+    .eq('used', false)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
 
   const ptbody = document.getElementById('partnersTableBody');
   if (!partners?.length) {
