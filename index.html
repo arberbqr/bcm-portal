@@ -1219,7 +1219,7 @@ function objCard(o, isAdmin) {
           </div>
         </div>
         <div><div class="obj-kpi-lbl">Kaltmiete p.M.</div><div class="obj-kpi-val">${fmt(o.cold_rent)}</div></div>
-        <div><div class="obj-kpi-lbl">Bruttorendite</div><div class="obj-kpi-val" style="color:${brutto>=4?'var(--pos)':'var(--neg)'}">${fmtP(brutto)}</div></div>
+        <div><div class="obj-kpi-lbl">Bruttorendite</div><div class="obj-kpi-val" style="color:var(--pos)">${fmtP(brutto)}</div></div>
       </div>
     </div>
   </div>`;
@@ -1757,7 +1757,7 @@ function renderVPList(data, grid) {
           + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--navy)">'
           + '€\u00a0'+tp.toLocaleString('de-DE')+'</td>'
           + '<td style="padding:8px 12px;text-align:right;font-size:13px">€\u00a0'+(o.cold_rent||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+'/Mo</td>'
-          + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:'+(parseFloat(rend)>=4?'var(--pos)':'var(--neg)')+'">'+rend+'</td>'
+          + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:'+'var(--pos)'+'">'+rend+'</td>'
           + '<td style="padding:8px 12px;text-align:center">'+statusBadge(o.status)+'</td>'
           + '<td style="padding:8px 6px"><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();openCalcForObject(\''+o.id+'\')">Kalkulator</button></td>'
           + '</tr>';
@@ -1798,7 +1798,7 @@ async function vpObjDetail(id) {
         </div>
         <div style="background:var(--navy);padding:12px 14px">
           <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Bruttorendite</div>
-          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:${brutto>=4?'var(--pos)':'var(--neg)'};margin-top:4px">${fmtP(brutto)}</div>
+          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--pos);margin-top:4px">${fmtP(brutto)}</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:12px">
@@ -2045,8 +2045,8 @@ function runCalc() {
   const extrasEl = document.getElementById('cr-objExtras');
   if(extrasEl) {
     const extras = [];
-    if(priceFurni > 0) extras.push(`🪑 <strong>Möbel:</strong> ${fmt(priceFurni)} inkl.`);
-    if(o.parking_active) extras.push(`🚗 <strong>${o.parking_count||1}× ${o.parking_type}:</strong> ${fmt(parkingPrice)} KP · ${fmt(parkingRentMon)}/Monat`);
+    if(priceFurni > 0) extras.push(`<strong>Möbel:</strong> ${fmt(priceFurni)} inkl.`);
+    if(o.parking_active) extras.push(`<strong>${o.parking_count||1}× ${o.parking_type}:</strong> ${fmt(parkingPrice)} KP · ${fmt(parkingRentMon)}/Monat`);
     if(extras.length > 0){
       extrasEl.innerHTML = extras.join('<span style="color:var(--g300);margin:0 4px">|</span>');
       extrasEl.style.display = 'flex';
@@ -2057,7 +2057,7 @@ function runCalc() {
 
   // KPIs
   const bEl = document.getElementById('cr-brutto');
-  bEl.textContent = fmtP(brutto); bEl.className = 'ck-v '+(brutto>=4?'pos':'neg');
+  bEl.textContent = fmtP(brutto); bEl.className = 'ck-v pos';
   document.getElementById('cr-netto').textContent = fmtP(netto);
   const bsEl = document.getElementById('cr-brutto-sub'); if(bsEl) bsEl.textContent = o.parking_active?'Gesamtmiete \u00f7 (KP+Stellplatz)':'Kaltmiete \u00f7 (KP+M\u00f6bel)';
   const nsEl = document.getElementById('cr-netto-sub');  if(nsEl) nsEl.textContent  = laufend>0?'abzgl. Hausgeld + NKK \u2212 KfW':'inkl. NKK, abzgl. KfW-Zuschuss';
@@ -2370,7 +2370,7 @@ async function printCalc() {
       + '</div>' : '')
     // KPIs
     + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">'
-    + [['Bruttorendite',fmtP(d.brutto),d.brutto>=4?'#2e7d52':'#c0392b'],['Nettorendite',fmtP(d.netto),'#1a2744'],['CF p.M. v.St.',fmt(d.cf1M,2),d.cf1M>=0?'#2e7d52':'#c0392b'],['CF p.M. n.St.',fmt(d.cf1MSt,2),d.cf1MSt>=0?'#2e7d52':'#c0392b'],['EK-Verzinsung 10J.',fmtP(d.irr),'#1a2744']]
+    + [['Bruttorendite',fmtP(d.brutto),'#2e7d52'],['Nettorendite',fmtP(d.netto),'#1a2744'],['CF p.M. v.St.',fmt(d.cf1M,2),d.cf1M>=0?'#2e7d52':'#c0392b'],['CF p.M. n.St.',fmt(d.cf1MSt,2),d.cf1MSt>=0?'#2e7d52':'#c0392b'],['EK-Verzinsung 10J.',fmtP(d.irr),'#1a2744']]
       .map(function(x){return '<div style="border:1px solid #d0ccc4;padding:7px 9px"><div style="font-size:6pt;color:#888075;text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+x[0]+'</div><div style="font-size:12pt;font-weight:700;color:'+x[2]+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
     + '</div>'
     // Wealth
