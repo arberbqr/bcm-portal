@@ -454,7 +454,30 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
   <div id="view-vp-objects" class="view">
     <div class="view-inner">
       <div class="page-title" id="vp-greeting">Verfügbare Objekte</div>
-      <div class="page-sub">Klicken Sie auf ein Objekt um den Kalkulator zu öffnen</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div class="page-sub" style="margin-bottom:0">Klicken Sie auf ein Objekt um den Kalkulator zu öffnen</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <input type="text" id="vp-search" placeholder="🔍 Suchen..." oninput="filterVPObjects()"
+            style="padding:7px 10px;border:1px solid var(--g300);font-family:'Source Sans 3',sans-serif;font-size:12px;width:160px;outline:none">
+          <select id="vp-sort" onchange="filterVPObjects()"
+            style="padding:7px 10px;border:1px solid var(--g300);font-family:'Source Sans 3',sans-serif;font-size:12px;background:white;outline:none;cursor:pointer">
+            <option value="name-asc">Name A–Z</option>
+            <option value="price-asc">Preis ↑</option>
+            <option value="price-desc">Preis ↓</option>
+            <option value="area-asc">Fläche ↑</option>
+            <option value="area-desc">Fläche ↓</option>
+            <option value="yield-desc">Rendite ↓</option>
+            <option value="rent-desc">Miete ↓</option>
+          </select>
+          <div style="display:flex;gap:4px">
+            <button id="vp-view-grid" onclick="setVPView('grid')" title="Kachelansicht"
+              style="padding:6px 10px;border:1px solid var(--g300);background:var(--navy);color:white;cursor:pointer;font-size:13px">⊞</button>
+            <button id="vp-view-list" onclick="setVPView('list')" title="Listenansicht"
+              style="padding:6px 10px;border:1px solid var(--g300);background:white;color:var(--g500);cursor:pointer;font-size:13px">☰</button>
+          </div>
+        </div>
+      </div>
+      <div id="vp-count" style="font-size:12px;color:var(--g500);margin-bottom:12px"></div>
       <div class="obj-grid" id="vpObjGrid"><div class="spinner"></div></div>
     </div>
   </div>
@@ -1627,22 +1650,108 @@ async function copyInviteLink(token) {
 // ══════════════════════════════════════════════════════
 // VP: OBJECTS
 // ══════════════════════════════════════════════════════
+let vpAllObjects = [];
+let vpCurrentView = 'grid';
+
 async function loadVPObjects() {
-  const name = currentProfile.full_name?.split(' ')[0] || 'Willkommen';
-  document.getElementById('vp-greeting').textContent = `Guten Tag, ${name} – verfügbare Objekte`;
+  const name = currentProfile.full_name ? currentProfile.full_name.split(' ')[0] : 'Willkommen';
+  document.getElementById('vp-greeting').textContent = 'Guten Tag, ' + name + ' \u2013 verf\u00fcgbare Objekte';
 
   const { data, error } = await sb.from('objects')
-    .select('*').eq('published', true).order('created_at', { ascending: false });
+    .select('*').eq('published', true).order('name', { ascending: true });
   if (error) return;
 
+  vpAllObjects = data || [];
+  filterVPObjects();
+}
+
+function filterVPObjects() {
+  const search = (document.getElementById('vp-search')?.value || '').toLowerCase();
+  const sort   = document.getElementById('vp-sort')?.value || 'name-asc';
+
+  let filtered = vpAllObjects.filter(o => {
+    if (!search) return true;
+    return (o.name||'').toLowerCase().includes(search) ||
+           (o.address||'').toLowerCase().includes(search) ||
+           (o.description||'').toLowerCase().includes(search);
+  });
+
+  // Sortieren
+  filtered.sort(function(a, b) {
+    var pa = (a.price_unit||0)+(a.price_furniture||0)+(a.parking_active?(a.parking_price||0):0);
+    var pb = (b.price_unit||0)+(b.price_furniture||0)+(b.parking_active?(b.parking_price||0):0);
+    var ra = pa>0 ? ((a.cold_rent||0)*12)/pa*100 : 0;
+    var rb = pb>0 ? ((b.cold_rent||0)*12)/pb*100 : 0;
+    if (sort==='price-asc')  return pa-pb;
+    if (sort==='price-desc') return pb-pa;
+    if (sort==='area-asc')   return (a.area||0)-(b.area||0);
+    if (sort==='area-desc')  return (b.area||0)-(a.area||0);
+    if (sort==='yield-desc') return rb-ra;
+    if (sort==='rent-desc')  return (b.cold_rent||0)-(a.cold_rent||0);
+    // name-asc default
+    return (a.name||'').localeCompare(b.name||'', 'de');
+  });
+
+  const countEl = document.getElementById('vp-count');
+  if(countEl) countEl.textContent = filtered.length + ' von ' + vpAllObjects.length + ' Einheiten';
+
   const grid = document.getElementById('vpObjGrid');
-  if (!data.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏢</div><div class="empty-txt">Derzeit keine Objekte verfügbar</div><div class="empty-sub">Bitte schauen Sie später wieder vorbei.</div></div>`;
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-txt">Keine Einheiten gefunden</div></div>';
     return;
   }
-  grid.innerHTML = data.map(o => objCard(o, false)).join('');
-  data.forEach(o => loadCardImage(o.id));
+
+  if (vpCurrentView === 'list') {
+    renderVPList(filtered, grid);
+  } else {
+    grid.style.display = '';
+    grid.innerHTML = filtered.map(o => objCard(o, false)).join('');
+    filtered.forEach(o => loadCardImage(o.id));
+  }
 }
+
+function setVPView(view) {
+  vpCurrentView = view;
+  document.getElementById('vp-view-grid').style.background = view==='grid'?'var(--navy)':'white';
+  document.getElementById('vp-view-grid').style.color      = view==='grid'?'white':'var(--g500)';
+  document.getElementById('vp-view-list').style.background = view==='list'?'var(--navy)':'white';
+  document.getElementById('vp-view-list').style.color      = view==='list'?'white':'var(--g500)';
+  filterVPObjects();
+}
+
+function renderVPList(data, grid) {
+  grid.style.display = 'block';
+  grid.innerHTML = '<div style="background:white;border:1px solid var(--g200)">'
+    + '<table style="width:100%;border-collapse:collapse">'
+    + '<thead><tr>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px">Einheit</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Fläche</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Kaufpreis</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Kaltmiete</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Rendite</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:center;font-size:11px">Status</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 4px"></th>'
+    + '</tr></thead><tbody>'
+    + data.map(function(o, i) {
+        var tp = (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0);
+        var rend = tp>0 ? ((o.cold_rent||0)*12/tp*100).toFixed(2)+'%' : '—';
+        var bg = i%2 ? 'background:#f7f6f4' : '';
+        return '<tr style="'+bg+';cursor:pointer" onclick="vpObjDetail(\''+o.id+'\')">'
+          + '<td style="padding:8px 12px"><div style="font-weight:700;color:var(--navy);font-size:13px">'+o.name+'</div>'
+          + '<div style="font-size:11px;color:var(--g500)">'+(o.address||'')+'</div></td>'
+          + '<td style="padding:8px 12px;text-align:right;font-size:13px">'+(o.area||'—')+' m²</td>'
+          + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--navy)">'
+          + '€\u00a0'+tp.toLocaleString('de-DE')+'</td>'
+          + '<td style="padding:8px 12px;text-align:right;font-size:13px">€\u00a0'+(o.cold_rent||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+'/Mo</td>'
+          + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:'+(parseFloat(rend)>=4?'var(--pos)':'var(--neg)')+'">'+rend+'</td>'
+          + '<td style="padding:8px 12px;text-align:center">'+statusBadge(o.status)+'</td>'
+          + '<td style="padding:8px 6px"><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();openCalcForObject(\''+o.id+'\')">Kalkulator</button></td>'
+          + '</tr>';
+      }).join('')
+    + '</tbody></table></div>';
+}
+
+
 
 async function vpObjDetail(id) {
   const { data: o } = await sb.from('objects').select('*').eq('id', id).single();
