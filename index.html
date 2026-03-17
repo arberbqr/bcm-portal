@@ -2533,10 +2533,15 @@ async function printCalc() {
   var pg1 = '<div style="' + S.page + '">' + ph()
     + '<div style="' + S.navy + ';padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
     + '<div><div style="font-size:14pt;font-weight:700">' + o.name + '</div><div style="font-size:8pt;opacity:.65;margin-top:2px">' + (o.address||'') + '</div></div>'
-    + '<div style="font-size:17pt;font-weight:700;' + S.gold + '">' + fmt(d.priceUnit+(o.parking_active?d.parkingPrice:0)) + '</div></div>'
+    + '<div style="text-align:right">'
+    + '<div style="font-size:17pt;font-weight:700;' + S.gold + '">' + fmt(d.priceUnit + d.priceFurni + (o.parking_active ? d.parkingPrice : 0)) + '</div>'
+    + ((d.priceFurni>0 || o.parking_active) ? '<div style="font-size:7.5pt;opacity:.6;margin-top:2px">'
+      + [d.priceFurni>0 ? 'Möbel ' + fmt(d.priceFurni) : '', o.parking_active ? 'Stellplatz ' + fmt(d.parkingPrice) : ''].filter(Boolean).join(' · ')
+      + '</div>' : '')
+    + '</div></div>'
     + (d.priceFurni>0||o.parking_active ? '<div style="background:#f7f6f4;border:1px solid #ece9e3;padding:6px 12px;margin-bottom:10px;font-size:8pt;display:flex;gap:16px;color:#4a4540">'
-      + (d.priceFurni>0 ? '<span>\uD83E\uDE91 <strong>M\u00f6bel:</strong> ' + fmt(d.priceFurni) + ' inkl.</span>' : '')
-      + (o.parking_active ? '<span>\uD83D\uDE97 <strong>' + (o.parking_count||1) + '\u00d7 ' + o.parking_type + ':</strong> ' + fmt(d.parkingPrice) + ' KP \u00b7 ' + fmt(d.parkingRentMon) + '/Monat</span>' : '')
+      + (d.priceFurni>0 ? '<span><strong>Möbel:</strong> ' + fmt(d.priceFurni) + ' inkl.</span>' : '')
+      + (o.parking_active ? '<span><strong>' + (o.parking_count||1) + '\u00d7 ' + o.parking_type + ':</strong> ' + fmt(d.parkingPrice) + ' KP \u00b7 ' + fmt(d.parkingRentMon) + '/Monat</span>' : '')
       + '</div>' : '')
     // KPIs
     + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">'
