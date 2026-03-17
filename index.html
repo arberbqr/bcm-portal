@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BCM Portal">
+<meta name="theme-color" content="#1a2744">
+<title>Beqiri Capital – Vertriebsportal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1a2744;--navy2:#253459;--gold:#b8972a;--gold2:#d4af4a;
+  --red:#c0392b;--g100:#f7f6f4;--g200:#ece9e3;--g300:#d0ccc4;
+  --g500:#888075;--white:#fff;--text:#1a1714;--pos:#2e7d52;--neg:#c0392b;
+  --bcm-navy:#1a2744;--dwi-navy:#1a2744;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--text);font-size:14px;min-height:100vh}
+
+/* ── SETUP SCREEN ── */
+.setup-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:24px}
+.setup-box{background:white;max-width:460px;width:100%;padding:40px}
+.setup-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.setup-logo-box{width:44px;height:44px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-weight:700;font-size:18px;color:var(--navy)}
+.setup-logo-txt{font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;color:var(--navy);line-height:1.2}
+.setup-logo-sub{font-size:10px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;display:block}
+.setup-title{font-family:'Libre Baskerville',serif;font-size:20px;color:var(--navy);margin-bottom:8px}
+.setup-sub{font-size:13px;color:var(--g500);margin-bottom:28px;line-height:1.6}
+.setup-fld{margin-bottom:16px}
+.setup-fld label{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:5px}
+.setup-fld input{width:100%;padding:10px 12px;border:1px solid var(--g300);font-family:'Source Sans 3',sans-serif;font-size:13px;outline:none}
+.setup-fld input:focus{border-color:var(--navy)}
+.setup-hint{font-size:11px;color:var(--g500);margin-top:4px}
+.btn-setup{width:100%;padding:12px;background:var(--gold);color:var(--navy);border:none;font-family:'Source Sans 3',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-top:8px}
+.btn-setup:hover{background:var(--gold2)}
+.setup-step{background:var(--g100);border-left:3px solid var(--gold);padding:12px 16px;margin-bottom:20px;font-size:12px;line-height:1.8;color:var(--g700)}
+.setup-step code{background:var(--navy);color:var(--gold2);padding:2px 6px;font-size:11px}
+
+/* ── LOGIN SCREEN ── */
+.login-screen{min-height:100vh;display:flex;background:var(--navy)}
+.login-left{flex:1;display:flex;align-items:center;justify-content:center;padding:48px;background:var(--navy)}
+.login-right{width:440px;background:white;display:flex;flex-direction:column;justify-content:center;padding:48px}
+.login-brand{text-align:center;margin-bottom:48px}
+.login-brand-box{width:60px;height:60px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-weight:700;font-size:24px;color:var(--navy);margin:0 auto 16px}
+.login-brand-name{font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:white}
+.login-brand-sub{font-size:11px;color:var(--gold2);letter-spacing:.15em;text-transform:uppercase;margin-top:4px}
+.login-tagline{color:rgba(255,255,255,.5);font-size:13px;margin-top:32px;text-align:center;max-width:300px;line-height:1.7}
+.login-title{font-family:'Libre Baskerville',serif;font-size:22px;color:var(--navy);margin-bottom:8px}
+.login-sub{font-size:13px;color:var(--g500);margin-bottom:32px}
+.login-fld{margin-bottom:16px}
+.login-fld label{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:5px}
+.login-fld input{width:100%;padding:10px 12px;border:1px solid var(--g300);font-family:'Source Sans 3',sans-serif;font-size:14px;outline:none;transition:border-color .15s}
+.login-fld input:focus{border-color:var(--navy)}
+.btn-login{width:100%;padding:12px;background:var(--navy);color:white;border:none;font-family:'Source Sans 3',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-top:8px;transition:background .15s}
+.btn-login:hover{background:var(--navy2)}
+.login-err{background:#fff0f0;border:1px solid var(--neg);color:var(--neg);padding:10px 12px;font-size:12px;margin-top:12px;display:none}
+.login-mode{text-align:center;margin-top:20px;font-size:12px;color:var(--g500)}
+.login-mode a{color:var(--navy);font-weight:600;cursor:pointer;text-decoration:none}
+
+/* ── APP SHELL ── */
+.app-shell{min-height:100vh;display:flex;flex-direction:column}
+.app-header{background:var(--navy);color:white;height:60px;display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.app-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.app-logo-box{width:32px;height:32px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-weight:700;font-size:13px;color:var(--navy)}
+.app-logo-txt{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:white;line-height:1.2}
+.app-logo-sub{font-size:8px;color:var(--gold2);letter-spacing:.12em;text-transform:uppercase;display:block}
+.app-nav{display:flex;gap:2px;flex:1;margin-left:20px}
+.app-nav-btn{padding:8px 14px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:'Source Sans 3',sans-serif}
+.app-nav-btn.active{color:white;border-bottom-color:var(--gold)}
+.app-nav-btn:hover:not(.active){color:rgba(255,255,255,.8)}
+.app-header-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.app-user{font-size:12px;color:rgba(255,255,255,.6)}
+.app-user strong{color:white;display:block;font-size:13px}
+.btn-sm{padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;border:none;font-family:'Source Sans 3',sans-serif;transition:all .15s}
+.btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:var(--gold2)}
+.btn-navy{background:var(--navy2);color:white;border:1px solid rgba(255,255,255,.2)}.btn-navy:hover{background:#2e4070}
+.btn-outline{background:transparent;color:white;border:1.5px solid rgba(255,255,255,.35)}.btn-outline:hover{border-color:white}
+.btn-danger{background:var(--neg);color:white}.btn-danger:hover{background:#a93226}
+.btn-pos{background:var(--pos);color:white}.btn-pos:hover{background:#256b45}
+
+/* ── VIEW CONTAINER ── */
+.view{display:none;flex:1}
+.view.active{display:block}
+.view-inner{max-width:1300px;margin:0 auto;padding:28px 24px}
+
+/* ── CARDS / SECTIONS ── */
+.card{background:white;border:1px solid var(--g200);margin-bottom:20px}
+.card-header{background:var(--navy);color:white;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card-header-title{font-family:'Libre Baskerville',serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.card-header-title::before{content:'';display:block;width:3px;height:13px;background:var(--gold);flex-shrink:0}
+.card-body{padding:20px}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--g300);border:1px solid var(--g300);margin-bottom:20px}
+.stat{background:white;padding:16px 18px}
+.stat-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500)}
+.stat-val{font-family:'Libre Baskerville',serif;font-size:26px;font-weight:700;color:var(--navy);margin-top:4px}
+.stat-sub{font-size:11px;color:var(--g500);margin-top:2px}
+.stat-val.pos{color:var(--pos)}.stat-val.neg{color:var(--neg)}
+
+/* ── OBJECT GRID ── */
+.obj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.obj-card{background:white;border:1px solid var(--g200);cursor:pointer;transition:all .2s;overflow:hidden}
+.obj-card:hover{border-color:var(--navy);box-shadow:0 4px 20px rgba(0,0,0,.1);transform:translateY(-2px)}
+.obj-card-img{height:160px;background:var(--navy);position:relative;overflow:hidden}
+.obj-card-img img{width:100%;height:100%;object-fit:cover}
+.obj-card-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;opacity:.3}
+.obj-card-status{position:absolute;top:10px;right:10px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.status-available{background:var(--pos);color:white}
+.status-reserved{background:var(--gold);color:var(--navy)}
+.status-sold{background:var(--neg);color:white}
+.status-draft{background:var(--g500);color:white}
+.obj-card-body{padding:16px}
+.obj-card-name{font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.obj-card-addr{font-size:12px;color:var(--g500);margin-bottom:12px}
+.obj-card-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding-top:12px;border-top:1px solid var(--g200)}
+.obj-kpi-lbl{font-size:9px;color:var(--g500);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.obj-kpi-val{font-size:14px;font-weight:700;color:var(--navy);margin-top:2px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+table th{background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+table th.r{text-align:right}
+table td{padding:8px 12px;border-bottom:1px solid var(--g200);white-space:nowrap;vertical-align:middle}
+table td.r{text-align:right}
+table tr:nth-child(even) td{background:var(--g100)}
+table tr:hover td{background:#eef0f5}
+.tag{display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+
+/* ── FORM ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.form-fld{display:flex;flex-direction:column;gap:4px}
+.form-fld.full{grid-column:1/-1}
+.form-fld label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500)}
+.form-fld input,.form-fld select,.form-fld textarea{width:100%;padding:8px 10px;border:1px solid var(--g300);background:var(--g100);font-family:'Source Sans 3',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
+.form-fld input:focus,.form-fld select:focus,.form-fld textarea:focus{border-color:var(--navy);background:white}
+.form-fld textarea{resize:vertical;min-height:80px}
+.form-section{font-family:'Libre Baskerville',serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:6px;margin:20px 0 14px;grid-column:1/-1}
+.form-hint{font-size:10px;color:var(--g500);margin-top:3px}
+.tog-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;grid-column:1/-1;padding:8px 0;border-top:1px dashed var(--g300);margin-top:4px}
+input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--navy)}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:white;max-width:800px;width:100%;max-height:90vh;overflow-y:auto;position:relative}
+.modal-header{background:var(--navy);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0}
+.modal-title{font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700}
+.modal-close{background:none;border:none;color:white;font-size:22px;cursor:pointer;opacity:.7;line-height:1}
+.modal-close:hover{opacity:1}
+.modal-body{padding:24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--g200);display:flex;gap:10px;justify-content:flex-end;background:var(--g100)}
+
+/* ── KALKULATOR (vereinfacht für Modal) ── */
+.calc-modal{max-width:1100px}
+.calc-layout{display:grid;grid-template-columns:300px 1fr;gap:20px}
+.calc-inputs{display:flex;flex-direction:column;gap:12px}
+.ci{background:white;border:1px solid var(--g200)}
+.ci-h{background:var(--navy);color:white;padding:8px 14px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;display:flex;align-items:center;gap:6px}
+.ci-h::before{content:'';width:2px;height:10px;background:var(--gold);flex-shrink:0;display:block}
+.ci-b{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.ci-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cf{display:flex;flex-direction:column;gap:3px}
+.cf label{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g500)}
+.cf input,.cf select{padding:6px 8px;border:1px solid var(--g300);background:var(--g100);font-family:'Source Sans 3',sans-serif;font-size:12px;width:100%;outline:none}
+.cf input:focus,.cf select:focus{border-color:var(--navy);background:white}
+.calc-results{display:flex;flex-direction:column;gap:12px}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--g300);border:1px solid var(--g300)}
+.ck{background:white;padding:10px 12px}
+.ck-l{font-size:8.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--g500)}
+.ck-v{font-family:'Libre Baskerville',serif;font-size:17px;font-weight:700;color:var(--navy);margin-top:2px}
+.ck-s{font-size:9px;color:var(--g500)}
+.ck-v.pos{color:var(--pos)}.ck-v.neg{color:var(--neg)}
+.wealth-mini{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--g200)}
+.wm{background:var(--navy);padding:10px 12px}
+.wm-l{font-size:8px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:600}
+.wm-v{font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700;color:var(--gold2);margin-top:2px}
+.chart-mini{position:relative;height:180px}
+.calc-tabs{display:flex;border-bottom:2px solid var(--navy);background:white}
+.calc-tab{padding:7px 12px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none;font-family:'Source Sans 3',sans-serif}
+.calc-tab.active{color:var(--navy);border-bottom-color:var(--gold)}
+.ctc{display:none}.ctc.active{display:block}
+
+/* ── RESERVATION FORM ── */
+.res-form{max-width:500px}
+
+/* ── NOTIFICATION ── */
+.notif{position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;padding:14px 20px;font-size:13px;z-index:300;max-width:340px;border-left:4px solid var(--gold);transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none}
+.notif.show{transform:translateY(0);opacity:1}
+.notif.success{border-color:var(--pos)}
+.notif.error{border-color:var(--neg);background:var(--neg)}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:60px 20px;color:var(--g500)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.empty-txt{font-size:14px;font-weight:600;color:var(--g700)}
+.empty-sub{font-size:12px;margin-top:6px}
+
+/* ── DOC LIST ── */
+.doc-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--g200)}
+.doc-icon{width:36px;height:36px;background:var(--g200);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.doc-name{font-weight:600;font-size:13px;color:var(--navy)}
+.doc-meta{font-size:11px;color:var(--g500)}
+.doc-dl{margin-left:auto}
+
+/* ── UPLOAD AREA ── */
+.upload-area{border:2px dashed var(--g300);padding:24px;text-align:center;cursor:pointer;background:var(--g100);transition:all .2s}
+.upload-area:hover,.upload-area.drag{border-color:var(--navy);background:#eef0f5}
+.upload-area input{display:none}
+
+/* ── BRANDING SWITCH ── */
+.brand-bcm{--accent:var(--navy)}
+.brand-dwi{--accent:#1a2744}
+
+/* ── MISC ── */
+.divider{border:none;border-top:1px solid var(--g200);margin:12px 0}
+.badge{display:inline-block;padding:3px 8px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:0}
+.badge-gold{background:rgba(184,151,42,.15);color:var(--gold)}
+.badge-pos{background:rgba(46,125,82,.12);color:var(--pos)}
+.badge-neg{background:rgba(192,57,43,.12);color:var(--neg)}
+.badge-gray{background:var(--g200);color:var(--g500)}
+.flex{display:flex;align-items:center;gap:8px}
+.page-title{font-family:'Libre Baskerville',serif;font-size:22px;color:var(--navy);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
+.spinner{width:32px;height:32px;border:3px solid var(--g200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){
+  .login-left{display:none}
+  .login-right{width:100%}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid.three{grid-template-columns:1fr 1fr}
+  .calc-layout{grid-template-columns:1fr}
+  .obj-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .view-inner{padding:16px}
+  .app-nav{display:none}
+  .mobile-menu-btn{display:block!important}
+}
+.mobile-menu-btn{display:none;background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:8px}
+</style>
+</head>
+<body>
+
+<!-- ══ NOTIFICATION ══ -->
+<div class="notif" id="notif"></div>
+
+<!-- ══ SETUP SCREEN ══ -->
+<div id="setupScreen" class="setup-screen" style="display:none!important">
+  <div class="setup-box">
+    <div class="setup-logo">
+      <div class="setup-logo-box">BC</div>
+      <div>
+        <div class="setup-logo-txt">Beqiri Capital Management</div>
+        <span class="setup-logo-sub">VP-Portal Setup</span>
+      </div>
+    </div>
+    <h2 class="setup-title">Ersteinrichtung</h2>
+    <p class="setup-sub">Verbinde das Portal mit deiner Supabase-Datenbank. Diese Daten werden sicher im Browser gespeichert.</p>
+
+    <div class="setup-step">
+      <strong>So findest du deine Supabase-Zugangsdaten:</strong><br>
+      1. Melde dich auf <strong>supabase.com</strong> an<br>
+      2. Öffne dein Projekt → <code>Settings → API</code><br>
+      3. Kopiere <strong>Project URL</strong> und <strong>anon public</strong> Key
+    </div>
+
+    <div class="setup-fld">
+      <label>Supabase Project URL</label>
+      <input type="text" id="setupUrl" placeholder="https://xxxx.supabase.co">
+      <div class="setup-hint">Aus Settings → API → Project URL</div>
+    </div>
+    <div class="setup-fld">
+      <label>Supabase Anon Key</label>
+      <input type="text" id="setupKey" placeholder="eyJhbGciOiJI...">
+      <div class="setup-hint">Aus Settings → API → anon public</div>
+    </div>
+    <button class="btn-setup" onclick="saveSetup()">Verbindung speichern & weiter</button>
+    <div class="login-err" id="setupErr">Verbindung fehlgeschlagen – bitte URL und Key prüfen.</div>
+  </div>
+</div>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="loginScreen" class="login-screen" style="display:none">
+  <div class="login-left">
+    <div>
+      <div class="login-brand">
+        <div class="login-brand-box" id="loginLogoBox">BC</div>
+        <div class="login-brand-name" id="loginBrandName">Beqiri Capital Management</div>
+        <div class="login-brand-sub">Vertriebsportal</div>
+      </div>
+      <div class="login-tagline">Ihr professioneller Zugang zu exklusiven Immobilien-Investments in Bayern.</div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div id="loginForm">
+      <h2 class="login-title">Anmelden</h2>
+      <p class="login-sub">Bitte melden Sie sich mit Ihren Zugangsdaten an.</p>
+      <div class="login-fld">
+        <label>E-Mail</label>
+        <input type="email" id="loginEmail" placeholder="name@firma.de" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="login-fld">
+        <label>Passwort</label>
+        <input type="password" id="loginPw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-login" onclick="doLogin()">Anmelden</button>
+      <div class="login-err" id="loginErr">E-Mail oder Passwort falsch.</div>
+      <div class="login-mode">Noch kein Zugang? <a onclick="showSignup()">Registrieren mit Einladungscode</a></div>
+    </div>
+    <div id="signupForm" style="display:none">
+      <h2 class="login-title">Registrieren</h2>
+      <p class="login-sub">Bitte geben Sie Ihren Einladungscode und Ihre Daten ein.</p>
+      <div class="login-fld">
+        <label>Einladungscode</label>
+        <input type="text" id="inviteToken" placeholder="z.B. abc123...">
+      </div>
+      <div class="login-fld">
+        <label>Vollständiger Name</label>
+        <input type="text" id="signupName" placeholder="Max Mustermann">
+      </div>
+      <div class="login-fld">
+        <label>E-Mail</label>
+        <input type="email" id="signupEmail" placeholder="name@firma.de">
+      </div>
+      <div class="login-fld">
+        <label>Passwort (min. 8 Zeichen)</label>
+        <input type="password" id="signupPw" placeholder="••••••••">
+      </div>
+      <button class="btn-login" onclick="doSignup()">Account erstellen</button>
+      <div class="login-err" id="signupErr"></div>
+      <div class="login-mode"><a onclick="showLogin()">← Zurück zur Anmeldung</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP SHELL ══ -->
+<div id="appShell" class="app-shell" style="display:none">
+  <header class="app-header">
+    <a class="app-logo" href="#">
+      <div class="app-logo-box" id="headerLogoBox">BC</div>
+      <div>
+        <div class="app-logo-txt" id="headerBrandName">Beqiri Capital</div>
+        <span class="app-logo-sub" id="headerBrandSub">Vertriebsportal</span>
+      </div>
+    </a>
+    <nav class="app-nav" id="appNav">
+      <!-- filled by JS based on role -->
+    </nav>
+    <div class="app-header-right">
+      <div class="app-user" id="headerUser">
+        <strong id="headerUserName">—</strong>
+        <span id="headerUserRole">—</span>
+      </div>
+      <button class="btn-sm btn-outline" onclick="doLogout()">Abmelden</button>
+    </div>
+  </header>
+
+  <!-- ── ADMIN VIEWS ── -->
+  <div id="view-objects" class="view">
+    <div class="view-inner">
+      <div class="flex" style="justify-content:space-between;margin-bottom:24px">
+        <div>
+          <div class="page-title">Objekte</div>
+          <div class="page-sub">Alle Projekte und Einheiten verwalten</div>
+        </div>
+        <button class="btn-sm btn-gold" onclick="openAddObject()">+ Objekt hinzufügen</button>
+      </div>
+      <div class="stats-row" id="adminObjStats">
+        <div class="stat"><div class="stat-lbl">Verfügbar</div><div class="stat-val pos" id="stat-available">—</div></div>
+        <div class="stat"><div class="stat-lbl">Reserviert</div><div class="stat-val" style="color:var(--gold)" id="stat-reserved">—</div></div>
+        <div class="stat"><div class="stat-lbl">Verkauft</div><div class="stat-val" id="stat-sold">—</div></div>
+        <div class="stat"><div class="stat-lbl">Entwurf</div><div class="stat-val" style="color:var(--g500)" id="stat-draft">—</div></div>
+      </div>
+      <div class="obj-grid" id="adminObjGrid"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <div id="view-reservations" class="view">
+    <div class="view-inner">
+      <div class="page-title">Reservierungen</div>
+      <div class="page-sub">Alle eingegangenen Reservierungsanfragen</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-title">Offene Anfragen</div>
+          <span class="badge badge-gold" id="res-count-badge">0 offen</span>
+        </div>
+        <div class="tbl-wrap">
+          <table id="resTable">
+            <thead><tr>
+              <th>Datum</th><th>Objekt</th><th>Käufer</th><th>VP</th>
+              <th>EK</th><th>Status</th><th>Läuft ab</th><th></th>
+            </tr></thead>
+            <tbody id="resTableBody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--g500)"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-partners" class="view">
+    <div class="view-inner">
+      <div class="flex" style="justify-content:space-between;margin-bottom:24px">
+        <div>
+          <div class="page-title">Vertriebspartner</div>
+          <div class="page-sub">Partner einladen und verwalten</div>
+        </div>
+        <button class="btn-sm btn-gold" onclick="openInviteModal()">+ Partner einladen</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title">Aktive Partner</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>E-Mail</th><th>Seit</th><th>Reservierungen</th><th>Status</th><th></th></tr></thead>
+            <tbody id="partnersTableBody"><tr><td colspan="6" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px">
+        <div class="card-header"><div class="card-header-title">Offene Einladungen</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>E-Mail</th><th>Name</th><th>Eingeladen am</th><th>Läuft ab</th><th>Status</th><th></th></tr></thead>
+            <tbody id="invitationsTableBody"><tr><td colspan="6" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VP VIEWS ── -->
+  <div id="view-vp-objects" class="view">
+    <div class="view-inner">
+      <div class="page-title" id="vp-greeting">Verfügbare Objekte</div>
+      <div class="page-sub">Klicken Sie auf ein Objekt um den Kalkulator zu öffnen</div>
+      <div class="obj-grid" id="vpObjGrid"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <div id="view-vp-reservations" class="view">
+    <div class="view-inner">
+      <div class="page-title">Meine Reservierungen</div>
+      <div class="page-sub">Übersicht Ihrer eingereichten Anfragen</div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title">Reservierungen</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Datum</th><th>Objekt</th><th>Käufer</th><th>Status</th><th>Läuft ab</th></tr></thead>
+            <tbody id="vpResTableBody"><tr><td colspan="5" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+
+<!-- Add/Edit Object -->
+<div class="modal-bg" id="objModal">
+  <div class="modal" style="max-width:900px">
+    <div class="modal-header">
+      <div class="modal-title" id="objModalTitle">Objekt hinzufügen</div>
+      <button class="modal-close" onclick="closeModal('objModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" id="objForm">
+        <div class="form-section">Objektdaten</div>
+        <div class="form-fld"><label>Objektname</label><input id="of-name" type="text" placeholder="z.B. Ahornstraße 2"></div>
+        <div class="form-fld"><label>Anlageklasse</label><input id="of-asset" type="text" value="Eigentumswohnung"></div>
+        <div class="form-fld full"><label>Adresse</label><input id="of-addr" type="text" placeholder="Straße, PLZ Ort"></div>
+        <div class="form-fld full"><label>Beschreibung</label><textarea id="of-desc" placeholder="Kurze Objektbeschreibung..."></textarea></div>
+        <div class="form-fld"><label>Status</label>
+          <select id="of-status">
+            <option value="draft">Entwurf</option>
+            <option value="available">Verfügbar</option>
+            <option value="reserved">Reserviert</option>
+            <option value="sold">Verkauft</option>
+          </select>
+        </div>
+        <div class="form-fld"><label>Branding</label>
+          <select id="of-branding">
+            <option value="bcm">Beqiri Capital Management</option>
+            <option value="dwi">Deutsche Wert Invest</option>
+          </select>
+        </div>
+        <div class="form-fld"><label>Veröffentlicht</label>
+          <select id="of-published">
+            <option value="false">Nein (Entwurf)</option>
+            <option value="true">Ja (für VP sichtbar)</option>
+          </select>
+        </div>
+
+        <div class="form-section">Preise & Fläche</div>
+        <div class="form-fld"><label>Kaufpreis Wohnung (€)</label><input id="of-price" type="number" value="300000"></div>
+        <div class="form-fld"><label>Kaufpreis Möbel (€)</label><input id="of-furniture" type="number" value="0"></div>
+        <div class="form-fld"><label>Wohnfläche (m²)</label><input id="of-area" type="number" value="60" step="0.01"></div>
+        <div class="form-fld"><label>Zimmer</label><input id="of-rooms" type="number" value="2" step="0.5"></div>
+        <div class="form-fld"><label>Etage</label><input id="of-floor" type="number" value="1"></div>
+        <div class="form-fld"><label>Baujahr</label><input id="of-year" type="number" value="2026"></div>
+        <div class="form-fld"><label>Bauzustand</label>
+          <select id="of-condition">
+            <option value="Neubau">Neubau</option>
+            <option value="Erstbezug">Erstbezug</option>
+            <option value="Saniert">Saniert</option>
+            <option value="Renovierungsbedürftig">Renovierungsbedürftig</option>
+          </select>
+        </div>
+
+        <div class="form-section">Miete & Kosten</div>
+        <div class="form-fld"><label>Kaltmiete p.M. (€)</label><input id="of-rent" type="number" value="0" step="0.01"></div>
+        <div class="form-fld"><label>Hausgeld p.M. (€)</label><input id="of-hausgeld" type="number" value="0"></div>
+        <div class="form-fld"><label>Instandhaltung p.M. (€)</label><input id="of-instand" type="number" value="0"></div>
+
+        <div class="form-section">Finanzierung (Richtwerte)</div>
+        <div class="form-fld"><label>Kreditzins (%)</label><input id="of-loanr" type="number" value="4.10" step="0.01"></div>
+        <div class="form-fld"><label>Tilgung (%)</label><input id="of-repayr" type="number" value="1.00" step="0.01"></div>
+
+        <div class="tog-row"><input type="checkbox" id="of-kfw" onchange="toggleOfKfw()"> KfW-Kredit</div>
+        <div id="of-kfw-section" style="display:none;grid-column:1/-1">
+          <div class="form-grid">
+            <div class="form-fld"><label>KfW Betrag (€)</label><input id="of-kfwamt" type="number" value="150000"></div>
+            <div class="form-fld"><label>KfW Zins (%)</label><input id="of-kfwr" type="number" value="3.01" step="0.01"></div>
+            <div class="form-fld"><label>KfW Tilgung (%)</label><input id="of-kfwrep" type="number" value="2.30" step="0.01"></div>
+            <div class="form-fld"><label>Tilgungszuschuss (€)</label><input id="of-kfwbonus" type="number" value="0"></div>
+          </div>
+        </div>
+
+        <div class="form-section">AfA & Steuer</div>
+        <div class="form-fld"><label>Grundanteil (%)</label><input id="of-land" type="number" value="15" step="0.1"></div>
+        <div class="form-fld"><label>Degressive AfA (%)</label><input id="of-degafa" type="number" value="0" step="0.1"></div>
+        <div class="form-fld"><label>Lineare AfA (%)</label><input id="of-linafa" type="number" value="3.0" step="0.1"></div>
+        <div class="form-fld"><label>AfA Beginn (Jahr)</label><input id="of-afast" type="number" value="2026"></div>
+        <div class="form-fld"><label>Grenzsteuersatz (%)</label><input id="of-taxr" type="number" value="42"></div>
+
+        <div class="form-section">Stellplatz</div>
+        <div class="tog-row"><input type="checkbox" id="of-parking" onchange="toggleOfParking()"> Stellplatz / Garage</div>
+        <div id="of-parking-section" style="display:none;grid-column:1/-1">
+          <div class="form-grid">
+            <div class="form-fld"><label>Typ</label>
+              <select id="of-parktype">
+                <option>Stellplatz</option><option>Tiefgarage</option><option>Garage</option><option>Carport</option>
+              </select>
+            </div>
+            <div class="form-fld"><label>Anzahl</label><input id="of-parkcount" type="number" value="1"></div>
+            <div class="form-fld"><label>Kaufpreis (€)</label><input id="of-parkprice" type="number" value="0"></div>
+            <div class="form-fld"><label>Miete p. Stellplatz (€/Monat)</label><input id="of-parkrent" type="number" value="0"></div>
+          </div>
+        </div>
+
+        <div class="form-section">Entwicklungsannahmen</div>
+        <div class="form-fld"><label>Wertsteigerung p.a. (%)</label><input id="of-vg" type="number" value="1.5" step="0.1"></div>
+        <div class="form-fld"><label>Mietsteigerung p.a. (%)</label><input id="of-rg" type="number" value="2.0" step="0.1"></div>
+        <div class="form-fld"><label>Leerstand (%)</label><input id="of-vac" type="number" value="0" step="0.1"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('objModal')">Abbrechen</button>
+      <button class="btn-sm btn-gold" onclick="saveObject()">Objekt speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Kalkulator Modal (VP) -->
+<div class="modal-bg" id="calcModal">
+  <div class="modal calc-modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="calcModalTitle">Kalkulator</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px" id="calcModalAddr"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('calcModal')">×</button>
+    </div>
+    <div class="modal-body" style="padding:16px">
+      <div class="calc-layout">
+        <!-- Inputs -->
+        <div class="calc-inputs">
+          <div class="ci">
+            <div class="ci-h">Empfänger</div>
+            <div class="ci-b">
+              <div class="cf"><label>Kundenname</label><input id="c-recipient" type="text" placeholder="Max Mustermann" oninput="runCalc()"></div>
+            </div>
+          </div>
+          <div class="ci">
+            <div class="ci-h">Finanzierung</div>
+            <div class="ci-b">
+              <div class="ci-row">
+                <div class="cf"><label>Kreditzins (%)</label><input id="c-loanr" type="number" step="0.01" oninput="runCalc()"></div>
+                <div class="cf"><label>Tilgung (%)</label><input id="c-repayr" type="number" step="0.01" oninput="runCalc()"></div>
+              </div>
+              <div class="cf"><label>Eigenkapital (€)</label><input id="c-equity" type="number" value="0" oninput="runCalc()"></div>
+              <div style="font-size:10px;color:var(--g500)" id="c-ekBreakdown"></div>
+            </div>
+          </div>
+          <div class="ci" id="c-kfw-card" style="display:none">
+            <div class="ci-h">KfW-Kredit</div>
+            <div class="ci-b">
+              <div class="ci-row">
+                <div class="cf"><label>Kredithöhe (€)</label><input id="c-kfwamt" type="number" oninput="runCalc()"></div>
+                <div class="cf"><label>KfW Zins (%)</label><input id="c-kfwr" type="number" step="0.01" oninput="runCalc()"></div>
+              </div>
+              <div class="ci-row">
+                <div class="cf"><label>KfW Tilgung (%)</label><input id="c-kfwrep" type="number" step="0.01" oninput="runCalc()"></div>
+                <div class="cf"><label>Tilgungszuschuss (€)</label><input id="c-kfwbonus" type="number" oninput="runCalc()"></div>
+              </div>
+            </div>
+          </div>
+          <div class="ci">
+            <div class="ci-h">Steuer</div>
+            <div class="ci-b">
+              <div class="cf"><label>Grenzsteuersatz (%)</label><input id="c-taxr" type="number" oninput="runCalc()"></div>
+            </div>
+          </div>
+          <div class="ci">
+            <div class="ci-h">Annahmen</div>
+            <div class="ci-b">
+              <div class="ci-row">
+                <div class="cf"><label>Wertsteigerung (%)</label><input id="c-vg" type="number" step="0.1" oninput="runCalc()"></div>
+                <div class="cf"><label>Mietsteigerung (%)</label><input id="c-rg" type="number" step="0.1" oninput="runCalc()"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="calc-results">
+          <div class="kpi-grid">
+            <div class="ck"><div class="ck-l">Bruttorendite</div><div class="ck-v" id="cr-brutto">—</div><div class="ck-s">Kaltmiete ÷ KP</div></div>
+            <div class="ck"><div class="ck-l">Nettorendite</div><div class="ck-v" id="cr-netto">—</div><div class="ck-s">inkl. NKK − Zuschuss</div></div>
+            <div class="ck"><div class="ck-l">CF p.M. v.St.</div><div class="ck-v" id="cr-cf">—</div><div class="ck-s" id="cr-cf-sub">erste 12 Monate</div></div>
+            <div class="ck"><div class="ck-l">CF p.M. n.St.</div><div class="ck-v" id="cr-cfst">—</div><div class="ck-s" id="cr-tax-hint">—</div></div>
+            <div class="ck"><div class="ck-l">EK-Verzinsung n.St.</div><div class="ck-v" id="cr-irr">—</div><div class="ck-s">10 Jahre IRR</div></div>
+            <div class="ck"><div class="ck-l">Gesamtkosten</div><div class="ck-v" id="cr-gk">—</div><div class="ck-s">inkl. NKK</div></div>
+          </div>
+
+          <div class="wealth-mini">
+            <div class="wm"><div class="wm-l">EK nach 10 Jahren</div><div class="wm-v" id="cr-ek10">—</div></div>
+            <div class="wm"><div class="wm-l">Immobilienwert 10J.</div><div class="wm-v" id="cr-wert10">—</div></div>
+            <div class="wm"><div class="wm-l">Steuerersparnis 10J.</div><div class="wm-v" id="cr-steuers">—</div></div>
+            <div class="wm"><div class="wm-l">Kum. CF n.St. 10J.</div><div class="wm-v" id="cr-cumcf">—</div></div>
+          </div>
+
+          <div style="background:white;border:1px solid var(--g200)">
+            <div class="calc-tabs">
+              <button class="calc-tab active" onclick="showCalcTab('ct-chart',this)">Diagramme</button>
+              <button class="calc-tab" onclick="showCalcTab('ct-table',this)">Cashflow</button>
+              <button class="calc-tab" onclick="showCalcTab('ct-afa',this)">AfA & Steuer</button>
+            </div>
+            <div id="ct-chart" class="ctc active" style="padding:12px">
+              <div class="chart-mini"><canvas id="cr-chartEK"></canvas></div>
+            </div>
+            <div id="ct-table" class="ctc" style="overflow-x:auto">
+              <table style="font-size:11px" id="cr-cfTable"></table>
+            </div>
+            <div id="ct-afa" class="ctc" style="overflow-x:auto">
+              <table style="font-size:11px" id="cr-afaTable"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('calcModal')">Schließen</button>
+      <button class="btn-sm btn-navy" onclick="openReservationFromCalc()">Einheit reservieren</button>
+      <button class="btn-sm btn-gold" onclick="printCalc()">📄 PDF drucken</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reservation Modal -->
+<div class="modal-bg" id="resModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title">Einheit reservieren</div>
+      <button class="modal-close" onclick="closeModal('resModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--g100);border-left:3px solid var(--gold);padding:12px 16px;margin-bottom:20px;font-size:12px;line-height:1.7;color:var(--g700)">
+        <strong>Reservierungsprozess:</strong><br>
+        • <strong>Soft-Reservierung (72h):</strong> Einheit wird sofort blockiert<br>
+        • <strong>Hard-Reservierung (21 Tage):</strong> Nach Genehmigung durch Beqiri Capital<br>
+        • Reservierungsgebühr: €500 (wird auf Provision angerechnet)
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-fld"><label>Käufer Name *</label><input id="res-buyer" type="text" placeholder="Vollständiger Name des Käufers"></div>
+        <div class="form-fld"><label>Eigenkapital des Käufers (€)</label><input id="res-equity" type="number" placeholder="z.B. 50000"></div>
+        <div class="form-fld"><label>Qualifizierung / Notizen *</label>
+          <textarea id="res-notes" rows="4" placeholder="Kurze Beschreibung: Investor/Eigennutzer, Finanzierungssituation, Zeitplan, Besonderheiten..."></textarea>
+        </div>
+        <div class="form-fld"><label>Finanzierungshinweise</label>
+          <input id="res-financing" type="text" placeholder="z.B. Volksbank München, Voranfrage liegt vor">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resModal')">Abbrechen</button>
+      <button class="btn-sm btn-gold" onclick="submitReservation()">Reservierung einreichen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="modal-bg" id="inviteModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div class="modal-title">Vertriebspartner einladen</div>
+      <button class="modal-close" onclick="closeModal('inviteModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-fld"><label>Name des Partners</label><input id="inv-name" type="text" placeholder="Max Mustermann"></div>
+        <div class="form-fld"><label>E-Mail Adresse</label><input id="inv-email" type="email" placeholder="partner@firma.de"></div>
+      </div>
+      <div style="background:var(--g100);padding:12px;margin-top:16px;font-size:12px;color:var(--g500);line-height:1.6">
+        Der Partner erhält einen Einladungslink per E-Mail (7 Tage gültig) und kann damit einen eigenen Account erstellen.
+      </div>
+      <div id="inviteResult" style="display:none;margin-top:16px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('inviteModal')">Schließen</button>
+      <button class="btn-sm btn-gold" onclick="sendInvitation()">Einladung erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Object Detail Modal (VP) -->
+<div class="modal-bg" id="objDetailModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title" id="detailModalTitle">Objektdetails</div>
+      <button class="modal-close" onclick="closeModal('objDetailModal')">×</button>
+    </div>
+    <div class="modal-body" id="objDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('objDetailModal')">Schließen</button>
+      <button class="btn-sm btn-navy" id="detailCalcBtn" onclick="openCalcFromDetail()">Kalkulator öffnen</button>
+      <button class="btn-sm btn-gold" id="detailResBtn" onclick="openResFromDetail()">Reservieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reservation Detail Modal (Admin) -->
+<div class="modal-bg" id="resDetailModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title">Reservierungsdetails</div>
+      <button class="modal-close" onclick="closeModal('resDetailModal')">×</button>
+    </div>
+    <div class="modal-body" id="resDetailBody"></div>
+    <div class="modal-footer" id="resDetailFooter"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIG & SUPABASE INIT
+// ══════════════════════════════════════════════════════
+let sb = null;
+let currentUser = null;
+let currentProfile = null;
+let currentObjId = null; // for reservation from calc
+let calcChart = null;
+
+const SUPABASE_URL_KEY = 'dwi_sb_url';
+const SUPABASE_KEY_KEY = 'dwi_sb_key';
+
+// Supabase Credentials (fest eingetragen)
+const SUPABASE_URL = 'https://lnwikmhtaqkqsjrngrlg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxud2lrbWh0YXFrcXNqcm5ncmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjAxNDMsImV4cCI6MjA4OTMzNjE0M30.BqTG6vtVvjQFKiiT5_quCn9RFw2TdIMwpi5LqFlC8O0';
+
+function initSupabase(url, key) {
+  sb = supabase.createClient(url, key);
+}
+
+// ══════════════════════════════════════════════════════
+// STARTUP
+// ══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  // Direkt mit fest eingetragenen Credentials verbinden
+  initSupabase(SUPABASE_URL, SUPABASE_KEY);
+  show('loginScreen');
+
+  // Check existing session
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await onLogin(session.user);
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════════════════
+async function saveSetup() {
+  const url = document.getElementById('setupUrl').value.trim();
+  const key = document.getElementById('setupKey').value.trim();
+  if (!url || !key) return;
+
+  try {
+    initSupabase(url, key);
+    // Test connection
+    const { error } = await sb.from('profiles').select('id').limit(1);
+    if (error && error.code !== 'PGRST116') throw error;
+    localStorage.setItem(SUPABASE_URL_KEY, url);
+    localStorage.setItem(SUPABASE_KEY_KEY, key);
+    hide('setupScreen');
+    show('loginScreen');
+    notify('Verbindung erfolgreich!', 'success');
+  } catch(e) {
+    document.getElementById('setupErr').style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════
+function showLogin() {
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('signupForm').style.display = 'none';
+}
+
+function showSignup() {
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('signupForm').style.display = 'block';
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const pw = document.getElementById('loginPw').value;
+  document.getElementById('loginErr').style.display = 'none';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error) {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('loginErr').textContent = 'E-Mail oder Passwort falsch.';
+    return;
+  }
+  await onLogin(data.user);
+}
+
+async function doSignup() {
+  const token = document.getElementById('inviteToken').value.trim();
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pw = document.getElementById('signupPw').value;
+  const errEl = document.getElementById('signupErr');
+  errEl.style.display = 'none';
+
+  if (!token || !name || !email || !pw) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Bitte alle Felder ausfüllen.';
+    return;
+  }
+
+  // Check invitation
+  const { data: inv, error: invErr } = await sb.from('invitations')
+    .select('*').eq('token', token).eq('used', false).single();
+
+  if (invErr || !inv) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Ungültiger oder bereits verwendeter Einladungscode.';
+    return;
+  }
+
+  if (inv.email && inv.email.toLowerCase() !== email.toLowerCase()) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Diese E-Mail stimmt nicht mit der Einladung überein.';
+    return;
+  }
+
+  const { data, error } = await sb.auth.signUp({
+    email, password: pw,
+    options: { data: { full_name: name, role: 'vp' } }
+  });
+
+  if (error) {
+    errEl.style.display = 'block';
+    errEl.textContent = error.message;
+    return;
+  }
+
+  // Mark invitation as used
+  await sb.from('invitations').update({ used: true, used_at: new Date().toISOString() }).eq('id', inv.id);
+
+  notify('Account erstellt! Bitte E-Mail bestätigen und dann einloggen.', 'success');
+  showLogin();
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  currentProfile = null;
+  hide('appShell');
+  show('loginScreen');
+}
+
+async function onLogin(user) {
+  currentUser = user;
+
+  // Load profile
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if (!profile) {
+    notify('Profil nicht gefunden. Bitte wende dich an den Administrator.', 'error');
+    await sb.auth.signOut();
+    return;
+  }
+
+  if (!profile.active) {
+    notify('Ihr Account wurde deaktiviert. Bitte wenden Sie sich an Beqiri Capital.', 'error');
+    await sb.auth.signOut();
+    return;
+  }
+
+  currentProfile = profile;
+  hide('loginScreen');
+  show('appShell');
+  setupAppShell();
+  loadView(profile.role === 'admin' ? 'objects' : 'vp-objects');
+}
+
+// ══════════════════════════════════════════════════════
+// APP SHELL SETUP
+// ══════════════════════════════════════════════════════
+function setupAppShell() {
+  const isAdmin = currentProfile.role === 'admin';
+
+  // Header user
+  document.getElementById('headerUserName').textContent = currentProfile.full_name || currentProfile.email;
+  document.getElementById('headerUserRole').textContent = isAdmin ? 'Administrator' : 'Vertriebspartner';
+
+  // Nav
+  const nav = document.getElementById('appNav');
+  if (isAdmin) {
+    nav.innerHTML = `
+      <button class="app-nav-btn" onclick="loadView('objects')">Objekte</button>
+      <button class="app-nav-btn" onclick="loadView('reservations')">Reservierungen</button>
+      <button class="app-nav-btn" onclick="loadView('partners')">Partner</button>
+    `;
+  } else {
+    nav.innerHTML = `
+      <button class="app-nav-btn" onclick="loadView('vp-objects')">Objektliste</button>
+      <button class="app-nav-btn" onclick="loadView('vp-reservations')">Meine Reservierungen</button>
+    `;
+  }
+}
+
+function loadView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.app-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + name)?.classList.add('active');
+  document.querySelectorAll('.app-nav-btn').forEach(b => {
+    if (b.textContent.toLowerCase().includes(name.split('-').pop().slice(0,4))) b.classList.add('active');
+  });
+
+  // Load data
+  if (name === 'objects') loadAdminObjects();
+  else if (name === 'reservations') loadReservations();
+  else if (name === 'partners') loadPartners();
+  else if (name === 'vp-objects') loadVPObjects();
+  else if (name === 'vp-reservations') loadVPReservations();
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+const fmt = (v, d=0) => v===null||v===undefined||isNaN(v) ? '—' : '€\u00a0' + Number(v).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtP = (v, d=2) => isNaN(v) ? '—' : Number(v).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}) + '\u00a0%';
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('de-DE') : '—';
+const fmtDateTime = (d) => d ? new Date(d).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+const clr = (v) => v >= 0 ? 'pos' : 'neg';
+
+function show(id) { document.getElementById(id).style.display = ''; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function notify(msg, type='') {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = 'notif show ' + type;
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+function statusBadge(s) {
+  const map = {available:'pos',reserved:'gold',sold:'neg',draft:'gray',pending:'gold',approved:'pos',rejected:'neg',expired:'gray',notarized:'pos'};
+  const labels = {available:'Verfügbar',reserved:'Reserviert',sold:'Verkauft',draft:'Entwurf',pending:'Ausstehend',approved:'Genehmigt',rejected:'Abgelehnt',expired:'Abgelaufen',notarized:'Notarisiert'};
+  return `<span class="badge badge-${map[s]||'gray'}">${labels[s]||s}</span>`;
+}
+
+// ══════════════════════════════════════════════════════
+// ADMIN: OBJECTS
+// ══════════════════════════════════════════════════════
+async function loadAdminObjects() {
+  const { data, error } = await sb.from('objects').select('*').order('created_at', { ascending: false });
+  if (error) { notify('Fehler beim Laden der Objekte', 'error'); return; }
+
+  const stats = { available:0, reserved:0, sold:0, draft:0 };
+  data.forEach(o => stats[o.status] = (stats[o.status]||0)+1);
+  document.getElementById('stat-available').textContent = stats.available;
+  document.getElementById('stat-reserved').textContent = stats.reserved;
+  document.getElementById('stat-sold').textContent = stats.sold;
+  document.getElementById('stat-draft').textContent = stats.draft;
+
+  const grid = document.getElementById('adminObjGrid');
+  if (!data.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏢</div><div class="empty-txt">Noch keine Objekte</div><div class="empty-sub">Klicke auf "+ Objekt hinzufügen" um zu starten</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = data.map(o => objCard(o, true)).join('');
+}
+
+function objCard(o, isAdmin) {
+  const priceUnit = o.price_unit || 0;
+  const parkPrice = o.parking_active ? (o.parking_price || 0) : 0;
+  const totalKP = priceUnit + (o.price_furniture||0) + parkPrice;
+  const annRent = ((o.cold_rent||0) + (o.parking_active?(o.parking_rent||0)*o.parking_count:0)) * 12;
+  const brutto = totalKP > 0 ? (annRent/totalKP*100) : 0;
+
+  return `<div class="obj-card" onclick="${isAdmin ? `editObject('${o.id}')` : `vpObjDetail('${o.id}')`}">
+    <div class="obj-card-img">
+      <div class="obj-card-img-placeholder">🏢</div>
+      <div class="obj-card-status status-${o.status}">${{available:'Verfügbar',reserved:'Reserviert',sold:'Verkauft',draft:'Entwurf'}[o.status]||o.status}</div>
+      ${!o.published && isAdmin ? '<div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.6);color:white;padding:3px 8px;font-size:10px;font-weight:700">NICHT VERÖFFENTLICHT</div>' : ''}
+    </div>
+    <div class="obj-card-body">
+      <div class="obj-card-name">${o.name}</div>
+      <div class="obj-card-addr">${o.address||'—'} · ${o.area||'—'} m² · ${o.rooms||'—'} Zi.</div>
+      <div class="obj-card-kpis">
+        <div><div class="obj-kpi-lbl">Kaufpreis</div><div class="obj-kpi-val">${fmt(priceUnit+parkPrice)}</div></div>
+        <div><div class="obj-kpi-lbl">Kaltmiete p.M.</div><div class="obj-kpi-val">${fmt(o.cold_rent)}</div></div>
+        <div><div class="obj-kpi-lbl">Bruttorendite</div><div class="obj-kpi-val" style="color:${brutto>=4?'var(--pos)':'var(--neg)'}">${fmtP(brutto)}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function openAddObject() {
+  clearObjForm();
+  document.getElementById('objModalTitle').textContent = 'Objekt hinzufügen';
+  document.getElementById('objModal').dataset.editId = '';
+  openModal('objModal');
+}
+
+async function editObject(id) {
+  const { data, error } = await sb.from('objects').select('*').eq('id', id).single();
+  if (error) { notify('Fehler beim Laden', 'error'); return; }
+  fillObjForm(data);
+  document.getElementById('objModalTitle').textContent = 'Objekt bearbeiten';
+  document.getElementById('objModal').dataset.editId = id;
+  openModal('objModal');
+}
+
+function clearObjForm() {
+  const fields = ['name','asset','addr','desc','price','furniture','area','rooms','floor','year','rent','hausgeld','instand','loanr','repayr','kfwamt','kfwr','kfwrep','kfwbonus','land','degafa','linafa','afast','taxr','vg','rg','vac','parkprice','parkrent','parkcount'];
+  fields.forEach(f => { const el = document.getElementById('of-'+f); if(el) el.value = el.type==='number'?'0':''; });
+  document.getElementById('of-asset').value = 'Eigentumswohnung';
+  document.getElementById('of-status').value = 'draft';
+  document.getElementById('of-branding').value = 'bcm';
+  document.getElementById('of-published').value = 'false';
+  document.getElementById('of-condition').value = 'Neubau';
+  document.getElementById('of-land').value = '15';
+  document.getElementById('of-linafa').value = '3';
+  document.getElementById('of-afast').value = '2026';
+  document.getElementById('of-taxr').value = '42';
+  document.getElementById('of-vg').value = '1.5';
+  document.getElementById('of-rg').value = '2.0';
+  document.getElementById('of-loanr').value = '4.1';
+  document.getElementById('of-repayr').value = '1.0';
+  document.getElementById('of-parkcount').value = '1';
+  document.getElementById('of-parktype').value = 'Stellplatz';
+  document.getElementById('of-kfw').checked = false;
+  document.getElementById('of-parking').checked = false;
+  document.getElementById('of-kfw-section').style.display = 'none';
+  document.getElementById('of-parking-section').style.display = 'none';
+}
+
+function fillObjForm(o) {
+  clearObjForm();
+  const set = (id, val) => { const el = document.getElementById('of-'+id); if(el && val!==null && val!==undefined) el.value = val; };
+  set('name', o.name); set('asset', o.asset_class); set('addr', o.address); set('desc', o.description);
+  set('price', o.price_unit); set('furniture', o.price_furniture); set('area', o.area); set('rooms', o.rooms);
+  set('floor', o.floor); set('year', o.build_year); set('rent', o.cold_rent); set('hausgeld', o.hausgeld);
+  set('instand', o.instandhaltung); set('loanr', o.loan_rate); set('repayr', o.repay_rate);
+  set('land', o.land_share); set('degafa', o.deg_afa); set('linafa', o.lin_afa); set('afast', o.afa_start);
+  set('taxr', o.tax_rate); set('vg', o.value_growth); set('rg', o.rent_growth); set('vac', o.vacancy);
+  document.getElementById('of-status').value = o.status;
+  document.getElementById('of-branding').value = o.branding || 'bcm';
+  document.getElementById('of-published').value = o.published ? 'true' : 'false';
+  document.getElementById('of-condition').value = o.condition;
+  if (o.kfw_active) {
+    document.getElementById('of-kfw').checked = true;
+    document.getElementById('of-kfw-section').style.display = 'grid';
+    set('kfwamt', o.kfw_amount); set('kfwr', o.kfw_rate); set('kfwrep', o.kfw_repay); set('kfwbonus', o.kfw_bonus);
+  }
+  if (o.parking_active) {
+    document.getElementById('of-parking').checked = true;
+    document.getElementById('of-parking-section').style.display = 'grid';
+    document.getElementById('of-parktype').value = o.parking_type;
+    set('parkcount', o.parking_count); set('parkprice', o.parking_price); set('parkrent', o.parking_rent);
+  }
+}
+
+function toggleOfKfw() { document.getElementById('of-kfw-section').style.display = document.getElementById('of-kfw').checked ? 'grid' : 'none'; }
+function toggleOfParking() { document.getElementById('of-parking-section').style.display = document.getElementById('of-parking').checked ? 'grid' : 'none'; }
+
+async function saveObject() {
+  const g = id => parseFloat(document.getElementById('of-'+id)?.value) || 0;
+  const gs = id => document.getElementById('of-'+id)?.value || '';
+  const gc = id => document.getElementById('of-'+id)?.checked;
+
+  const obj = {
+    name: gs('name'), asset_class: gs('asset'), address: gs('addr'), description: gs('desc'),
+    status: gs('status'), branding: gs('branding'), published: gs('published') === 'true',
+    price_unit: g('price'), price_furniture: g('furniture'), area: g('area'), rooms: g('rooms'),
+    floor: g('floor')||null, build_year: g('year')||null, condition: gs('condition'),
+    cold_rent: g('rent'), hausgeld: g('hausgeld'), instandhaltung: g('instand'),
+    loan_rate: g('loanr'), repay_rate: g('repayr'),
+    kfw_active: gc('kfw'), kfw_amount: g('kfwamt'), kfw_rate: g('kfwr'), kfw_repay: g('kfwrep'), kfw_bonus: g('kfwbonus'),
+    land_share: g('land'), deg_afa: g('degafa'), lin_afa: g('linafa'), afa_start: g('afast')||2026,
+    tax_rate: g('taxr'), value_growth: g('vg'), rent_growth: g('rg'), vacancy: g('vac'),
+    parking_active: gc('parking'), parking_type: gs('parktype'), parking_count: g('parkcount')||1,
+    parking_price: g('parkprice'), parking_rent: g('parkrent')
+  };
+
+  if (!obj.name) { notify('Bitte Objektname eingeben', 'error'); return; }
+
+  const editId = document.getElementById('objModal').dataset.editId;
+  let error;
+  if (editId) {
+    ({ error } = await sb.from('objects').update(obj).eq('id', editId));
+  } else {
+    ({ error } = await sb.from('objects').insert(obj));
+  }
+
+  if (error) { notify('Fehler beim Speichern: ' + error.message, 'error'); return; }
+  closeModal('objModal');
+  notify(editId ? 'Objekt aktualisiert!' : 'Objekt hinzugefügt!', 'success');
+  loadAdminObjects();
+}
+
+// ══════════════════════════════════════════════════════
+// ADMIN: RESERVATIONS
+// ══════════════════════════════════════════════════════
+async function loadReservations() {
+  const { data, error } = await sb.from('reservations')
+    .select('*, objects(name,address)')
+    .order('created_at', { ascending: false });
+  if (error) return;
+
+  const open = data.filter(r => r.status === 'pending').length;
+  document.getElementById('res-count-badge').textContent = open + ' offen';
+
+  const tbody = document.getElementById('resTableBody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--g500)">Keine Reservierungen</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(r => `<tr>
+    <td>${fmtDate(r.created_at)}</td>
+    <td><strong>${r.objects?.name||'—'}</strong><div style="font-size:11px;color:var(--g500)">${r.objects?.address||''}</div></td>
+    <td>${r.buyer_name}</td>
+    <td>${r.vp_name||r.vp_email||'—'}</td>
+    <td class="r">${fmt(r.equity)}</td>
+    <td>${statusBadge(r.status)}</td>
+    <td style="font-size:11px">${fmtDateTime(r.expires_at)}</td>
+    <td><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="openResDetail('${r.id}')">Details</button></td>
+  </tr>`).join('');
+}
+
+async function openResDetail(id) {
+  const { data: r } = await sb.from('reservations')
+    .select('*, objects(name,address,price_unit)').eq('id', id).single();
+  if (!r) return;
+
+  document.getElementById('resDetailBody').innerHTML = `
+    <div style="display:grid;gap:10px">
+      <div style="background:var(--g100);padding:14px;border-left:3px solid var(--gold)">
+        <strong style="font-size:15px">${r.objects?.name}</strong>
+        <div style="font-size:12px;color:var(--g500);margin-top:2px">${r.objects?.address}</div>
+      </div>
+      ${row('Käufer', r.buyer_name)}
+      ${row('Vertriebspartner', r.vp_name + ' (' + r.vp_email + ')')}
+      ${row('Eigenkapital', fmt(r.equity))}
+      ${row('Finanzierung', r.financing_notes || '—')}
+      ${row('Status', statusBadge(r.status))}
+      ${row('Erstellt', fmtDateTime(r.created_at))}
+      ${row('Läuft ab', fmtDateTime(r.expires_at))}
+      <div style="background:var(--g100);padding:12px;margin-top:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:6px">Qualifizierungsnotiz</div>
+        <div style="font-size:13px;line-height:1.6">${r.buyer_notes || '—'}</div>
+      </div>
+    </div>`;
+
+  const footer = document.getElementById('resDetailFooter');
+  if (r.status === 'pending') {
+    footer.innerHTML = `
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
+      <button class="btn-sm btn-danger" onclick="updateRes('${id}','rejected')">Ablehnen</button>
+      <button class="btn-sm btn-pos" onclick="updateRes('${id}','approved')">Genehmigen ✓</button>`;
+  } else {
+    footer.innerHTML = `<button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>`;
+  }
+  openModal('resDetailModal');
+}
+
+function row(label, value) {
+  return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--g200);font-size:13px">
+    <span style="color:var(--g500)">${label}</span><span style="font-weight:600">${value}</span>
+  </div>`;
+}
+
+async function updateRes(id, status) {
+  const updates = { status };
+  if (status === 'approved') {
+    updates.approved_at = new Date().toISOString();
+    updates.hard_expires_at = new Date(Date.now() + 21*24*60*60*1000).toISOString();
+  }
+  const { error } = await sb.from('reservations').update(updates).eq('id', id);
+  if (error) { notify('Fehler', 'error'); return; }
+
+  // Update object status if approved
+  if (status === 'approved') {
+    const { data: r } = await sb.from('reservations').select('object_id').eq('id', id).single();
+    if (r) await sb.from('objects').update({ status: 'reserved' }).eq('id', r.object_id);
+  }
+
+  closeModal('resDetailModal');
+  notify(status === 'approved' ? 'Reservierung genehmigt!' : 'Reservierung abgelehnt.', status === 'approved' ? 'success' : '');
+  loadReservations();
+}
+
+// ══════════════════════════════════════════════════════
+// ADMIN: PARTNERS
+// ══════════════════════════════════════════════════════
+async function loadPartners() {
+  const { data: partners } = await sb.from('profiles').select('*').eq('role', 'vp').order('created_at');
+  const { data: invitations } = await sb.from('invitations').select('*').eq('used', false).order('created_at', {ascending:false});
+
+  const ptbody = document.getElementById('partnersTableBody');
+  if (!partners?.length) {
+    ptbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--g500)">Noch keine Partner</td></tr>`;
+  } else {
+    ptbody.innerHTML = partners.map(p => `<tr>
+      <td><strong>${p.full_name||'—'}</strong></td>
+      <td>${p.email}</td>
+      <td>${fmtDate(p.created_at)}</td>
+      <td class="r">—</td>
+      <td>${p.active ? '<span class="badge badge-pos">Aktiv</span>' : '<span class="badge badge-neg">Deaktiviert</span>'}</td>
+      <td>
+        <button class="btn-sm ${p.active?'btn-danger':'btn-pos'}" style="font-size:10px;padding:4px 10px" onclick="togglePartner('${p.id}',${!p.active})">
+          ${p.active ? 'Deaktivieren' : 'Aktivieren'}
+        </button>
+      </td>
+    </tr>`).join('');
+  }
+
+  const itbody = document.getElementById('invitationsTableBody');
+  if (!invitations?.length) {
+    itbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--g500)">Keine offenen Einladungen</td></tr>`;
+  } else {
+    itbody.innerHTML = invitations.map(i => `<tr>
+      <td>${i.email||'—'}</td>
+      <td>${i.full_name||'—'}</td>
+      <td>${fmtDate(i.created_at)}</td>
+      <td>${fmtDate(i.expires_at)}</td>
+      <td>${i.used ? '<span class="badge badge-pos">Verwendet</span>' : '<span class="badge badge-gold">Offen</span>'}</td>
+      <td>
+        <button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="copyInviteLink('${i.token}')">Link kopieren</button>
+      </td>
+    </tr>`).join('');
+  }
+}
+
+async function togglePartner(id, active) {
+  await sb.from('profiles').update({ active }).eq('id', id);
+  notify(active ? 'Partner aktiviert' : 'Partner deaktiviert', 'success');
+  loadPartners();
+}
+
+function openInviteModal() {
+  document.getElementById('inv-name').value = '';
+  document.getElementById('inv-email').value = '';
+  document.getElementById('inviteResult').style.display = 'none';
+  openModal('inviteModal');
+}
+
+async function sendInvitation() {
+  const email = document.getElementById('inv-email').value.trim();
+  const name = document.getElementById('inv-name').value.trim();
+  if (!email) { notify('Bitte E-Mail eingeben', 'error'); return; }
+
+  const { data, error } = await sb.from('invitations').insert({
+    email, full_name: name, invited_by: currentUser.id
+  }).select().single();
+
+  if (error) { notify('Fehler: ' + error.message, 'error'); return; }
+
+  const link = `${window.location.href.split('?')[0]}?invite=${data.token}`;
+  const resEl = document.getElementById('inviteResult');
+  resEl.style.display = 'block';
+  resEl.innerHTML = `
+    <div style="background:var(--g100);border:1px solid var(--g300);padding:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--g500);margin-bottom:8px;letter-spacing:.07em;text-transform:uppercase">Einladungslink (7 Tage gültig)</div>
+      <div style="font-size:11px;word-break:break-all;background:white;padding:8px;border:1px solid var(--g300);margin-bottom:8px;color:var(--navy)">${link}</div>
+      <div style="font-size:11px;color:var(--g500)">Einladungscode: <strong style="color:var(--navy)">${data.token}</strong></div>
+    </div>`;
+  notify('Einladung erstellt!', 'success');
+  loadPartners();
+}
+
+async function copyInviteLink(token) {
+  const link = `${window.location.href.split('?')[0]}?invite=${token}`;
+  await navigator.clipboard.writeText(link);
+  notify('Link kopiert!', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// VP: OBJECTS
+// ══════════════════════════════════════════════════════
+async function loadVPObjects() {
+  const name = currentProfile.full_name?.split(' ')[0] || 'Willkommen';
+  document.getElementById('vp-greeting').textContent = `Guten Tag, ${name} – verfügbare Objekte`;
+
+  const { data, error } = await sb.from('objects')
+    .select('*').eq('published', true).order('created_at', { ascending: false });
+  if (error) return;
+
+  const grid = document.getElementById('vpObjGrid');
+  if (!data.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏢</div><div class="empty-txt">Derzeit keine Objekte verfügbar</div><div class="empty-sub">Bitte schauen Sie später wieder vorbei.</div></div>`;
+    return;
+  }
+  grid.innerHTML = data.map(o => objCard(o, false)).join('');
+}
+
+async function vpObjDetail(id) {
+  const { data: o } = await sb.from('objects').select('*').eq('id', id).single();
+  if (!o) return;
+
+  const { data: docs } = await sb.from('documents').select('*').eq('object_id', id);
+
+  currentObjId = id;
+  document.getElementById('detailModalTitle').textContent = o.name;
+
+  const priceUnit = o.price_unit || 0;
+  const parkPrice = o.parking_active ? (o.parking_price||0) : 0;
+  const totalKP = priceUnit + (o.price_furniture||0) + parkPrice;
+  const annRent = ((o.cold_rent||0) + (o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0))*12;
+  const brutto = totalKP > 0 ? (annRent/totalKP*100) : 0;
+
+  document.getElementById('objDetailBody').innerHTML = `
+    <div style="display:grid;gap:0">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--g300);margin-bottom:16px">
+        <div style="background:var(--navy);padding:12px 14px">
+          <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Kaufpreis</div>
+          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-top:4px">${fmt(priceUnit+parkPrice)}</div>
+        </div>
+        <div style="background:var(--navy);padding:12px 14px">
+          <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Kaltmiete</div>
+          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-top:4px">${fmt(o.cold_rent)}/Monat</div>
+        </div>
+        <div style="background:var(--navy);padding:12px 14px">
+          <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Bruttorendite</div>
+          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:${brutto>=4?'var(--pos)':'var(--neg)'};margin-top:4px">${fmtP(brutto)}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:12px">
+        ${drow('Fläche', (o.area||'—') + ' m²')}
+        ${drow('Zimmer', o.rooms||'—')}
+        ${drow('Etage', o.floor||'—')}
+        ${drow('Baujahr', o.build_year||'—')}
+        ${drow('Bauzustand', o.condition||'—')}
+        ${drow('Anlageklasse', o.asset_class||'—')}
+        ${o.parking_active ? drow(o.parking_type, (o.parking_count||1)+'× · '+fmt(o.parking_price)) : ''}
+        ${o.hausgeld > 0 ? drow('Hausgeld p.M.', fmt(o.hausgeld)) : ''}
+      </div>
+      ${o.description ? `<div style="background:var(--g100);padding:12px;font-size:12px;line-height:1.6;color:var(--g700);margin-bottom:16px">${o.description}</div>` : ''}
+      ${docs?.length ? `
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:8px">Dokumente</div>
+        ${docs.map(d => `
+          <div class="doc-item">
+            <div class="doc-icon">${docIcon(d.doc_type)}</div>
+            <div><div class="doc-name">${d.name}</div><div class="doc-meta">${d.doc_type} · ${d.file_type||''}</div></div>
+            <button class="btn-sm btn-gold doc-dl" onclick="downloadDoc('${d.file_path}','${d.name}')">↓ Download</button>
+          </div>`).join('')}
+      ` : '<div style="color:var(--g500);font-size:12px;text-align:center;padding:12px">Noch keine Dokumente verfügbar</div>'}
+    </div>`;
+
+  document.getElementById('detailResBtn').style.display = o.status === 'available' ? '' : 'none';
+  openModal('objDetailModal');
+}
+
+function drow(label, value) {
+  return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--g200)">
+    <span style="color:var(--g500)">${label}</span><span style="font-weight:600">${value}</span>
+  </div>`;
+}
+
+function docIcon(type) {
+  const map = {expose:'📄',grundriss:'📐',baubeschreibung:'📋',energieausweis:'⚡',other:'📎'};
+  return map[type]||'📎';
+}
+
+async function downloadDoc(path, name) {
+  const { data, error } = await sb.storage.from('documents').createSignedUrl(path, 60);
+  if (error) { notify('Download-Fehler', 'error'); return; }
+  const a = document.createElement('a'); a.href = data.signedUrl; a.download = name; a.click();
+}
+
+function openCalcFromDetail() {
+  closeModal('objDetailModal');
+  openCalcForObject(currentObjId);
+}
+
+function openResFromDetail() {
+  closeModal('objDetailModal');
+  openReservationModal(currentObjId);
+}
+
+// ══════════════════════════════════════════════════════
+// CALCULATOR
+// ══════════════════════════════════════════════════════
+let calcObj = null;
+
+async function openCalcForObject(id) {
+  const { data: o } = await sb.from('objects').select('*').eq('id', id).single();
+  if (!o) return;
+  calcObj = o;
+  currentObjId = id;
+
+  document.getElementById('calcModalTitle').textContent = o.name;
+  document.getElementById('calcModalAddr').textContent = o.address || '';
+
+  // Fill calc inputs from object
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val??''; };
+  set('c-loanr', o.loan_rate); set('c-repayr', o.repay_rate);
+  set('c-equity', 0); set('c-taxr', o.tax_rate);
+  set('c-vg', o.value_growth); set('c-rg', o.rent_growth);
+
+  if (o.kfw_active) {
+    document.getElementById('c-kfw-card').style.display = '';
+    set('c-kfwamt', o.kfw_amount); set('c-kfwr', o.kfw_rate);
+    set('c-kfwrep', o.kfw_repay); set('c-kfwbonus', o.kfw_bonus);
+  } else {
+    document.getElementById('c-kfw-card').style.display = 'none';
+  }
+
+  runCalc();
+  openModal('calcModal');
+}
+
+function gC(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+
+function calcIRR(cfs) {
+  let r = 0.1;
+  for (let i = 0; i < 300; i++) {
+    let npv = 0, d = 0;
+    for (let t = 0; t < cfs.length; t++) { npv += cfs[t]/Math.pow(1+r,t); d -= t*cfs[t]/Math.pow(1+r,t+1); }
+    if (Math.abs(d) < 1e-12) break;
+    const nr = r - npv/d;
+    if (Math.abs(nr-r) < 1e-9) { r = nr; break; }
+    r = nr;
+  }
+  return isFinite(r) ? r*100 : NaN;
+}
+
+function runCalc() {
+  if (!calcObj) return;
+  const o = calcObj;
+
+  const priceUnit = o.price_unit || 0;
+  const priceFurni = o.price_furniture || 0;
+  const parkingPrice = o.parking_active ? (o.parking_price||0) : 0;
+  const parkingRentMon = o.parking_active ? (o.parking_rent||0)*(o.parking_count||1) : 0;
+  const totalPrice = priceUnit + priceFurni + parkingPrice;
+  const coldRent = (o.cold_rent||0) + parkingRentMon;
+  const hausgeld = (o.hausgeld||0) + (o.instandhaltung||0);
+
+  const loanR = gC('c-loanr')/100;
+  const repayR = gC('c-repayr')/100;
+  const equityIn = gC('c-equity');
+  const taxR = gC('c-taxr')/100;
+  const vgR = gC('c-vg')/100;
+  const rgR = gC('c-rg')/100;
+  const vacR = (o.vacancy||0)/100;
+
+  const kfwAmt = o.kfw_active ? gC('c-kfwamt') : 0;
+  const kfwR = gC('c-kfwr')/100;
+  const kfwRep = gC('c-kfwrep')/100;
+  const kfwBonus = o.kfw_active ? gC('c-kfwbonus') : 0;
+
+  // NKK
+  const nkkBasis = priceUnit + parkingPrice;
+  const gstV = (o.gst_pct||3.5)/100*nkkBasis;
+  const gbKV = (o.gb_kauf_pct||0.5)/100*nkkBasis;
+  const notV = (o.notar_pct||1.0)/100*nkkBasis;
+  const gbPV = (o.gb_pfand_pct||0.1)/100*nkkBasis;
+  const totalNKK = gstV+gbKV+notV+gbPV;
+  const gesamtkosten = totalPrice+totalNKK;
+  const effGesamtkosten = gesamtkosten - kfwBonus;
+
+  // Kredit
+  const kfwUsed = Math.min(kfwAmt, gesamtkosten);
+  const kfwNetBal = Math.max(0, kfwUsed-kfwBonus);
+  const loanBase = Math.max(0, gesamtkosten-equityIn-kfwUsed);
+  const anfK = gbPV;
+
+  // AfA
+  const landPct = (o.land_share||15)/100;
+  const buildVal = priceUnit*(1-landPct);
+  const nkkBuild = totalNKK*(1-landPct);
+  const afaBasis = buildVal+nkkBuild;
+  const degAfAPct = (o.deg_afa||0)/100;
+  const linAfAPct = (o.lin_afa||3)/100;
+  const furAfA = priceFurni > 0 ? Math.round(priceFurni/10) : 0;
+  let afaRem = afaBasis;
+  const afaArr = [];
+  for (let i = 0; i < 20; i++) {
+    const degV = afaRem*degAfAPct, linV = afaBasis*linAfAPct;
+    const v = Math.min(linV>degV?linV:degV, afaRem);
+    afaArr.push(v); afaRem -= v;
+    if (afaRem <= 0) { while(afaArr.length<20) afaArr.push(0); break; }
+  }
+
+  // 20-year loop
+  const years = [];
+  let loanBal = loanBase, kfwBal = kfwNetBal, rentCur = coldRent*12, propVal = totalPrice;
+  const laufend = hausgeld*12;
+
+  for (let i = 0; i < 20; i++) {
+    if (i > 0) rentCur *= (1+rgR);
+    const rentEff = rentCur*(1-vacR);
+    const int1 = loanBal*loanR, tl1 = loanBal*repayR; loanBal -= tl1;
+    const intK = kfwBal*kfwR, tlK = kfwBal*kfwRep; kfwBal -= tlK;
+    const totalInt = int1+intK, totalTl = tl1+tlK, totalDS = totalInt+totalTl;
+    const afaG = (afaArr[i]||0)+furAfA;
+    const werb = i===0 ? -anfK : 0;
+    const einkuenfte = rentEff+werb-afaG-totalInt-laufend;
+    const taxEff = einkuenfte < 0 ? Math.abs(einkuenfte)*taxR : -(einkuenfte*taxR);
+    const netCfB = rentEff-totalDS-laufend;
+    const netCfA = netCfB+taxEff;
+    propVal *= (1+vgR);
+    years.push({rentEff,int1,tl1,intK,tlK,totalInt,totalTl,totalDS,
+      afaG,werb,einkuenfte,taxEff,netCfB,netCfA,propVal,
+      totalLoan:loanBal+kfwBal,equity:propVal-loanBal-kfwBal});
+  }
+
+  // KPIs
+  const annRent = coldRent*12;
+  const brutto = totalPrice>0 ? annRent/totalPrice*100 : 0;
+  const netto = effGesamtkosten>0 ? (annRent-laufend)/effGesamtkosten*100 : 0;
+  const cf1M = years[0].netCfB/12;
+  const cf1MSt = years[0].netCfA/12;
+  const ekIn = equityIn>0 ? equityIn : Math.max(gesamtkosten-kfwUsed,0);
+  const sale10 = years[9].propVal, loan10 = years[9].totalLoan;
+  const cfArr = [-(ekIn)];
+  for (let i=0;i<9;i++) cfArr.push(years[i].netCfA);
+  cfArr.push(years[9].netCfA+(sale10-loan10));
+  const irr = calcIRR(cfArr);
+
+  const ekBeiKauf = totalPrice-(loanBase+kfwUsed);
+  const ekNach10 = years[9].equity;
+  const steuerErsparnis10 = years.slice(0,10).reduce((a,y)=>a+(y.taxEff>0?y.taxEff:0),0);
+  const cumCfA10 = years.slice(0,10).reduce((a,y)=>a+y.netCfA,0);
+
+  // Update UI
+  const sv = (id, v, cls='') => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = v;
+    if (cls) el.className = 'ck-v ' + cls;
+  };
+
+  document.getElementById('cr-brutto').textContent = fmtP(brutto);
+  document.getElementById('cr-brutto').className = 'ck-v ' + (brutto>=4?'pos':'neg');
+  document.getElementById('cr-netto').textContent = fmtP(netto);
+  document.getElementById('cr-cf').textContent = fmt(cf1M,2);
+  document.getElementById('cr-cf').className = 'ck-v ' + clr(cf1M);
+  document.getElementById('cr-cfst').textContent = fmt(cf1MSt,2);
+  document.getElementById('cr-cfst').className = 'ck-v ' + clr(cf1MSt);
+  document.getElementById('cr-irr').textContent = fmtP(irr);
+  document.getElementById('cr-gk').textContent = fmt(gesamtkosten);
+
+  const tax0 = years[0].taxEff;
+  document.getElementById('cr-tax-hint').innerHTML = tax0>=0
+    ? `<span style="color:var(--pos)">▲ +${fmt(tax0/12,0)}/Mo Steuersparnis</span>`
+    : `<span style="color:var(--neg)">▼ ${fmt(tax0/12,0)}/Mo Steuerbelastung</span>`;
+
+  document.getElementById('cr-ek10').textContent = fmt(ekNach10);
+  document.getElementById('cr-wert10').textContent = fmt(years[9].propVal);
+  document.getElementById('cr-steuers').textContent = fmt(steuerErsparnis10);
+  document.getElementById('cr-cumcf').textContent = fmt(cumCfA10);
+
+  // EK Chart
+  if (calcChart) { calcChart.destroy(); calcChart = null; }
+  const yrs = years.slice(0,10).map((_,i)=>(o.afa_start||2026)+i+'');
+  const ekLabels = ['Kauf',...yrs];
+  const yr0Loan = loanBase+kfwUsed;
+  calcChart = new Chart(document.getElementById('cr-chartEK'), {
+    type:'line',
+    data:{labels:ekLabels,datasets:[
+      {label:'Immobilienwert',data:[totalPrice,...years.slice(0,10).map(y=>Math.round(y.propVal))],borderColor:'rgba(184,151,42,.8)',backgroundColor:'rgba(184,151,42,.08)',fill:true,tension:.3,borderWidth:2,pointRadius:2},
+      {label:'Kreditrestschuld',data:[yr0Loan,...years.slice(0,10).map(y=>Math.round(y.totalLoan))],borderColor:'#c0392b',backgroundColor:'rgba(192,57,43,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:2},
+      {label:'Eigenkapital',data:[totalPrice-yr0Loan,...years.slice(0,10).map(y=>Math.round(y.equity))],borderColor:'#1a2744',fill:false,tension:0,borderWidth:2.5,pointRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:9}}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#ece9e3'},ticks:{font:{size:9},callback:v=>Math.abs(v)>=1000?Math.round(v/1000)+'T':v}}}}
+  });
+
+  // Cashflow Table
+  let cfH = `<thead><tr><th>Jahr</th><th class="r">Miete</th><th class="r">Zinsen</th><th class="r">Tilgung</th><th class="r">CF v.St.</th><th class="r">Steuereff.</th><th class="r">CF n.St.</th><th class="r">EK</th></tr></thead><tbody>`;
+  years.slice(0,10).forEach((y,i) => {
+    cfH += `<tr><td>${(o.afa_start||2026)+i}</td><td class="r">${fmt(y.rentEff)}</td><td class="r" style="color:var(--neg)">${fmt(y.totalInt)}</td><td class="r">${fmt(y.totalTl)}</td><td class="r ${clr(y.netCfB)}">${fmt(y.netCfB)}</td><td class="r ${clr(y.taxEff)}">${fmt(y.taxEff)}</td><td class="r ${clr(y.netCfA)}">${fmt(y.netCfA)}</td><td class="r ${clr(y.equity)}">${fmt(y.equity)}</td></tr>`;
+  });
+  cfH += `</tbody>`;
+  document.getElementById('cr-cfTable').innerHTML = cfH;
+
+  // AfA Table
+  let afaH = `<thead><tr><th>Jahr</th><th class="r">AfA Gebäude</th><th class="r">AfA Möbel</th><th class="r">Steuerl. Ergebnis</th><th class="r">Steuerersparnis</th></tr></thead><tbody>`;
+  years.slice(0,10).forEach((y,i) => {
+    afaH += `<tr><td>${(o.afa_start||2026)+i}</td><td class="r">${fmt(afaArr[i])}</td><td class="r">${fmt(furAfA)}</td><td class="r ${y.einkuenfte>=0?'neg':'pos'}">${fmt(y.einkuenfte)}</td><td class="r ${clr(y.taxEff)}">${fmt(y.taxEff)}</td></tr>`;
+  });
+  afaH += `</tbody>`;
+  document.getElementById('cr-afaTable').innerHTML = afaH;
+}
+
+function showCalcTab(id, btn) {
+  document.querySelectorAll('.ctc').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.calc-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function openReservationFromCalc() {
+  closeModal('calcModal');
+  openReservationModal(currentObjId);
+}
+
+function openReservationModal(id) {
+  currentObjId = id;
+  document.getElementById('res-buyer').value = '';
+  document.getElementById('res-equity').value = '';
+  document.getElementById('res-notes').value = '';
+  document.getElementById('res-financing').value = '';
+  openModal('resModal');
+}
+
+async function submitReservation() {
+  const buyer = document.getElementById('res-buyer').value.trim();
+  const notes = document.getElementById('res-notes').value.trim();
+  if (!buyer || !notes) { notify('Bitte Käufername und Qualifizierung ausfüllen', 'error'); return; }
+
+  const { error } = await sb.from('reservations').insert({
+    object_id: currentObjId,
+    vp_id: currentUser.id,
+    vp_name: currentProfile.full_name,
+    vp_email: currentProfile.email,
+    buyer_name: buyer,
+    buyer_notes: notes,
+    equity: parseFloat(document.getElementById('res-equity').value)||null,
+    financing_notes: document.getElementById('res-financing').value,
+    expires_at: new Date(Date.now()+72*60*60*1000).toISOString()
+  });
+
+  if (error) { notify('Fehler beim Einreichen: ' + error.message, 'error'); return; }
+  closeModal('resModal');
+  notify('Reservierungsanfrage eingereicht! Beqiri Capital prüft Ihre Anfrage.', 'success');
+  loadVPReservations();
+}
+
+// ══════════════════════════════════════════════════════
+// VP: RESERVATIONS
+// ══════════════════════════════════════════════════════
+async function loadVPReservations() {
+  const { data, error } = await sb.from('reservations')
+    .select('*, objects(name,address)').eq('vp_id', currentUser.id)
+    .order('created_at', { ascending: false });
+  if (error) return;
+
+  const tbody = document.getElementById('vpResTableBody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--g500)">Noch keine Reservierungen</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(r => `<tr>
+    <td>${fmtDate(r.created_at)}</td>
+    <td><strong>${r.objects?.name||'—'}</strong><div style="font-size:11px;color:var(--g500)">${r.objects?.address||''}</div></td>
+    <td>${r.buyer_name}</td>
+    <td>${statusBadge(r.status)}</td>
+    <td style="font-size:11px">${fmtDateTime(r.status==='approved'?r.hard_expires_at:r.expires_at)}</td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// PRINT CALC
+// ══════════════════════════════════════════════════════
+function printCalc() {
+  window.print();
+}
+
+// ══════════════════════════════════════════════════════
+// CHECK INVITE TOKEN IN URL
+// ══════════════════════════════════════════════════════
+const urlParams = new URLSearchParams(window.location.search);
+const inviteTokenParam = urlParams.get('invite');
+if (inviteTokenParam) {
+  window.addEventListener('DOMContentLoaded', () => {
+    showSignup();
+    document.getElementById('inviteToken').value = inviteTokenParam;
+  });
+}
+</script>
+</body>
+</html>
