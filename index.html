@@ -1296,7 +1296,7 @@ async function loadCardImage(objId) {
   ` + container.querySelector('.obj-card-status').outerHTML;
 }
 
-
+async function loadExistingImages(objId) {
   existingImages = [];
   const { data, error } = await sb.storage.from('object-images').list(objId);
   if (error || !data) return;
