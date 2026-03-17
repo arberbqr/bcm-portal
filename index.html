@@ -10,6 +10,7 @@
 <title>Beqiri Capital – Vertriebsportal</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -574,18 +575,25 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="form-fld"><label>Mietsteigerung p.a. (%)</label><input id="of-rg" type="number" value="2.0" step="0.1"></div>
         <div class="form-fld"><label>Leerstand (%)</label><input id="of-vac" type="number" value="0" step="0.1"></div>
 
-        <div class="form-section">Objektfotos</div>
+        <div class="form-section">Fotos & Dokumente</div>
         <div class="form-fld full">
-          <div class="upload-area" id="imgUploadArea" onclick="document.getElementById('imgFileInput').click()"
+          <label>Ordnerstruktur als ZIP oder einzelne Dateien</label>
+          <div class="upload-area" id="imgUploadArea"
             ondragover="event.preventDefault();this.classList.add('drag')"
             ondragleave="this.classList.remove('drag')"
-            ondrop="onImgDrop(event)">
-            <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none" onchange="onImgSelect(event)">
-            <div style="font-size:28px;margin-bottom:8px;opacity:.4">🏠</div>
-            <div style="font-size:12px;color:var(--g500)">Bilder hierher ziehen oder klicken<br><span style="font-size:11px;opacity:.7">JPG, PNG – max. 5MB pro Bild</span></div>
+            ondrop="onObjFileDrop(event)"
+            onclick="document.getElementById('objFileInput').click()">
+            <input type="file" id="objFileInput" accept="image/*,.pdf,.xlsx,.xls,.docx,.zip" multiple style="display:none" onchange="onObjFileSelect(event)">
+            <div style="font-size:26px;margin-bottom:8px;opacity:.4">📁</div>
+            <div style="font-size:12px;color:var(--g500)">
+              ZIP-Datei oder einzelne Bilder/Dokumente reinziehen<br>
+              <span style="font-size:11px;opacity:.7">ZIP → Ordnerstruktur wird beibehalten · Bilder → Fotos · PDFs → Dokumente</span>
+            </div>
           </div>
-          <div id="imgUploadProgress" style="display:none;margin-top:8px;font-size:12px;color:var(--g500)"></div>
-          <div id="imgPreviewGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px"></div>
+          <div id="objUploadPreview" style="margin-top:10px;display:none">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:6px" id="objUploadSummary"></div>
+            <div id="objFileItems" style="max-height:160px;overflow-y:auto;border:1px solid var(--g200)"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1196,9 +1204,10 @@ function objCard(o, isAdmin) {
 
 function openAddObject() {
   clearObjForm();
-  pendingImages = [];
+  pendingObjFiles = [];
   existingImages = [];
-  renderImgPreviews();
+  var prev = document.getElementById('objUploadPreview');
+  if(prev) prev.style.display = 'none';
   document.getElementById('objModalTitle').textContent = 'Objekt hinzufügen';
   document.getElementById('objModal').dataset.editId = '';
   openModal('objModal');
@@ -1208,7 +1217,7 @@ async function editObject(id) {
   const { data, error } = await sb.from('objects').select('*').eq('id', id).single();
   if (error) { notify('Fehler beim Laden', 'error'); return; }
   fillObjForm(data);
-  pendingImages = [];
+  pendingObjFiles = [];
   document.getElementById('objModalTitle').textContent = 'Objekt bearbeiten';
   document.getElementById('objModal').dataset.editId = id;
   await loadExistingImages(id);
@@ -1309,77 +1318,110 @@ async function saveObject() {
   loadAdminObjects();
 }
 
-// ── IMAGE UPLOAD ──
-let pendingImages = []; // {file, previewUrl}
-let existingImages = []; // {path, url} – bereits hochgeladene Bilder
+// ── FILE UPLOAD (ZIP + einzelne Bilder/Dokumente) ──
+let pendingObjFiles = [];
+let existingImages  = [];
 
-function onImgDrop(e) {
+function isImgExt(ext) { return ['jpg','jpeg','png','gif','webp'].includes(ext.toLowerCase()); }
+function isDocExt(ext) { return ['pdf','xlsx','xls','docx','doc','csv'].includes(ext.toLowerCase()); }
+function fileMime(ext) {
+  var m = {pdf:'application/pdf',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    xls:'application/vnd.ms-excel',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',csv:'text/csv'};
+  return m[ext.toLowerCase()] || 'application/octet-stream';
+}
+function fileEmoji(ext) {
+  if(isImgExt(ext)) return '\uD83D\uDDBC';
+  if(ext==='pdf') return '\uD83D\uDCC4';
+  if(['xlsx','xls','csv'].includes(ext)) return '\uD83D\uDCCA';
+  return '\uD83D\uDCCE';
+}
+
+function onObjFileDrop(e) {
   e.preventDefault();
   document.getElementById('imgUploadArea').classList.remove('drag');
-  handleImgFiles(e.dataTransfer.files);
+  handleObjFiles(Array.from(e.dataTransfer.files));
+}
+function onObjFileSelect(e) { handleObjFiles(Array.from(e.target.files)); }
+// legacy stubs
+function onImgDrop(e) { onObjFileDrop(e); }
+function onImgSelect(e) { onObjFileSelect(e); }
+function renderThumbs() {}
+function renderImgPreviews() {}
+function removePendingImg(i) { pendingObjFiles.splice(i,1); renderObjFilePreview(); }
+
+async function handleObjFiles(files) {
+  pendingObjFiles = [];
+  for (var fi = 0; fi < files.length; fi++) {
+    var f = files[fi];
+    var ext = f.name.split('.').pop().toLowerCase();
+    if (ext === 'zip') {
+      var zip = await JSZip.loadAsync(f);
+      var entries = Object.entries(zip.files);
+      for (var ei = 0; ei < entries.length; ei++) {
+        var path = entries[ei][0], entry = entries[ei][1];
+        if (entry.dir) continue;
+        var parts = path.split('/');
+        var name = parts[parts.length-1];
+        if (name.startsWith('.') || name.startsWith('__')) continue;
+        var fext = name.split('.').pop().toLowerCase();
+        if (!isImgExt(fext) && !isDocExt(fext)) continue;
+        var blob = await entry.async('blob');
+        var folderPath = parts.slice(1,-1).join('/');
+        pendingObjFiles.push({ name: name, ext: fext, blob: blob,
+          storagePath: folderPath ? folderPath+'/'+name : name,
+          isImg: isImgExt(fext), isDoc: isDocExt(fext) });
+      }
+    } else if (isImgExt(ext) || isDocExt(ext)) {
+      pendingObjFiles.push({ name: f.name, ext: ext, blob: f,
+        storagePath: f.name, isImg: isImgExt(ext), isDoc: isDocExt(ext) });
+    }
+  }
+  renderObjFilePreview();
 }
 
-function onImgSelect(e) {
-  handleImgFiles(e.target.files);
-}
-
-function handleImgFiles(files) {
-  Array.from(files).forEach(f => {
-    if (!f.type.startsWith('image/')) return;
-    if (f.size > 5 * 1024 * 1024) { notify('Bild zu groß (max. 5MB): ' + f.name, 'error'); return; }
-    const url = URL.createObjectURL(f);
-    pendingImages.push({ file: f, previewUrl: url });
-  });
-  renderImgPreviews();
-}
-
-function renderImgPreviews() {
-  const grid = document.getElementById('imgPreviewGrid');
-  const allImgs = [
-    ...existingImages.map((img, i) => `
-      <div style="position:relative">
-        <img src="${img.url}" style="width:100%;height:80px;object-fit:cover;display:block">
-        <button onclick="removeExistingImg(${i})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);color:white;border:none;width:20px;height:20px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">×</button>
-      </div>`),
-    ...pendingImages.map((img, i) => `
-      <div style="position:relative">
-        <img src="${img.previewUrl}" style="width:100%;height:80px;object-fit:cover;display:block">
-        <div style="position:absolute;top:3px;left:3px;background:var(--gold);color:var(--navy);font-size:8px;font-weight:700;padding:2px 5px">NEU</div>
-        <button onclick="removePendingImg(${i})" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);color:white;border:none;width:20px;height:20px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">×</button>
-      </div>`)
-  ];
-  grid.innerHTML = allImgs.join('');
-  grid.style.display = allImgs.length ? 'grid' : 'none';
-}
-
-function removePendingImg(i) {
-  pendingImages.splice(i, 1);
-  renderImgPreviews();
+function renderObjFilePreview() {
+  var imgs = pendingObjFiles.filter(function(f){return f.isImg;}).length;
+  var docs = pendingObjFiles.filter(function(f){return f.isDoc;}).length;
+  var preview = document.getElementById('objUploadPreview');
+  var summary = document.getElementById('objUploadSummary');
+  var items   = document.getElementById('objFileItems');
+  if (!preview) return;
+  if (!pendingObjFiles.length) { preview.style.display='none'; return; }
+  preview.style.display = 'block';
+  if(summary) summary.textContent = pendingObjFiles.length+' Dateien bereit ('+imgs+' Bilder, '+docs+' Dokumente)';
+  if(items) items.innerHTML = pendingObjFiles.map(function(f,i) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid var(--g200);font-size:11px">'
+      +'<span>'+fileEmoji(f.ext)+'</span>'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div>'
+      +'<div style="color:var(--g500);font-size:10px">'+(f.storagePath !== f.name ? f.storagePath : (f.isImg ? '\u2192 Fotos' : '\u2192 Dokumente'))+'</div></div>'
+      +'<span style="color:var(--g500);font-size:10px;background:var(--g100);padding:1px 6px">'+f.ext.toUpperCase()+'</span>'
+      +'<button onclick="removePendingImg('+i+')" style="background:none;border:none;color:var(--g500);cursor:pointer;font-size:14px;padding:0 4px">\u00d7</button></div>';
+  }).join('');
 }
 
 async function removeExistingImg(i) {
-  const img = existingImages[i];
+  var img = existingImages[i];
   await sb.storage.from('object-images').remove([img.path]);
   existingImages.splice(i, 1);
-  renderImgPreviews();
 }
 
 async function uploadPendingImages(objId) {
-  if (!pendingImages.length) return;
-  const prog = document.getElementById('imgUploadProgress');
-  prog.style.display = 'block';
-
-  for (let i = 0; i < pendingImages.length; i++) {
-    const img = pendingImages[i];
-    prog.textContent = `Bild ${i+1} von ${pendingImages.length} wird hochgeladen...`;
-    const ext = img.file.name.split('.').pop();
-    const path = `${objId}/${Date.now()}_${i}.${ext}`;
-    const { error } = await sb.storage.from('object-images').upload(path, img.file, { upsert: true });
-    if (error) { notify('Upload-Fehler: ' + error.message, 'error'); }
+  if (!pendingObjFiles.length) return;
+  var ok = 0, err = 0;
+  for (var i = 0; i < pendingObjFiles.length; i++) {
+    var f = pendingObjFiles[i];
+    if (f.isImg) {
+      var r = await sb.storage.from('object-images').upload(objId+'/'+f.name, f.blob, {upsert:true, contentType: fileMime(f.ext)});
+      r.error ? err++ : ok++;
+    } else if (f.isDoc) {
+      var r2 = await sb.storage.from('documents').upload('AH2/'+f.storagePath, f.blob, {upsert:true, contentType: fileMime(f.ext)});
+      r2.error ? err++ : ok++;
+    }
   }
-
-  prog.style.display = 'none';
-  pendingImages = [];
+  if (err > 0) notify(ok+' Dateien hochgeladen, '+err+' Fehler', 'error');
+  else if (ok > 0) notify(ok+' Dateien erfolgreich hochgeladen!', 'success');
+  pendingObjFiles = [];
 }
 
 async function loadCardImage(objId) {
