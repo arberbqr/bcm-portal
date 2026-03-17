@@ -315,12 +315,8 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
       <div class="login-mode">Noch kein Zugang? <a onclick="showSignup()">Registrieren mit Einladungscode</a></div>
     </div>
     <div id="signupForm" style="display:none">
-      <h2 class="login-title">Registrieren</h2>
-      <p class="login-sub">Bitte geben Sie Ihren Einladungscode und Ihre Daten ein.</p>
-      <div class="login-fld">
-        <label>Einladungscode</label>
-        <input type="text" id="inviteToken" placeholder="z.B. abc123...">
-      </div>
+      <h2 class="login-title">Account erstellen</h2>
+      <p class="login-sub">Erstellen Sie Ihren Zugang zum Beqiri Capital Portal.</p>
       <div class="login-fld">
         <label>Vollständiger Name</label>
         <input type="text" id="signupName" placeholder="Max Mustermann">
@@ -332,6 +328,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
       <div class="login-fld">
         <label>Passwort (min. 8 Zeichen)</label>
         <input type="password" id="signupPw" placeholder="••••••••">
+      </div>
+      <div class="login-fld" id="tokenField" style="display:none">
+        <label>Einladungscode</label>
+        <input type="text" id="inviteToken" placeholder="z.B. abc123...">
       </div>
       <button class="btn-login" onclick="doSignup()">Account erstellen</button>
       <div class="login-err" id="signupErr"></div>
@@ -844,10 +844,10 @@ async function doLogin() {
 }
 
 async function doSignup() {
-  const token = document.getElementById('inviteToken').value.trim();
-  const name = document.getElementById('signupName').value.trim();
+  const name  = document.getElementById('signupName').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
-  const pw = document.getElementById('signupPw').value;
+  const pw    = document.getElementById('signupPw').value;
+  const token = (document.getElementById('inviteToken')?.value || '').trim();
   const errEl = document.getElementById('signupErr');
   errEl.style.display = 'none';
 
@@ -857,29 +857,41 @@ async function doSignup() {
     return;
   }
 
-  const isAdminSignup = !token; // Kein Token = erster Admin-Account
+  if (pw.length < 8) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Passwort muss mindestens 8 Zeichen haben.';
+    return;
+  }
 
-  // Token nur validieren wenn angegeben (VP-Signup)
-  if (!isAdminSignup && token) {
-    const { data: inv, error: invErr } = await sb.from('invitations')
-      .select('*').eq('token', token).eq('used', false).single();
+  // Token vorhanden = VP-Signup, kein Token = Admin-Signup
+  const role = token ? 'vp' : 'admin';
+
+  // VP: Token validieren
+  if (token) {
+    const { data: inv, error: invErr } = await sb
+      .from('invitations')
+      .select('*')
+      .eq('token', token)
+      .eq('used', false)
+      .maybeSingle();
 
     if (invErr || !inv) {
       errEl.style.display = 'block';
-      errEl.textContent = 'Ungültiger oder bereits verwendeter Einladungscode.';
+      errEl.textContent = 'Ungültiger oder abgelaufener Einladungscode.';
       return;
     }
-
     if (inv.email && inv.email.toLowerCase() !== email.toLowerCase()) {
       errEl.style.display = 'block';
-      errEl.textContent = 'Diese E-Mail stimmt nicht mit der Einladung überein.';
+      errEl.textContent = 'E-Mail stimmt nicht mit der Einladung überein.';
       return;
     }
   }
 
+  // Account erstellen
   const { data, error } = await sb.auth.signUp({
-    email, password: pw,
-    options: { data: { full_name: name, role: isAdminSignup ? 'admin' : 'vp' } }
+    email,
+    password: pw,
+    options: { data: { full_name: name, role } }
   });
 
   if (error) {
@@ -888,17 +900,14 @@ async function doSignup() {
     return;
   }
 
-  // Mark invitation as used if token was provided
+  // Token als verwendet markieren
   if (token) {
-    const { data: inv } = await sb.from('invitations').select('id').eq('token', token).single();
-    if (inv) await sb.from('invitations').update({ used: true, used_at: new Date().toISOString() }).eq('id', inv.id);
+    await sb.from('invitations')
+      .update({ used: true, used_at: new Date().toISOString() })
+      .eq('token', token);
   }
 
-  if (isAdminSignup) {
-    notify('Admin-Account erstellt! Bitte E-Mail bestätigen und dann einloggen.', 'success');
-  } else {
-    notify('Account erstellt! Bitte E-Mail bestätigen und dann einloggen.', 'success');
-  }
+  notify('Account erstellt! Bitte jetzt einloggen.', 'success');
   showLogin();
 }
 
