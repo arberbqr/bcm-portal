@@ -231,19 +231,26 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 .spinner{width:32px;height:32px;border:3px solid var(--g200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+@media print {
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:#fff;margin:0}
+  header,.app-shell,#calc-print-area ~ *{display:none!important}
+  #calc-print-area{display:block!important}
+  @page{size:A4;margin:0}
+}
+
+#calc-print-area{display:none}
+
 @media(max-width:900px){
   .login-left{display:none}
   .login-right{width:100%}
   .form-grid{grid-template-columns:1fr}
   .form-grid.three{grid-template-columns:1fr 1fr}
-  .calc-layout{grid-template-columns:1fr}
   .obj-grid{grid-template-columns:1fr}
   .stats-row{grid-template-columns:repeat(2,1fr)}
   .view-inner{padding:16px}
   .app-nav{display:none}
-  .mobile-menu-btn{display:block!important}
 }
-.mobile-menu-btn{display:none;background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:8px}
 </style>
 </head>
 <body>
@@ -582,9 +589,9 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
   </div>
 </div>
 
-<!-- Kalkulator Modal (VP) -->
+<!-- Kalkulator Modal (VP) - Vollständig -->
 <div class="modal-bg" id="calcModal">
-  <div class="modal calc-modal">
+  <div class="modal" style="max-width:1200px;width:98%">
     <div class="modal-header">
       <div>
         <div class="modal-title" id="calcModalTitle">Kalkulator</div>
@@ -592,16 +599,19 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
       </div>
       <button class="modal-close" onclick="closeModal('calcModal')">×</button>
     </div>
-    <div class="modal-body" style="padding:16px">
-      <div class="calc-layout">
-        <!-- Inputs -->
-        <div class="calc-inputs">
+    <div class="modal-body" style="padding:16px;background:var(--g100)">
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:16px">
+
+        <!-- ── INPUT PANEL ── -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+
           <div class="ci">
             <div class="ci-h">Empfänger</div>
             <div class="ci-b">
               <div class="cf"><label>Kundenname</label><input id="c-recipient" type="text" placeholder="Max Mustermann" oninput="runCalc()"></div>
             </div>
           </div>
+
           <div class="ci">
             <div class="ci-h">Finanzierung</div>
             <div class="ci-b">
@@ -610,9 +620,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
                 <div class="cf"><label>Tilgung (%)</label><input id="c-repayr" type="number" step="0.01" oninput="runCalc()"></div>
               </div>
               <div class="cf"><label>Eigenkapital (€)</label><input id="c-equity" type="number" value="0" oninput="runCalc()"></div>
-              <div style="font-size:10px;color:var(--g500)" id="c-ekBreakdown"></div>
+              <div style="font-size:10px;color:var(--g500);margin-top:2px" id="c-ekBreakdown"></div>
             </div>
           </div>
+
           <div class="ci" id="c-kfw-card" style="display:none">
             <div class="ci-h">KfW-Kredit</div>
             <div class="ci-b">
@@ -626,57 +637,112 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
               </div>
             </div>
           </div>
+
           <div class="ci">
-            <div class="ci-h">Steuer</div>
+            <div class="ci-h">Steuer & AfA</div>
             <div class="ci-b">
               <div class="cf"><label>Grenzsteuersatz (%)</label><input id="c-taxr" type="number" oninput="runCalc()"></div>
             </div>
           </div>
+
           <div class="ci">
             <div class="ci-h">Annahmen</div>
             <div class="ci-b">
               <div class="ci-row">
-                <div class="cf"><label>Wertsteigerung (%)</label><input id="c-vg" type="number" step="0.1" oninput="runCalc()"></div>
+                <div class="cf">
+                  <label style="display:flex;align-items:center;justify-content:space-between">
+                    Wertsteigerung (%)
+                    <span style="display:flex;align-items:center;gap:3px;font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--g500)">
+                      <input type="checkbox" id="c-useVg" checked onchange="runCalc()" style="width:11px;height:11px;margin:0"> aktiv
+                    </span>
+                  </label>
+                  <input id="c-vg" type="number" step="0.1" oninput="runCalc()">
+                </div>
                 <div class="cf"><label>Mietsteigerung (%)</label><input id="c-rg" type="number" step="0.1" oninput="runCalc()"></div>
               </div>
+              <div class="cf"><label>Leerstand (%)</label><input id="c-vac" type="number" step="0.1" oninput="runCalc()"></div>
             </div>
           </div>
+
         </div>
 
-        <!-- Results -->
-        <div class="calc-results">
-          <div class="kpi-grid">
-            <div class="ck"><div class="ck-l">Bruttorendite</div><div class="ck-v" id="cr-brutto">—</div><div class="ck-s">Kaltmiete ÷ KP</div></div>
-            <div class="ck"><div class="ck-l">Nettorendite</div><div class="ck-v" id="cr-netto">—</div><div class="ck-s">inkl. NKK − Zuschuss</div></div>
-            <div class="ck"><div class="ck-l">CF p.M. v.St.</div><div class="ck-v" id="cr-cf">—</div><div class="ck-s" id="cr-cf-sub">erste 12 Monate</div></div>
-            <div class="ck"><div class="ck-l">CF p.M. n.St.</div><div class="ck-v" id="cr-cfst">—</div><div class="ck-s" id="cr-tax-hint">—</div></div>
-            <div class="ck"><div class="ck-l">EK-Verzinsung n.St.</div><div class="ck-v" id="cr-irr">—</div><div class="ck-s">10 Jahre IRR</div></div>
-            <div class="ck"><div class="ck-l">Gesamtkosten</div><div class="ck-v" id="cr-gk">—</div><div class="ck-s">inkl. NKK</div></div>
+        <!-- ── RESULTS PANEL ── -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+
+          <!-- Obj Banner -->
+          <div style="background:var(--navy);color:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700" id="cr-objName">—</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px" id="cr-objAddr">—</div>
+            </div>
+            <div style="font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--gold2)" id="cr-totalPrice">—</div>
           </div>
 
-          <div class="wealth-mini">
-            <div class="wm"><div class="wm-l">EK nach 10 Jahren</div><div class="wm-v" id="cr-ek10">—</div></div>
-            <div class="wm"><div class="wm-l">Immobilienwert 10J.</div><div class="wm-v" id="cr-wert10">—</div></div>
+          <!-- KPI Row -->
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--g300);border:1px solid var(--g300)">
+            <div class="ck"><div class="ck-l">Bruttorendite</div><div class="ck-v" id="cr-brutto">—</div><div class="ck-s" id="cr-brutto-sub">Kaltmiete ÷ KP</div></div>
+            <div class="ck"><div class="ck-l">Nettorendite</div><div class="ck-v" id="cr-netto">—</div><div class="ck-s" id="cr-netto-sub">inkl. NKK − Zuschuss</div></div>
+            <div class="ck"><div class="ck-l">CF p.M. v.St.</div><div class="ck-v" id="cr-cf">—</div><div class="ck-s">erste 12 Monate</div></div>
+            <div class="ck"><div class="ck-l">CF p.M. n.St.</div><div class="ck-v" id="cr-cfst">—</div><div class="ck-s" id="cr-tax-hint">—</div></div>
+            <div class="ck"><div class="ck-l">EK-Verzinsung n.St.</div><div class="ck-v" id="cr-irr">—</div><div class="ck-s">10 Jahre IRR</div></div>
+          </div>
+
+          <!-- Wealth Bar -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--g200)">
+            <div class="wm"><div class="wm-l">EK nach 10 Jahren</div><div class="wm-v" id="cr-ek10">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-wzuwachs-sub">—</div></div>
+            <div class="wm"><div class="wm-l">Immobilienwert 10J.</div><div class="wm-v" id="cr-wert10">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-wert10-sub">—</div></div>
             <div class="wm"><div class="wm-l">Steuerersparnis 10J.</div><div class="wm-v" id="cr-steuers">—</div></div>
             <div class="wm"><div class="wm-l">Kum. CF n.St. 10J.</div><div class="wm-v" id="cr-cumcf">—</div></div>
           </div>
 
+          <!-- Tabs + Charts/Tables -->
           <div style="background:white;border:1px solid var(--g200)">
             <div class="calc-tabs">
-              <button class="calc-tab active" onclick="showCalcTab('ct-chart',this)">Diagramme</button>
-              <button class="calc-tab" onclick="showCalcTab('ct-table',this)">Cashflow</button>
+              <button class="calc-tab active" onclick="showCalcTab('ct-charts',this)">Diagramme</button>
+              <button class="calc-tab" onclick="showCalcTab('ct-invest',this)">Investition</button>
+              <button class="calc-tab" onclick="showCalcTab('ct-cashflow',this)">Cashflow</button>
               <button class="calc-tab" onclick="showCalcTab('ct-afa',this)">AfA & Steuer</button>
             </div>
-            <div id="ct-chart" class="ctc active" style="padding:12px">
-              <div class="chart-mini"><canvas id="cr-chartEK"></canvas></div>
+
+            <!-- Diagramme -->
+            <div id="ct-charts" class="ctc active" style="padding:12px">
+              <div style="margin-bottom:12px">
+                <div style="font-family:'Libre Baskerville',serif;font-size:11px;color:var(--navy);text-align:center;margin-bottom:6px">Vermögensentwicklung (kumuliert)*</div>
+                <div style="position:relative;height:180px"><canvas id="cr-chartVerm"></canvas></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div>
+                  <div style="font-family:'Libre Baskerville',serif;font-size:11px;color:var(--navy);text-align:center;margin-bottom:6px">Eigenkapital-Aufbau*</div>
+                  <div style="position:relative;height:150px"><canvas id="cr-chartEK"></canvas></div>
+                </div>
+                <div>
+                  <div style="font-family:'Libre Baskerville',serif;font-size:11px;color:var(--navy);text-align:center;margin-bottom:6px">Cashflow-Zusammensetzung*</div>
+                  <div style="position:relative;height:150px"><canvas id="cr-chartCF"></canvas></div>
+                </div>
+              </div>
+              <div style="font-size:9px;color:var(--g500);margin-top:8px">* Erwartete Werte basierend auf Ihren Annahmen</div>
             </div>
-            <div id="ct-table" class="ctc" style="overflow-x:auto">
-              <table style="font-size:11px" id="cr-cfTable"></table>
+
+            <!-- Investition -->
+            <div id="ct-invest" class="ctc" style="padding:14px">
+              <div id="cr-investTable"></div>
             </div>
+
+            <!-- Cashflow -->
+            <div id="ct-cashflow" class="ctc" style="overflow-x:auto">
+              <table style="font-size:11px;width:100%;border-collapse:collapse" id="cr-cfTable"></table>
+            </div>
+
+            <!-- AfA & Steuer -->
             <div id="ct-afa" class="ctc" style="overflow-x:auto">
-              <table style="font-size:11px" id="cr-afaTable"></table>
+              <table style="font-size:11px;width:100%;border-collapse:collapse" id="cr-afaTable"></table>
             </div>
           </div>
+
+          <div style="font-size:10px;color:var(--g500);line-height:1.5;padding:8px 10px;background:white;border:1px solid var(--g200);border-top:2px solid var(--gold)">
+            Die aufgeführten Informationen dienen ausschließlich Informationszwecken. Zukünftige Wert- und Mietsteigerungen sind nicht garantiert. © Beqiri Capital Management
+          </div>
+
         </div>
       </div>
     </div>
@@ -780,7 +846,8 @@ let sb = null;
 let currentUser = null;
 let currentProfile = null;
 let currentObjId = null; // for reservation from calc
-let calcChart = null;
+
+// Hilfsfunktion entfernt - wird durch irow() ersetzt
 
 const SUPABASE_URL_KEY = 'dwi_sb_url';
 const SUPABASE_KEY_KEY = 'dwi_sb_key';
@@ -1622,6 +1689,7 @@ async function openCalcForObject(id) {
 }
 
 function gC(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+function gcb(id) { const el = document.getElementById(id); return el ? el.checked : true; }
 
 function calcIRR(cfs) {
   let r = 0.1;
@@ -1636,55 +1704,63 @@ function calcIRR(cfs) {
   return isFinite(r) ? r*100 : NaN;
 }
 
+let calcCharts = {};
+function destroyCalcChart(id) { if(calcCharts[id]){calcCharts[id].destroy();delete calcCharts[id];} }
+let calcData = {};
+
+function irow(label, value, indent=false) {
+  return `<div style="display:flex;justify-content:space-between;padding:4px 0${indent?';padding-left:12px':''};border-bottom:1px solid var(--g200)">
+    <span style="color:var(--g500)">${label}</span><span style="font-weight:600">${value}</span>
+  </div>`;
+}
+
 function runCalc() {
   if (!calcObj) return;
   const o = calcObj;
 
-  const priceUnit = o.price_unit || 0;
-  const priceFurni = o.price_furniture || 0;
+  const priceUnit    = o.price_unit || 0;
+  const priceFurni   = o.price_furniture || 0;
   const parkingPrice = o.parking_active ? (o.parking_price||0) : 0;
   const parkingRentMon = o.parking_active ? (o.parking_rent||0)*(o.parking_count||1) : 0;
-  const totalPrice = priceUnit + priceFurni + parkingPrice;
-  const coldRent = (o.cold_rent||0) + parkingRentMon;
-  const hausgeld = (o.hausgeld||0) + (o.instandhaltung||0);
+  const totalPrice   = priceUnit + priceFurni + parkingPrice;
+  const coldRent     = (o.cold_rent||0) + parkingRentMon;
+  const hausgeld     = (o.hausgeld||0) + (o.instandhaltung||0);
 
-  const loanR = gC('c-loanr')/100;
-  const repayR = gC('c-repayr')/100;
+  const loanR    = gC('c-loanr')/100;
+  const repayR   = gC('c-repayr')/100;
   const equityIn = gC('c-equity');
-  const taxR = gC('c-taxr')/100;
-  const vgR = gC('c-vg')/100;
-  const rgR = gC('c-rg')/100;
-  const vacR = (o.vacancy||0)/100;
+  const taxR     = gC('c-taxr')/100;
+  const vgRaw    = gC('c-vg')/100;
+  const vgR      = gcb('c-useVg') ? vgRaw : 0;
+  const rgR      = gC('c-rg')/100;
+  const vacR     = gC('c-vac')/100;
 
-  const kfwAmt = o.kfw_active ? gC('c-kfwamt') : 0;
-  const kfwR = gC('c-kfwr')/100;
-  const kfwRep = gC('c-kfwrep')/100;
+  const kfwAmt   = o.kfw_active ? gC('c-kfwamt') : 0;
+  const kfwR     = gC('c-kfwr')/100;
+  const kfwRep   = gC('c-kfwrep')/100;
   const kfwBonus = o.kfw_active ? gC('c-kfwbonus') : 0;
 
-  // NKK
   const nkkBasis = priceUnit + parkingPrice;
-  const gstV = (o.gst_pct||3.5)/100*nkkBasis;
-  const gbKV = (o.gb_kauf_pct||0.5)/100*nkkBasis;
-  const notV = (o.notar_pct||1.0)/100*nkkBasis;
-  const gbPV = (o.gb_pfand_pct||0.1)/100*nkkBasis;
+  const gstV  = (o.gst_pct||3.5)/100*nkkBasis;
+  const gbKV  = (o.gb_kauf_pct||0.5)/100*nkkBasis;
+  const notV  = (o.notar_pct||1.0)/100*nkkBasis;
+  const gbPV  = (o.gb_pfand_pct||0.1)/100*nkkBasis;
   const totalNKK = gstV+gbKV+notV+gbPV;
   const gesamtkosten = totalPrice+totalNKK;
-  const effGesamtkosten = gesamtkosten - kfwBonus;
+  const effGesamtkosten = gesamtkosten-kfwBonus;
 
-  // Kredit
-  const kfwUsed = Math.min(kfwAmt, gesamtkosten);
+  const kfwUsed   = Math.min(kfwAmt, gesamtkosten);
   const kfwNetBal = Math.max(0, kfwUsed-kfwBonus);
-  const loanBase = Math.max(0, gesamtkosten-equityIn-kfwUsed);
+  const loanBase  = Math.max(0, gesamtkosten-equityIn-kfwUsed);
   const anfK = gbPV;
 
-  // AfA
-  const landPct = (o.land_share||15)/100;
-  const buildVal = priceUnit*(1-landPct);
-  const nkkBuild = totalNKK*(1-landPct);
-  const afaBasis = buildVal+nkkBuild;
+  const landPct   = (o.land_share||15)/100;
+  const buildVal  = priceUnit*(1-landPct);
+  const nkkBuild  = totalNKK*(1-landPct);
+  const afaBasis  = buildVal+nkkBuild;
   const degAfAPct = (o.deg_afa||0)/100;
   const linAfAPct = (o.lin_afa||3)/100;
-  const furAfA = priceFurni > 0 ? Math.round(priceFurni/10) : 0;
+  const furAfA    = priceFurni > 0 ? Math.round(priceFurni/10) : 0;
   let afaRem = afaBasis;
   const afaArr = [];
   for (let i = 0; i < 20; i++) {
@@ -1694,7 +1770,6 @@ function runCalc() {
     if (afaRem <= 0) { while(afaArr.length<20) afaArr.push(0); break; }
   }
 
-  // 20-year loop
   const years = [];
   let loanBal = loanBase, kfwBal = kfwNetBal, rentCur = coldRent*12, propVal = totalPrice;
   const laufend = hausgeld*12;
@@ -1717,85 +1792,200 @@ function runCalc() {
       totalLoan:loanBal+kfwBal,equity:propVal-loanBal-kfwBal});
   }
 
-  // KPIs
-  const annRent = coldRent*12;
-  const brutto = totalPrice>0 ? annRent/totalPrice*100 : 0;
-  const netto = effGesamtkosten>0 ? (annRent-laufend)/effGesamtkosten*100 : 0;
-  const cf1M = years[0].netCfB/12;
-  const cf1MSt = years[0].netCfA/12;
-  const ekIn = equityIn>0 ? equityIn : Math.max(gesamtkosten-kfwUsed,0);
-  const sale10 = years[9].propVal, loan10 = years[9].totalLoan;
-  const cfArr = [-(ekIn)];
+  const annRent  = coldRent*12;
+  const brutto   = totalPrice>0 ? annRent/totalPrice*100 : 0;
+  const netto    = effGesamtkosten>0 ? (annRent-laufend)/effGesamtkosten*100 : 0;
+  const cf1M     = years[0].netCfB/12;
+  const cf1MSt   = years[0].netCfA/12;
+  const ekIn     = equityIn>0 ? equityIn : Math.max(gesamtkosten-kfwUsed,0);
+  const cfArr    = [-(ekIn)];
   for (let i=0;i<9;i++) cfArr.push(years[i].netCfA);
-  cfArr.push(years[9].netCfA+(sale10-loan10));
+  cfArr.push(years[9].netCfA+(years[9].propVal-years[9].totalLoan));
   const irr = calcIRR(cfArr);
-
   const ekBeiKauf = totalPrice-(loanBase+kfwUsed);
-  const ekNach10 = years[9].equity;
+  const ekNach10  = years[9].equity;
+  const wzuwachs  = ekNach10-ekBeiKauf;
   const steuerErsparnis10 = years.slice(0,10).reduce((a,y)=>a+(y.taxEff>0?y.taxEff:0),0);
-  const cumCfA10 = years.slice(0,10).reduce((a,y)=>a+y.netCfA,0);
+  const cumCfA10  = years.slice(0,10).reduce((a,y)=>a+y.netCfA,0);
 
-  // Update UI
-  const sv = (id, v, cls='') => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = v;
-    if (cls) el.className = 'ck-v ' + cls;
-  };
+  // Banner
+  document.getElementById('cr-objName').textContent  = o.name;
+  document.getElementById('cr-objAddr').textContent  = o.address||'';
+  document.getElementById('cr-totalPrice').textContent = fmt(priceUnit+parkingPrice);
 
-  document.getElementById('cr-brutto').textContent = fmtP(brutto);
-  document.getElementById('cr-brutto').className = 'ck-v ' + (brutto>=4?'pos':'neg');
+  // KPIs
+  const bEl = document.getElementById('cr-brutto');
+  bEl.textContent = fmtP(brutto); bEl.className = 'ck-v '+(brutto>=4?'pos':'neg');
   document.getElementById('cr-netto').textContent = fmtP(netto);
-  document.getElementById('cr-cf').textContent = fmt(cf1M,2);
-  document.getElementById('cr-cf').className = 'ck-v ' + clr(cf1M);
-  document.getElementById('cr-cfst').textContent = fmt(cf1MSt,2);
-  document.getElementById('cr-cfst').className = 'ck-v ' + clr(cf1MSt);
+  const bsEl = document.getElementById('cr-brutto-sub'); if(bsEl) bsEl.textContent = o.parking_active?'Gesamtmiete \u00f7 (KP+Stellplatz)':'Kaltmiete \u00f7 (KP+M\u00f6bel)';
+  const nsEl = document.getElementById('cr-netto-sub');  if(nsEl) nsEl.textContent  = laufend>0?'abzgl. Hausgeld + NKK \u2212 KfW':'inkl. NKK, abzgl. KfW-Zuschuss';
+  const cfEl = document.getElementById('cr-cf'); cfEl.textContent = fmt(cf1M,2); cfEl.className = 'ck-v '+clr(cf1M);
+  const cfStEl = document.getElementById('cr-cfst'); cfStEl.textContent = fmt(cf1MSt,2); cfStEl.className = 'ck-v '+clr(cf1MSt);
   document.getElementById('cr-irr').textContent = fmtP(irr);
-  document.getElementById('cr-gk').textContent = fmt(gesamtkosten);
-
   const tax0 = years[0].taxEff;
   document.getElementById('cr-tax-hint').innerHTML = tax0>=0
-    ? `<span style="color:var(--pos)">▲ +${fmt(tax0/12,0)}/Mo Steuersparnis</span>`
-    : `<span style="color:var(--neg)">▼ ${fmt(tax0/12,0)}/Mo Steuerbelastung</span>`;
+    ? `<span style="color:var(--pos)">\u25b2 +${fmt(tax0/12,0)}/Mo Steuerersparnis</span>`
+    : `<span style="color:var(--neg)">\u25bc ${fmt(Math.abs(tax0/12),0)}/Mo Steuerbelastung</span>`;
 
+  // Wealth
   document.getElementById('cr-ek10').textContent = fmt(ekNach10);
+  const wzEl = document.getElementById('cr-wzuwachs-sub'); if(wzEl) wzEl.textContent = 'Zuwachs: '+fmt(wzuwachs)+' ab Kauf';
   document.getElementById('cr-wert10').textContent = fmt(years[9].propVal);
+  const w10El = document.getElementById('cr-wert10-sub'); if(w10El) w10El.textContent = vgR>0?'bei '+fmtP(vgR*100)+' p.a.':'ohne Wertsteigerung';
   document.getElementById('cr-steuers').textContent = fmt(steuerErsparnis10);
-  document.getElementById('cr-cumcf').textContent = fmt(cumCfA10);
+  document.getElementById('cr-cumcf').textContent   = fmt(cumCfA10);
 
-  // EK Chart
-  if (calcChart) { calcChart.destroy(); calcChart = null; }
+  // Invest Tab
+  const itEl = document.getElementById('cr-investTable');
+  if(itEl) itEl.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
+      <div>
+        ${irow('Kaufpreis Wohnung', fmt(priceUnit))}
+        ${irow('Kaufpreis M\u00f6bel', fmt(priceFurni))}
+        ${o.parking_active ? irow((o.parking_count||1)+'\u00d7 '+o.parking_type, fmt(parkingPrice)) : ''}
+        ${irow('+ Kaufnebenkosten', fmt(totalNKK))}
+        ${irow('GrESt '+(o.gst_pct||3.5)+'%', fmt(gstV), true)}
+        ${irow('Grundbuch '+(o.gb_kauf_pct||0.5)+'%', fmt(gbKV), true)}
+        ${irow('Notar '+(o.notar_pct||1.0)+'%', fmt(notV), true)}
+        ${irow('Pfandrecht '+(o.gb_pfand_pct||0.1)+'%', fmt(gbPV), true)}
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:2px solid var(--navy);margin-top:4px;font-weight:700">
+          <span>Gesamtkosten</span><span style="color:var(--navy)">${fmt(gesamtkosten)}</span>
+        </div>
+      </div>
+      <div>
+        ${irow('Kredit 1', fmt(loanBase))}
+        ${irow('Kreditzins', fmtP(loanR*100))}
+        ${irow('Tilgung p.a.', fmtP(repayR*100))}
+        ${o.kfw_active ? irow('KfW netto', fmt(kfwNetBal)) : ''}
+        ${o.kfw_active ? irow('Tilgungszuschuss', fmt(kfwBonus)) : ''}
+        ${irow('Kaltmiete p.M.', fmt(coldRent))}
+        ${laufend>0 ? irow('Hausgeld/Instandh.', '\u2212'+fmt(hausgeld)+'/Monat') : ''}
+        ${irow('Jahresmiete', fmt(annRent))}
+        ${irow('Kaufpreis/m\u00b2', o.area>0 ? fmt(priceUnit/o.area,2) : '\u2014')}
+      </div>
+    </div>`;
+
+  // Cashflow Table
+  const thS = 'background:var(--navy);color:white;padding:5px 7px;font-size:10px';
+  let cfH = `<thead><tr>
+    <th style="${thS};text-align:left">Jahr</th>
+    <th style="${thS};text-align:right">Miete</th>
+    <th style="${thS};text-align:right">Zinsen</th>
+    <th style="${thS};text-align:right">Tilgung</th>
+    <th style="${thS};text-align:right">CF v.St.</th>
+    <th style="${thS};text-align:right">Steuereff.</th>
+    <th style="${thS};text-align:right">CF n.St.</th>
+    <th style="${thS};text-align:right">EK</th>
+  </tr></thead><tbody>`;
+  let sR=0,sI=0,sT=0,sCB=0,sSt=0,sCA=0;
+  years.slice(0,10).forEach((y,i)=>{
+    sR+=y.rentEff;sI+=y.totalInt;sT+=y.totalTl;sCB+=y.netCfB;sSt+=y.taxEff;sCA+=y.netCfA;
+    const bg=i%2?'background:#f7f6f4':'';
+    const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #ece9e3;text-align:right${c?';color:'+c:''}">${v}</td>`;
+    cfH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #ece9e3;font-weight:600">${(o.afa_start||2026)+i}</td>
+      ${td(fmt(y.rentEff))}${td(fmt(y.totalInt),'var(--neg)')}${td(fmt(y.totalTl))}
+      ${td(fmt(y.netCfB),y.netCfB>=0?'var(--pos)':'var(--neg)')}
+      ${td(fmt(y.taxEff),y.taxEff>=0?'var(--pos)':'var(--neg)')}
+      ${td(fmt(y.netCfA),y.netCfA>=0?'var(--pos)':'var(--neg)')}
+      ${td(fmt(y.equity),y.equity>=0?'var(--pos)':'var(--neg)')}</tr>`;
+  });
+  cfH+=`<tr style="background:var(--navy);color:white;border-top:2px solid var(--gold)">
+    <td style="padding:4px 7px;font-weight:700">Summe</td>
+    <td style="padding:4px 7px;text-align:right">${fmt(sR)}</td><td style="padding:4px 7px;text-align:right">${fmt(sI)}</td>
+    <td style="padding:4px 7px;text-align:right">${fmt(sT)}</td><td style="padding:4px 7px;text-align:right">${fmt(sCB)}</td>
+    <td style="padding:4px 7px;text-align:right">${fmt(sSt)}</td><td style="padding:4px 7px;text-align:right">${fmt(sCA)}</td><td style="padding:4px 7px;text-align:right">\u2014</td>
+  </tr></tbody>`;
+  document.getElementById('cr-cfTable').innerHTML = cfH;
+
+  // AfA Table
+  let afaH = `<thead><tr>
+    <th style="${thS};text-align:left">Jahr</th>
+    <th style="${thS};text-align:right">AfA Geb\u00e4ude</th>
+    <th style="${thS};text-align:right">AfA M\u00f6bel</th>
+    <th style="${thS};text-align:right">Steuerl. Ergebnis</th>
+    <th style="${thS};text-align:right">Steuerersparnis (+)</th>
+    <th style="${thS};text-align:right">CF n.St. p.M.</th>
+  </tr></thead><tbody>`;
+  years.slice(0,10).forEach((y,i)=>{
+    const bg=i%2?'background:#f7f6f4':'';
+    const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #ece9e3;text-align:right${c?';color:'+c:''}">${v}</td>`;
+    afaH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #ece9e3;font-weight:600">${(o.afa_start||2026)+i}</td>
+      ${td(fmt(afaArr[i]))}${td(fmt(furAfA))}
+      ${td(fmt(y.einkuenfte),y.einkuenfte>=0?'var(--neg)':'var(--pos)')}
+      ${td(fmt(y.taxEff),y.taxEff>=0?'var(--pos)':'var(--neg)')}
+      ${td(fmt(y.netCfA/12,2),y.netCfA>=0?'var(--pos)':'var(--neg)')}</tr>`;
+  });
+  afaH+=`</tbody>`;
+  document.getElementById('cr-afaTable').innerHTML = afaH;
+
+  // Charts
   const yrs = years.slice(0,10).map((_,i)=>(o.afa_start||2026)+i+'');
-  const ekLabels = ['Kauf',...yrs];
-  const yr0Loan = loanBase+kfwUsed;
-  calcChart = new Chart(document.getElementById('cr-chartEK'), {
+  const NAVY='#1a2744',GOLD='rgba(184,151,42,.75)',RED='rgba(192,57,43,.75)',GRN='rgba(46,125,82,.75)',G200='#ece9e3';
+  const tcb = v=>Math.abs(v)>=1000?Math.round(v/1000)+'T':v;
+
+  // 1) Vermögensentwicklung
+  destroyCalcChart('verm');
+  let runTl=0,runCf=0;
+  const cumTl=[],cumWert=[],cumCf=[],cumTotal=[];
+  years.slice(0,10).forEach(y=>{
+    runTl+=y.totalTl; runCf+=y.netCfA;
+    const bW=y.propVal-totalPrice;
+    cumTl.push(Math.round(runTl)); cumWert.push(Math.round(Math.max(0,bW)));
+    cumCf.push(Math.round(runCf)); cumTotal.push(Math.round(runTl+Math.max(0,bW)+runCf));
+  });
+  if(document.getElementById('cr-chartVerm')) calcCharts.verm = new Chart(document.getElementById('cr-chartVerm'),{
+    type:'bar',
+    data:{labels:yrs,datasets:[
+      {label:'Tilgung',data:cumTl,backgroundColor:'#c0392b',stack:'s'},
+      {label:'Wertsteigerung',data:cumWert,backgroundColor:GOLD,stack:'s'},
+      {label:'CF n.St.',data:cumCf,backgroundColor:GRN,stack:'s'},
+      {label:'Gesamtertrag',data:cumTotal,type:'line',borderColor:NAVY,borderWidth:2,pointRadius:2,fill:false,tension:.3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:8}}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:G200},ticks:{font:{size:9},callback:tcb}}}}
+  });
+
+  // 2) EK-Aufbau
+  destroyCalcChart('ek');
+  const yr0Loan=loanBase+kfwUsed;
+  const ekLabels=['Kauf',...yrs];
+  if(document.getElementById('cr-chartEK')) calcCharts.ek = new Chart(document.getElementById('cr-chartEK'),{
     type:'line',
     data:{labels:ekLabels,datasets:[
       {label:'Immobilienwert',data:[totalPrice,...years.slice(0,10).map(y=>Math.round(y.propVal))],borderColor:'rgba(184,151,42,.8)',backgroundColor:'rgba(184,151,42,.08)',fill:true,tension:.3,borderWidth:2,pointRadius:2},
       {label:'Kreditrestschuld',data:[yr0Loan,...years.slice(0,10).map(y=>Math.round(y.totalLoan))],borderColor:'#c0392b',backgroundColor:'rgba(192,57,43,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:2},
-      {label:'Eigenkapital',data:[totalPrice-yr0Loan,...years.slice(0,10).map(y=>Math.round(y.equity))],borderColor:'#1a2744',fill:false,tension:0,borderWidth:2.5,pointRadius:3}
+      {label:'Eigenkapital',data:[totalPrice-yr0Loan,...years.slice(0,10).map(y=>Math.round(y.equity))],borderColor:NAVY,fill:false,tension:0,borderWidth:2.5,pointRadius:3}
     ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:9}}}},
-      scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'#ece9e3'},ticks:{font:{size:9},callback:v=>Math.abs(v)>=1000?Math.round(v/1000)+'T':v}}}}
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:8}}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:G200},ticks:{font:{size:9},callback:tcb}}}}
   });
 
-  // Cashflow Table
-  let cfH = `<thead><tr><th>Jahr</th><th class="r">Miete</th><th class="r">Zinsen</th><th class="r">Tilgung</th><th class="r">CF v.St.</th><th class="r">Steuereff.</th><th class="r">CF n.St.</th><th class="r">EK</th></tr></thead><tbody>`;
-  years.slice(0,10).forEach((y,i) => {
-    cfH += `<tr><td>${(o.afa_start||2026)+i}</td><td class="r">${fmt(y.rentEff)}</td><td class="r" style="color:var(--neg)">${fmt(y.totalInt)}</td><td class="r">${fmt(y.totalTl)}</td><td class="r ${clr(y.netCfB)}">${fmt(y.netCfB)}</td><td class="r ${clr(y.taxEff)}">${fmt(y.taxEff)}</td><td class="r ${clr(y.netCfA)}">${fmt(y.netCfA)}</td><td class="r ${clr(y.equity)}">${fmt(y.equity)}</td></tr>`;
+  // 3) Cashflow-Zusammensetzung
+  destroyCalcChart('cf');
+  const taxColors=years.slice(0,10).map(y=>y.taxEff>=0?'rgba(46,125,82,.5)':'rgba(184,151,42,.8)');
+  if(document.getElementById('cr-chartCF')) calcCharts.cf = new Chart(document.getElementById('cr-chartCF'),{
+    type:'bar',
+    data:{labels:yrs,datasets:[
+      {label:'Miete',data:years.slice(0,10).map(y=>Math.round(y.rentEff)),backgroundColor:GRN},
+      {label:'Zins & Tilgung',data:years.slice(0,10).map(y=>-Math.round(y.totalDS)),backgroundColor:RED},
+      {label:'Steuereffekt',data:years.slice(0,10).map(y=>Math.round(y.taxEff)),backgroundColor:taxColors},
+      {label:'CF n.St.',data:years.slice(0,10).map(y=>Math.round(y.netCfA)),type:'line',borderColor:NAVY,borderWidth:2,pointRadius:2,fill:false,tension:.3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:8}}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:G200},ticks:{font:{size:9},callback:tcb}}}}
   });
-  cfH += `</tbody>`;
-  document.getElementById('cr-cfTable').innerHTML = cfH;
 
-  // AfA Table
-  let afaH = `<thead><tr><th>Jahr</th><th class="r">AfA Gebäude</th><th class="r">AfA Möbel</th><th class="r">Steuerl. Ergebnis</th><th class="r">Steuerersparnis</th></tr></thead><tbody>`;
-  years.slice(0,10).forEach((y,i) => {
-    afaH += `<tr><td>${(o.afa_start||2026)+i}</td><td class="r">${fmt(afaArr[i])}</td><td class="r">${fmt(furAfA)}</td><td class="r ${y.einkuenfte>=0?'neg':'pos'}">${fmt(y.einkuenfte)}</td><td class="r ${clr(y.taxEff)}">${fmt(y.taxEff)}</td></tr>`;
-  });
-  afaH += `</tbody>`;
-  document.getElementById('cr-afaTable').innerHTML = afaH;
+  calcData = {o,years,afaArr,furAfA,totalPrice,coldRent,annRent,brutto,netto,
+    cf1M,cf1MSt,irr,ekNach10,wzuwachs,wert10:years[9].propVal,steuerErsparnis10,cumCfA10,
+    gesamtkosten,effGesamtkosten,gstV,gbKV,notV,gbPV,totalNKK,loanBase,kfwUsed,kfwNetBal,
+    laufend,hausgeld,parkingPrice,parkingRentMon,vgR,rgR,vacR,taxR,loanR,repayR,kfwBonus,
+    priceUnit,priceFurni};
 }
 
+function showCalcTab(id, btn) {
 function showCalcTab(id, btn) {
   document.querySelectorAll('.ctc').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.calc-tab').forEach(b=>b.classList.remove('active'));
@@ -1866,8 +2056,164 @@ async function loadVPReservations() {
 // ══════════════════════════════════════════════════════
 // PRINT CALC
 // ══════════════════════════════════════════════════════
-function printCalc() {
-  window.print();
+async function printCalc() {
+  if (!calcData || !calcData.o) return;
+  const d = calcData;
+  const o = d.o;
+
+  // Lade Objektfotos aus Supabase
+  let photoImgs = [];
+  try {
+    const { data: files } = await sb.storage.from('object-images').list(o.id, { limit: 6 });
+    if (files?.length) {
+      for (const f of files) {
+        const { data: u } = sb.storage.from('object-images').getPublicUrl(`${o.id}/${f.name}`);
+        photoImgs.push(u.publicUrl);
+      }
+    }
+  } catch(e) {}
+
+  // Chart-Bilder
+  const imgVerm = document.getElementById('cr-chartVerm')?.toDataURL('image/png') || '';
+  const imgEK   = document.getElementById('cr-chartEK')?.toDataURL('image/png') || '';
+  const imgCF   = document.getElementById('cr-chartCF')?.toDataURL('image/png') || '';
+
+  const branding = o.branding === 'dwi' ? 'Deutsche Wert Invest' : 'Beqiri Capital Management';
+  const disc = `Die aufgeführten Informationen dienen ausschließlich Informationszwecken und stellen keine individuelle Anlageempfehlung dar. Zukünftige Wert- und Mietsteigerungen sind nicht garantiert. © ${branding}`;
+  const recipient = document.getElementById('c-recipient')?.value || '';
+
+  const ph = `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #1a2744">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div style="width:26px;height:26px;background:#b8972a;display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-weight:700;font-size:11px;color:#1a2744">${o.branding==='dwi'?'DW':'BC'}</div>
+      <div><div style="font-family:'Libre Baskerville',serif;font-size:10pt;font-weight:700;color:#1a2744">${branding}</div><div style="font-size:7pt;color:#b8972a;letter-spacing:.1em;text-transform:uppercase">Investmentkalkulation</div></div>
+    </div>
+    <div style="text-align:right;font-size:7.5pt;color:#888075"><div>Beispielkalkulation</div>${recipient?`<div style="margin-top:2px">Für: ${recipient}</div>`:''}</div>
+  </div>`;
+
+  const footer = `<div style="margin-top:10px;padding-top:5px;border-top:1px solid #d0ccc4;font-size:6pt;color:#888075;line-height:1.4">${disc}</div>`;
+
+  const pp = (content) => `<div style="page-break-after:always;padding:14mm 16mm 12mm;font-family:'Source Sans 3',sans-serif;font-size:9pt;line-height:1.4;max-width:100%;overflow:hidden">${ph}${content}${footer}</div>`;
+
+  const row2 = (l,v,indent=false) => {
+    const pad = indent ? '3.5px 0 3.5px 10px' : '3.5px 0';
+    return `<div style="display:flex;justify-content:space-between;padding:${pad};border-bottom:1px solid #ece9e3;font-size:8pt"><span style="color:#888075">${l}</span><span style="font-weight:700;color:#1a2744">${v}</span></div>`;
+  };
+
+  // Seite 1: Zusammenfassung
+  const pg1 = pp(`
+    <div style="background:#1a2744;color:white;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div><div style="font-family:'Libre Baskerville',serif;font-size:15pt;font-weight:700">${o.name}</div><div style="font-size:8pt;color:rgba(255,255,255,.65);margin-top:2px">${o.address||''}</div></div>
+      <div style="font-family:'Libre Baskerville',serif;font-size:18pt;font-weight:700;color:#d4af4a">${fmt(d.priceUnit+(o.parking_active?d.parkingPrice:0))}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">
+      ${[['Bruttorendite',fmtP(d.brutto),d.brutto>=4?'#2e7d52':'#c0392b'],['Nettorendite',fmtP(d.netto),'#1a2744'],['CF p.M. v.St.',fmt(d.cf1M,2),d.cf1M>=0?'#2e7d52':'#c0392b'],['CF p.M. n.St.',fmt(d.cf1MSt,2),d.cf1MSt>=0?'#2e7d52':'#c0392b'],['EK-Verzinsung 10J.',fmtP(d.irr),'#1a2744']]
+        .map(([l,v,c])=>`<div style="border:1px solid #d0ccc4;padding:7px 9px"><div style="font-size:6.5pt;color:#888075;text-transform:uppercase;letter-spacing:.07em;font-weight:700">${l}</div><div style="font-family:'Libre Baskerville',serif;font-size:13pt;font-weight:700;color:${c};margin-top:2px">${v}</div></div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px">
+      ${[['EK nach 10 Jahren',fmt(d.ekNach10)],['Immobilienwert 10J.',fmt(d.years[9].propVal)],['Steuerersparnis 10J.',fmt(d.steuerErsparnis10)],['Kum. CF n.St. 10J.',fmt(d.cumCfA10)]]
+        .map(([l,v])=>`<div style="background:#1a2744;padding:8px 10px"><div style="font-size:6pt;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;font-weight:600">${l}</div><div style="font-family:'Libre Baskerville',serif;font-size:12pt;font-weight:700;color:#d4af4a;margin-top:2px">${v}</div></div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div>
+        <div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:7px">Investmentinformation</div>
+        ${row2('Kaufpreis Wohnung',fmt(d.priceUnit))}
+        ${d.priceFurni>0?row2('Kaufpreis Möbel',fmt(d.priceFurni)):''}
+        ${o.parking_active?row2((o.parking_count||1)+'× '+o.parking_type,fmt(d.parkingPrice)):''}
+        ${row2('+ Kaufnebenkosten',fmt(d.totalNKK))}
+        ${row2('GrESt '+(o.gst_pct||3.5)+'%',fmt(d.gstV),true)}
+        ${row2('Grundbuch '+(o.gb_kauf_pct||0.5)+'%',fmt(d.gbKV),true)}
+        ${row2('Notar '+(o.notar_pct||1.0)+'%',fmt(d.notV),true)}
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #1a2744;margin-top:4px;font-weight:700;font-size:9pt;color:#1a2744"><span>Gesamtkosten</span><span>${fmt(d.gesamtkosten)}</span></div>
+      </div>
+      <div>
+        <div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:7px">Finanzierung & Annahmen</div>
+        ${row2('Kredit 1',fmt(d.loanBase))}
+        ${row2('Kreditzins',fmtP(d.loanR*100))}
+        ${row2('Tilgung p.a.',fmtP(d.repayR*100))}
+        ${o.kfw_active?row2('KfW netto',fmt(d.kfwNetBal)):''}
+        ${d.kfwBonus>0?row2('Tilgungszuschuss',fmt(d.kfwBonus)):''}
+        ${row2('Kaltmiete p.M.',fmt(d.coldRent))}
+        ${row2('Jahresmiete',fmt(d.coldRent*12))}
+        ${row2('Wertsteigerung p.a.',d.vgR>0?fmtP(d.vgR*100):'0 % (deaktiviert)')}
+        ${row2('Grenzsteuersatz',fmtP(d.taxR*100))}
+      </div>
+    </div>
+  `);
+
+  // Seite 2: Diagramme
+  const pg2 = pp(`
+    <div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:10px">Diagramme</div>
+    ${imgVerm?`<div style="border:1px solid #d0ccc4;padding:8px;margin-bottom:10px"><div style="font-family:'Libre Baskerville',serif;font-size:8pt;color:#1a2744;text-align:center;margin-bottom:6px">Vermögensentwicklung (kumuliert)*</div><img src="${imgVerm}" style="width:100%;max-height:180px;object-fit:contain"></div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${imgEK?`<div style="border:1px solid #d0ccc4;padding:8px"><div style="font-family:'Libre Baskerville',serif;font-size:8pt;color:#1a2744;text-align:center;margin-bottom:6px">Eigenkapital-Aufbau*</div><img src="${imgEK}" style="width:100%;max-height:160px;object-fit:contain"></div>`:''}
+      ${imgCF?`<div style="border:1px solid #d0ccc4;padding:8px"><div style="font-family:'Libre Baskerville',serif;font-size:8pt;color:#1a2744;text-align:center;margin-bottom:6px">Cashflow-Zusammensetzung*</div><img src="${imgCF}" style="width:100%;max-height:160px;object-fit:contain"></div>`:''}
+    </div>
+    <div style="font-size:7pt;color:#888075;margin-top:8px">* Erwartete Werte basierend auf Ihren Annahmen | Alle Werte in €</div>
+  `);
+
+  // Seite 3: Cashflow-Tabelle
+  const cfRows = d.years.slice(0,10).map((y,i)=>`<tr style="${i%2?'background:#f7f6f4':''}">
+    <td style="padding:3.5px 6px">${(o.afa_start||2026)+i}</td>
+    <td style="padding:3.5px 6px;text-align:right">${fmt(y.rentEff)}</td>
+    <td style="padding:3.5px 6px;text-align:right;color:#c0392b">${fmt(y.totalInt)}</td>
+    <td style="padding:3.5px 6px;text-align:right">${fmt(y.totalTl)}</td>
+    <td style="padding:3.5px 6px;text-align:right;color:${y.netCfB>=0?'#2e7d52':'#c0392b'}">${fmt(y.netCfB)}</td>
+    <td style="padding:3.5px 6px;text-align:right;color:${y.taxEff>=0?'#2e7d52':'#c0392b'}">${fmt(y.taxEff)}</td>
+    <td style="padding:3.5px 6px;text-align:right;color:${y.netCfA>=0?'#2e7d52':'#c0392b'}">${fmt(y.netCfA)}</td>
+    <td style="padding:3.5px 6px;text-align:right;color:${y.equity>=0?'#2e7d52':'#c0392b'}">${fmt(y.equity)}</td>
+  </tr>`).join('');
+
+  const th = (t,r=false) => `<th style="background:#1a2744;color:white;padding:5px 6px;text-align:${r?'right':'left'};font-size:6.5pt;white-space:nowrap">${t}</th>`;
+
+  const pg3 = pp(`
+    <div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:10px">Kalkulation – Cashflow (10 Jahre)</div>
+    <table style="width:100%;border-collapse:collapse;font-size:7.5pt">
+      <thead><tr>${th('Jahr')}${th('Miete',true)}${th('Zinsen',true)}${th('Tilgung',true)}${th('CF v.St.',true)}${th('Steuereff.',true)}${th('CF n.St.',true)}${th('Eigenkapital',true)}</tr></thead>
+      <tbody>${cfRows}</tbody>
+    </table>
+    <div style="height:12px"></div>
+    <div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:8px">Einkünfte aus Vermietung</div>
+    <table style="width:100%;border-collapse:collapse;font-size:7.5pt">
+      <thead><tr>${th('Jahr')}${th('AfA Gebäude',true)}${th('AfA Möbel',true)}${th('Steuerl. Ergebnis',true)}${th('Steuerersparnis',true)}${th('CF n.St. p.M.',true)}</tr></thead>
+      <tbody>${d.years.slice(0,10).map((y,i)=>`<tr style="${i%2?'background:#f7f6f4':''}">
+        <td style="padding:3.5px 6px">${(o.afa_start||2026)+i}</td>
+        <td style="padding:3.5px 6px;text-align:right">${fmt(d.afaArr[i])}</td>
+        <td style="padding:3.5px 6px;text-align:right">${fmt(d.furAfA)}</td>
+        <td style="padding:3.5px 6px;text-align:right;color:${y.einkuenfte>=0?'#c0392b':'#2e7d52'}">${fmt(y.einkuenfte)}</td>
+        <td style="padding:3.5px 6px;text-align:right;color:${y.taxEff>=0?'#2e7d52':'#c0392b'}">${fmt(y.taxEff)}</td>
+        <td style="padding:3.5px 6px;text-align:right;color:${y.netCfA>=0?'#2e7d52':'#c0392b'}">${fmt(y.netCfA/12,2)}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  `);
+
+  // Foto-Seiten
+  let photoPages = '';
+  if (photoImgs.length) {
+    for (let i=0; i<photoImgs.length; i+=4) {
+      const chunk = photoImgs.slice(i, i+4);
+      photoPages += pp(`
+        <div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:12px">Objektfotos</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          ${chunk.map(src=>`<img src="${src}" style="width:100%;height:185px;object-fit:cover;display:block">`).join('')}
+        </div>
+      `);
+    }
+  }
+
+  // Print-Bereich aufbauen
+  let printArea = document.getElementById('calc-print-area');
+  if (!printArea) {
+    printArea = document.createElement('div');
+    printArea.id = 'calc-print-area';
+    document.body.appendChild(printArea);
+  }
+  printArea.innerHTML = pg1 + pg2 + pg3 + photoPages;
+  printArea.style.display = 'block';
+
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { printArea.style.display = 'none'; }, 500);
+  }, 200);
 }
 
 // ══════════════════════════════════════════════════════
