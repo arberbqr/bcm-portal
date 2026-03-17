@@ -374,6 +374,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <strong id="headerUserName">—</strong>
         <span id="headerUserRole">—</span>
       </div>
+      <button class="btn-sm btn-outline" id="btnProfil" onclick="openProfilModal()" style="display:none">⚙ Profil</button>
       <button class="btn-sm btn-outline" onclick="doLogout()">Abmelden</button>
     </div>
   </header>
@@ -499,9 +500,43 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
   </div>
 </div>
 
-<!-- ══ MODALS ══ -->
+<!-- VP Profil Modal -->
+<div class="modal-bg" id="profilModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title">Mein Firmenprofil</div>
+      <button class="modal-close" onclick="closeModal('profilModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--g100);border-left:3px solid var(--gold);padding:10px 14px;font-size:12px;color:var(--g500);margin-bottom:20px;line-height:1.6">
+        Ihr Firmenlogo und -name erscheinen im Kalkulator-Header und im PDF-Export für Ihre Kunden.
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-fld">
+          <label>Firmenname</label>
+          <input id="prof-company" type="text" placeholder="z.B. Muster Immobilien GmbH">
+        </div>
+        <div class="form-fld">
+          <label>Logo hochladen</label>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div id="prof-logo-preview" style="width:60px;height:60px;background:var(--g200);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🏢</div>
+            <div>
+              <button class="btn-sm btn-navy" style="font-size:11px" onclick="document.getElementById('prof-logo-input').click()">Bild auswählen</button>
+              <input type="file" id="prof-logo-input" accept="image/*" style="display:none" onchange="onLogoSelect(event)">
+              <div style="font-size:10px;color:var(--g500);margin-top:4px">PNG, JPG – empfohlen quadratisch</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('profilModal')">Abbrechen</button>
+      <button class="btn-sm btn-gold" onclick="saveProfil()">Profil speichern</button>
+    </div>
+  </div>
+</div>
 
-<!-- Add/Edit Object -->
+
 <div class="modal-bg" id="objModal">
   <div class="modal" style="max-width:900px">
     <div class="modal-header">
@@ -635,6 +670,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="modal-title" id="calcModalTitle">Kalkulator</div>
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px" id="calcModalAddr"></div>
       </div>
+      <div id="calc-vp-brand" style="display:none;align-items:center;gap:8px;margin-right:auto;margin-left:20px"></div>
       <button class="modal-close" onclick="closeModal('calcModal')">×</button>
     </div>
     <div class="modal-body" style="padding:16px;background:var(--g100)">
@@ -1107,6 +1143,10 @@ function setupAppShell() {
   // Header user
   document.getElementById('headerUserName').textContent = currentProfile.full_name || currentProfile.email;
   document.getElementById('headerUserRole').textContent = isAdmin ? 'Administrator' : 'Vertriebspartner';
+
+  // Profil-Button nur für VP
+  const profilBtn = document.getElementById('btnProfil');
+  if(profilBtn) profilBtn.style.display = isAdmin ? 'none' : '';
 
   // Nav
   const nav = document.getElementById('appNav');
@@ -1671,6 +1711,48 @@ async function copyInviteLink(token) {
 }
 
 // ══════════════════════════════════════════════════════
+// VP PROFIL
+// ══════════════════════════════════════════════════════
+let vpLogoBase64 = '';
+
+function openProfilModal() {
+  document.getElementById('prof-company').value = currentProfile.company_name || '';
+  vpLogoBase64 = currentProfile.company_logo || '';
+  const prev = document.getElementById('prof-logo-preview');
+  if(vpLogoBase64) {
+    prev.innerHTML = '<img src="'+vpLogoBase64+'" style="width:60px;height:60px;object-fit:contain">';
+  } else {
+    prev.innerHTML = '🏢';
+  }
+  openModal('profilModal');
+}
+
+function onLogoSelect(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    vpLogoBase64 = ev.target.result;
+    const prev = document.getElementById('prof-logo-preview');
+    prev.innerHTML = '<img src="'+vpLogoBase64+'" style="width:60px;height:60px;object-fit:contain">';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveProfil() {
+  const company = document.getElementById('prof-company').value.trim();
+  const { error } = await sb.from('profiles').update({
+    company_name: company,
+    company_logo: vpLogoBase64 || null
+  }).eq('id', currentUser.id);
+  if(error) { notify('Fehler: ' + error.message, 'error'); return; }
+  currentProfile.company_name = company;
+  currentProfile.company_logo = vpLogoBase64;
+  closeModal('profilModal');
+  notify('Profil gespeichert!', 'success');
+}
+
+// ══════════════════════════════════════════════════════
 // VP: OBJECTS
 // ══════════════════════════════════════════════════════
 let vpAllObjects = [];
@@ -1727,9 +1809,7 @@ function filterVPObjects() {
   if (vpCurrentView === 'list') {
     renderVPList(filtered, grid);
   } else {
-    grid.style.display = '';
-    grid.innerHTML = filtered.map(o => objCard(o, false)).join('');
-    filtered.forEach(o => loadCardImage(o.id));
+    renderVPGrouped(filtered, grid);
   }
 }
 
@@ -1742,12 +1822,60 @@ function setVPView(view) {
   filterVPObjects();
 }
 
+function renderVPGrouped(data, grid) {
+  // Nach Adresse/Projekt gruppieren
+  const groups = {};
+  data.forEach(o => {
+    const key = o.address || 'Sonstige';
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(o);
+  });
+
+  const keys = Object.keys(groups);
+  grid.style.display = 'block';
+
+  if(keys.length === 1) {
+    // Nur eine Gruppe → direkt als Grid ohne Gruppenheader
+    grid.innerHTML = '<div class="obj-grid">' + data.map(o => objCard(o, false)).join('') + '</div>';
+    data.forEach(o => loadCardImage(o.id));
+    return;
+  }
+
+  // Mehrere Gruppen → mit Projektüberschrift
+  grid.innerHTML = keys.map(key => {
+    const objs = groups[key];
+    const stats = getProjectStats(objs);
+    return '<div style="margin-bottom:28px">'
+      + '<div style="background:var(--navy);color:white;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+      + '<div>'
+      + '<div style="font-family:\'Libre Baskerville\',serif;font-size:14px;font-weight:700">' + key + '</div>'
+      + '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + objs.length + ' Einheiten</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:16px;font-size:11px">'
+      + '<div style="text-align:right"><div style="color:rgba(255,255,255,.5)">Verfügbar</div><div style="color:var(--gold2);font-weight:700">' + stats.available + ' / ' + objs.length + '</div></div>'
+      + '<div style="text-align:right"><div style="color:rgba(255,255,255,.5)">Ø Rendite</div><div style="color:var(--gold2);font-weight:700">' + stats.avgYield + '</div></div>'
+      + '</div></div>'
+      + '<div class="obj-grid">' + objs.map(o => objCard(o, false)).join('') + '</div>'
+      + '</div>';
+  }).join('');
+
+  data.forEach(o => loadCardImage(o.id));
+}
+
+function getProjectStats(objs) {
+  const available = objs.filter(o => o.status === 'available').length;
+  const yields = objs.map(o => {
+    const tp = (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0);
+    const rent = ((o.cold_rent||0)+(o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0))*12;
+    return tp>0 ? rent/tp*100 : 0;
+  }).filter(v => v>0);
+  const avg = yields.length ? (yields.reduce((a,b)=>a+b,0)/yields.length) : 0;
+  return { available, avgYield: avg>0 ? avg.toFixed(2)+'%' : '—' };
+}
+
+
 function renderVPList(data, grid) {
   grid.style.display = 'block';
-  grid.innerHTML = '<div style="background:white;border:1px solid var(--g200)">'
-    + '<table style="width:100%;border-collapse:collapse">'
-    + '<thead><tr>'
-    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px">Einheit</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Fläche</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Kaufpreis</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Kaltmiete</th>'
@@ -1877,6 +2005,32 @@ async function openCalcForObject(id) {
 
   document.getElementById('calcModalTitle').textContent = o.name;
   document.getElementById('calcModalAddr').textContent = o.address || '';
+
+  // VP-Logo anzeigen falls vorhanden
+  var logoEl = document.getElementById('calc-vp-logo');
+  if(currentProfile && currentProfile.company_logo && logoEl) {
+    document.getElementById('calc-vp-logo-img').src = currentProfile.company_logo;
+    document.getElementById('calc-vp-company').textContent = currentProfile.company_name || '';
+    logoEl.style.display = 'flex';
+  } else if(logoEl) {
+    logoEl.style.display = 'none';
+  }
+
+  // VP-Branding im Kalkulator-Header anzeigen
+  const vpBrand = document.getElementById('calc-vp-brand');
+  if(vpBrand && currentProfile.role === 'vp') {
+    if(currentProfile.company_logo || currentProfile.company_name) {
+      vpBrand.style.display = 'flex';
+      vpBrand.innerHTML = (currentProfile.company_logo
+        ? '<img src="'+currentProfile.company_logo+'" style="height:28px;max-width:80px;object-fit:contain">'
+        : '') +
+        (currentProfile.company_name
+        ? '<span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.8)">'+ currentProfile.company_name +'</span>'
+        : '');
+    } else {
+      vpBrand.style.display = 'none';
+    }
+  }
 
   // Fill calc inputs from object
   const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val !== null && val !== undefined ? val : ''; };
@@ -2329,8 +2483,11 @@ async function printCalc() {
   const imgEK   = document.getElementById('cr-chartEK')   ? document.getElementById('cr-chartEK').toDataURL('image/png')   : '';
   const imgCF   = document.getElementById('cr-chartCF')   ? document.getElementById('cr-chartCF').toDataURL('image/png')   : '';
 
-  const branding  = o.branding === 'dwi' ? 'Deutsche Wert Invest' : 'Beqiri Capital Management';
-  const logoTxt   = o.branding === 'dwi' ? 'DW' : 'BC';
+  // VP-Branding: eigenes Logo/Name wenn vorhanden, sonst Objekt-Branding
+  const vpCompany = (currentProfile && currentProfile.role === 'vp' && currentProfile.company_name) ? currentProfile.company_name : null;
+  const vpLogo    = (currentProfile && currentProfile.role === 'vp' && currentProfile.company_logo) ? currentProfile.company_logo : null;
+  const branding  = vpCompany || (o.branding === 'dwi' ? 'Deutsche Wert Invest' : 'Beqiri Capital Management');
+  const logoTxt   = vpLogo ? null : (o.branding === 'dwi' ? 'DW' : 'BC');
   const recipient = document.getElementById('c-recipient') ? document.getElementById('c-recipient').value : '';
   const disc = 'Die aufgeführten Informationen dienen ausschließlich Informationszwecken und stellen keine individuelle Anlageempfehlung dar. Zukünftige Wert- und Mietsteigerungen sind nicht garantiert. \u00a9 ' + branding;
 
@@ -2344,9 +2501,12 @@ async function printCalc() {
   };
 
   function ph() {
+    var logoHtml = vpLogo
+      ? '<img src="'+vpLogo+'" style="height:26px;max-width:80px;object-fit:contain">'
+      : '<div style="width:26px;height:26px;background:#b8972a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#1a2744">' + logoTxt + '</div>';
     return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:2pt solid #1a2744">'
       + '<div style="display:flex;align-items:center;gap:9px">'
-      + '<div style="width:26px;height:26px;background:#b8972a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#1a2744">' + logoTxt + '</div>'
+      + logoHtml
       + '<div><div style="font-size:11pt;font-weight:700;color:#1a2744">' + branding + '</div>'
       + '<div style="font-size:7pt;color:#b8972a;letter-spacing:.1em;text-transform:uppercase">Investmentkalkulation</div></div></div>'
       + '<div style="text-align:right;font-size:7.5pt;color:#888075"><div>Beispielkalkulation</div>'
