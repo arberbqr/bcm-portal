@@ -1614,12 +1614,17 @@ async function togglePartner(id, active) {
 }
 
 async function deletePartner(id, name) {
-  if (!confirm(`Partner "${name}" wirklich löschen?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.`)) return;
-  // Reservierungen des Partners anonymisieren
-  await sb.from('reservations').update({ vp_name: name + ' (gelöscht)', vp_id: null }).eq('vp_id', id);
+  if (!confirm('Partner "' + name + '" wirklich löschen?\n\nAlle Reservierungen bleiben erhalten, werden aber anonymisiert.')) return;
+  // Erst Reservierungen anonymisieren (FK-Constraint umgehen)
+  await sb.from('reservations').update({ vp_id: null, vp_name: name + ' (gelöscht)' }).eq('vp_id', id);
+  // Einladungen bereinigen
+  await sb.from('invitations').delete().eq('invited_by', id);
   // Profil löschen
   const { error } = await sb.from('profiles').delete().eq('id', id);
-  if (error) { notify('Fehler beim Löschen: ' + error.message, 'error'); return; }
+  if (error) {
+    notify('Fehler: ' + error.message + ' – bitte in Supabase SQL prüfen', 'error');
+    return;
+  }
   notify('Partner "' + name + '" wurde gelöscht.', 'success');
   loadPartners();
 }
