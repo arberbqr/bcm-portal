@@ -329,9 +329,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <label>Passwort (min. 8 Zeichen)</label>
         <input type="password" id="signupPw" placeholder="••••••••">
       </div>
-      <div class="login-fld" id="tokenField" style="display:none">
+      <div class="login-fld" id="tokenField">
         <label>Einladungscode</label>
         <input type="text" id="inviteToken" placeholder="z.B. abc123...">
+        <div style="font-size:11px;color:var(--g500);margin-top:3px">Von Beqiri Capital per E-Mail erhalten</div>
       </div>
       <button class="btn-login" onclick="doSignup()">Account erstellen</button>
       <div class="login-err" id="signupErr"></div>
