@@ -695,6 +695,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
               <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px" id="cr-objAddr">—</div>
             </div>
             <div style="font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--gold2)" id="cr-totalPrice">—</div>
+            <div id="cr-price-break" style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;text-align:right;display:none"></div>
           </div>
           <!-- Möbel / Stellplatz Info -->
           <div id="cr-objExtras" style="display:none;background:rgba(26,39,68,.06);border:1px solid var(--g200);padding:8px 14px;display:flex;gap:16px;font-size:11px;color:var(--g700)"></div>
@@ -1177,7 +1178,15 @@ function objCard(o, isAdmin) {
       <div class="obj-card-name">${o.name}</div>
       <div class="obj-card-addr">${o.address||'—'} · ${o.area||'—'} m² · ${o.rooms||'—'} Zi.</div>
       <div class="obj-card-kpis">
-        <div><div class="obj-kpi-lbl">Kaufpreis</div><div class="obj-kpi-val">${fmt(priceUnit+parkPrice)}</div></div>
+        <div>
+          <div class="obj-kpi-lbl">Kaufpreis gesamt</div>
+          <div class="obj-kpi-val">${fmt(priceUnit+parkPrice+(o.price_furniture||0))}</div>
+          <div style="font-size:10px;color:var(--g500);margin-top:1px">
+            ${o.price_furniture>0?'inkl. €'+Math.round(o.price_furniture/1000)+'k Möbel':''}
+            ${o.parking_active&&o.price_furniture>0?' · ':''}
+            ${o.parking_active?'€'+(o.parking_price||0).toLocaleString('de-DE')+' Stellplatz':''}
+          </div>
+        </div>
         <div><div class="obj-kpi-lbl">Kaltmiete p.M.</div><div class="obj-kpi-val">${fmt(o.cold_rent)}</div></div>
         <div><div class="obj-kpi-lbl">Bruttorendite</div><div class="obj-kpi-val" style="color:${brutto>=4?'var(--pos)':'var(--neg)'}">${fmtP(brutto)}</div></div>
       </div>
@@ -1613,7 +1622,10 @@ async function vpObjDetail(id) {
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--g300);margin-bottom:16px">
         <div style="background:var(--navy);padding:12px 14px">
           <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Kaufpreis</div>
-          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-top:4px">${fmt(priceUnit+parkPrice)}</div>
+          <div>
+            <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-top:4px">${fmt(priceUnit+parkPrice+(o.price_furniture||0))}</div>
+            ${(o.price_furniture>0||o.parking_active)?`<div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px">${[o.price_furniture>0?'Möbel '+fmt(o.price_furniture):'',o.parking_active?'Stellplatz '+fmt(o.parking_price||0):''].filter(Boolean).join(' · ')}</div>`:''}
+          </div>
         </div>
         <div style="background:var(--navy);padding:12px 14px">
           <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Kaltmiete</div>
@@ -1852,7 +1864,17 @@ function runCalc() {
   // Banner
   document.getElementById('cr-objName').textContent  = o.name;
   document.getElementById('cr-objAddr').textContent  = o.address||'';
-  document.getElementById('cr-totalPrice').textContent = fmt(priceUnit+parkingPrice);
+  document.getElementById('cr-totalPrice').textContent = fmt(priceUnit + parkingPrice + priceFurni);
+
+  // Preisaufschlüsselung unter dem Preis
+  const priceBreakEl = document.getElementById('cr-price-break');
+  if(priceBreakEl) {
+    const parts = [];
+    if(priceFurni > 0) parts.push('Möbel ' + fmt(priceFurni));
+    if(o.parking_active) parts.push('Stellplatz ' + fmt(parkingPrice));
+    priceBreakEl.textContent = parts.length ? 'inkl. ' + parts.join(' · ') : '';
+    priceBreakEl.style.display = parts.length ? '' : 'none';
+  }
 
   // Extras Banner (Möbel + Stellplatz)
   const extrasEl = document.getElementById('cr-objExtras');
