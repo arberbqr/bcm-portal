@@ -853,15 +853,11 @@ async function doSignup() {
 
   if (!name || !email || !pw) {
     errEl.style.display = 'block';
-    errEl.textContent = 'Bitte alle Felder ausfüllen.';
+    errEl.textContent = 'Bitte Name, E-Mail und Passwort ausfüllen.';
     return;
   }
 
-  // Check if any users exist yet (first user = admin, no token needed)
-  const { count } = await sb.from('profiles').select('*', { count: 'exact', head: true });
-  const isFirstUser = count === 0;
-
-  if (!isFirstUser && !token) {
+  if (!isFirstUser) {
     errEl.style.display = 'block';
     errEl.textContent = 'Bitte Einladungscode eingeben.';
     return;
