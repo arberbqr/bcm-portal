@@ -857,14 +857,10 @@ async function doSignup() {
     return;
   }
 
-  if (!isFirstUser) {
-    errEl.style.display = 'block';
-    errEl.textContent = 'Bitte Einladungscode eingeben.';
-    return;
-  }
+  const isAdminSignup = !token; // Kein Token = erster Admin-Account
 
-  // If token provided, validate it
-  if (token) {
+  // Token nur validieren wenn angegeben (VP-Signup)
+  if (!isAdminSignup && token) {
     const { data: inv, error: invErr } = await sb.from('invitations')
       .select('*').eq('token', token).eq('used', false).single();
 
@@ -883,7 +879,7 @@ async function doSignup() {
 
   const { data, error } = await sb.auth.signUp({
     email, password: pw,
-    options: { data: { full_name: name, role: isFirstUser ? 'admin' : 'vp' } }
+    options: { data: { full_name: name, role: isAdminSignup ? 'admin' : 'vp' } }
   });
 
   if (error) {
@@ -898,7 +894,7 @@ async function doSignup() {
     if (inv) await sb.from('invitations').update({ used: true, used_at: new Date().toISOString() }).eq('id', inv.id);
   }
 
-  if (isFirstUser) {
+  if (isAdminSignup) {
     notify('Admin-Account erstellt! Bitte E-Mail bestätigen und dann einloggen.', 'success');
   } else {
     notify('Account erstellt! Bitte E-Mail bestätigen und dann einloggen.', 'success');
