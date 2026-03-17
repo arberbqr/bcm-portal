@@ -1757,7 +1757,8 @@ function renderVPList(data, grid) {
     + '</tr></thead><tbody>'
     + data.map(function(o, i) {
         var tp = (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0);
-        var rend = tp>0 ? ((o.cold_rent||0)*12/tp*100).toFixed(2)+'%' : '—';
+        var annRent = ((o.cold_rent||0) + (o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0)) * 12;
+        var rend = tp>0 ? (annRent/tp*100).toFixed(2)+'%' : '—';
         var bg = i%2 ? 'background:#f7f6f4' : '';
         return '<tr style="'+bg+';cursor:pointer" onclick="vpObjDetail(\''+o.id+'\')">'
           + '<td style="padding:8px 12px"><div style="font-weight:700;color:var(--navy);font-size:13px">'+o.name+'</div>'
