@@ -1583,6 +1583,9 @@ async function loadPartners() {
         <button class="btn-sm ${p.active?'btn-danger':'btn-pos'}" style="font-size:10px;padding:4px 10px" onclick="togglePartner('${p.id}',${!p.active})">
           ${p.active ? 'Deaktivieren' : 'Aktivieren'}
         </button>
+        <button class="btn-sm" style="font-size:10px;padding:4px 10px;background:var(--g200);color:var(--text);margin-left:4px" onclick="deletePartner('${p.id}','${p.full_name||p.email}')">
+          🗑 Löschen
+        </button>
       </td>
     </tr>`).join('');
   }
@@ -1607,6 +1610,17 @@ async function loadPartners() {
 async function togglePartner(id, active) {
   await sb.from('profiles').update({ active }).eq('id', id);
   notify(active ? 'Partner aktiviert' : 'Partner deaktiviert', 'success');
+  loadPartners();
+}
+
+async function deletePartner(id, name) {
+  if (!confirm(`Partner "${name}" wirklich löschen?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.`)) return;
+  // Reservierungen des Partners anonymisieren
+  await sb.from('reservations').update({ vp_name: name + ' (gelöscht)', vp_id: null }).eq('vp_id', id);
+  // Profil löschen
+  const { error } = await sb.from('profiles').delete().eq('id', id);
+  if (error) { notify('Fehler beim Löschen: ' + error.message, 'error'); return; }
+  notify('Partner "' + name + '" wurde gelöscht.', 'success');
   loadPartners();
 }
 
