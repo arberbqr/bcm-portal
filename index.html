@@ -730,6 +730,13 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
             <div class="ci-h">Steuer & AfA</div>
             <div class="ci-b">
               <div class="cf"><label>Grenzsteuersatz (%)</label><input id="c-taxr" type="number" oninput="runCalc()"></div>
+              <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--g300)">
+                <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;font-weight:600;color:var(--navy)">
+                  <input type="checkbox" id="c-nkkInKP" onchange="runCalc()" style="width:14px;height:14px;accent-color:var(--navy)">
+                  NKK im Kaufpreis enthalten
+                </label>
+                <div style="font-size:10px;color:var(--g500);margin-top:3px;margin-left:21px">NKK werden nicht extra berechnet – z.B. wenn Nebenkosten bereits im KP enthalten sind</div>
+              </div>
             </div>
           </div>
 
@@ -2126,11 +2133,13 @@ function runCalc() {
   const kfwRep   = gC('c-kfwrep')/100;
   const kfwBonus = o.kfw_active ? gC('c-kfwbonus') : 0;
 
+  const nkkInKP = document.getElementById('c-nkkInKP') ? document.getElementById('c-nkkInKP').checked : false;
+
   const nkkBasis = priceUnit + parkingPrice;
-  const gstV  = (o.gst_pct||3.5)/100*nkkBasis;
-  const gbKV  = (o.gb_kauf_pct||0.5)/100*nkkBasis;
-  const notV  = (o.notar_pct||1.0)/100*nkkBasis;
-  const gbPV  = (o.gb_pfand_pct||0.1)/100*nkkBasis;
+  const gstV  = nkkInKP ? 0 : (o.gst_pct||3.5)/100*nkkBasis;
+  const gbKV  = nkkInKP ? 0 : (o.gb_kauf_pct||0.5)/100*nkkBasis;
+  const notV  = nkkInKP ? 0 : (o.notar_pct||1.0)/100*nkkBasis;
+  const gbPV  = nkkInKP ? 0 : (o.gb_pfand_pct||0.1)/100*nkkBasis;
   const totalNKK = gstV+gbKV+notV+gbPV;
   const gesamtkosten = totalPrice+totalNKK;
   const effGesamtkosten = gesamtkosten - kfwBonus; // Zuschuss reduziert effektive Investitionskosten für Renditeberechnung
@@ -2292,7 +2301,7 @@ function runCalc() {
 
   // Invest Tab
   const itEl = document.getElementById('cr-investTable');
-  if(itEl) itEl.innerHTML = `
+  if(itEl) itEl.innerHTML = (nkkInKP ? '<div style="background:#fff8e8;border-left:3px solid var(--gold);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--g700)">ℹ️ <strong>NKK mitfinanziert:</strong> Kaufnebenkosten sind im Kaufpreis enthalten – keine separate NKK-Berechnung.</div>' : '') + `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
       <div>
         ${irow('Kaufpreis Wohnung', fmt(priceUnit))}
