@@ -193,7 +193,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 .res-form{max-width:500px}
 
 /* ── NOTIFICATION ── */
-.notif{position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;padding:14px 20px;font-size:13px;z-index:300;max-width:340px;border-left:4px solid var(--gold);transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none}
+.notif{position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;padding:14px 20px;font-size:13px;z-index:99999;max-width:340px;border-left:4px solid var(--gold);transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 .notif.show{transform:translateY(0);opacity:1}
 .notif.success{border-color:var(--pos)}
 .notif.error{border-color:var(--neg);background:var(--neg)}
@@ -934,32 +934,75 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 
 <!-- Reservation Modal -->
 <div class="modal-bg" id="resModal">
-  <div class="modal" style="max-width:500px">
+  <div class="modal" style="max-width:560px">
     <div class="modal-header">
       <div class="modal-title">Einheit reservieren</div>
       <button class="modal-close" onclick="closeModal('resModal')">×</button>
     </div>
     <div class="modal-body">
-      <div style="background:var(--g100);border-left:3px solid var(--gold);padding:12px 16px;margin-bottom:20px;font-size:12px;line-height:1.7;color:var(--g700)">
-        <strong>Reservierungsprozess:</strong><br>
-        • <strong>Soft-Reservierung (72h):</strong> Einheit wird sofort blockiert<br>
-        • <strong>Hard-Reservierung (21 Tage):</strong> Nach Genehmigung durch Beqiri Capital<br>
-        • Reservierungsgebühr: €500 (wird auf Provision angerechnet)
+      <!-- Prozess Info -->
+      <div style="background:var(--g100);border-left:3px solid var(--gold);padding:12px 16px;margin-bottom:20px;font-size:12px;line-height:1.8;color:var(--g700)">
+        <strong style="color:var(--navy)">Reservierungsprozess:</strong><br>
+        <span style="color:var(--gold)">①</span> <strong>Soft-Reservierung (72h):</strong> Einheit wird sofort blockiert<br>
+        <span style="color:var(--pos)">②</span> <strong>Hard-Reservierung (21 Tage):</strong> Nach Genehmigung durch Beqiri Capital<br>
+        <span style="color:var(--navy)">③</span> <strong>Notarisierung:</strong> Finaler Abschluss<br>
+        <span style="font-size:11px;color:var(--g500)">Reservierungsgebühr: €500 (wird auf Provision angerechnet)</span>
       </div>
+
       <div class="form-grid" style="grid-template-columns:1fr">
-        <div class="form-fld"><label>Käufer Name *</label><input id="res-buyer" type="text" placeholder="Vollständiger Name des Käufers"></div>
-        <div class="form-fld"><label>Eigenkapital des Käufers (€)</label><input id="res-equity" type="number" placeholder="z.B. 50000"></div>
-        <div class="form-fld"><label>Qualifizierung / Notizen *</label>
-          <textarea id="res-notes" rows="4" placeholder="Kurze Beschreibung: Investor/Eigennutzer, Finanzierungssituation, Zeitplan, Besonderheiten..."></textarea>
+        <!-- Käufer -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:4px">Käufer</div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="form-fld"><label>Name *</label><input id="res-buyer" type="text" placeholder="Vollständiger Name"></div>
+          <div class="form-fld"><label>Telefon / E-Mail</label><input id="res-contact" type="text" placeholder="Kontaktdaten des Käufers"></div>
         </div>
-        <div class="form-fld"><label>Finanzierungshinweise</label>
+
+        <!-- Finanzierung -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:4px;margin-top:8px">Finanzierung</div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="form-fld">
+            <label>Finanzierungsart *</label>
+            <select id="res-financing-type">
+              <option value="bank">Bankfinanzierung</option>
+              <option value="kfw">Bankfinanzierung + KfW</option>
+              <option value="equity">Eigenkapital (Vollkauf)</option>
+              <option value="mixed">Gemischte Finanzierung</option>
+              <option value="pending">Noch offen</option>
+            </select>
+          </div>
+          <div class="form-fld"><label>Eigenkapital (€)</label><input id="res-equity" type="number" placeholder="z.B. 50.000"></div>
+        </div>
+        <div class="form-fld"><label>Finanzierungsdetails</label>
           <input id="res-financing" type="text" placeholder="z.B. Volksbank München, Voranfrage liegt vor">
+        </div>
+
+        <!-- Kalkulation verknüpfen -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:4px;margin-top:8px">Kalkulation</div>
+        <div class="form-fld">
+          <label>Gespeicherte Kalkulation verknüpfen</label>
+          <select id="res-calc-id">
+            <option value="">— keine —</option>
+          </select>
+        </div>
+
+        <!-- Notizen -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:4px;margin-top:8px">Qualifizierung</div>
+        <div class="form-fld"><label>Notizen für Admin *</label>
+          <textarea id="res-notes" rows="3" placeholder="Investor/Eigennutzer, Finanzierungssituation, Zeitplan, Besonderheiten..."></textarea>
+        </div>
+
+        <!-- Dokument Upload -->
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:4px;margin-top:8px">Dokument (optional)</div>
+        <div class="form-fld">
+          <label>Finanzierungsbestätigung / Sonstiges</label>
+          <input type="file" id="res-doc" accept=".pdf,.jpg,.jpeg,.png,.docx" style="font-size:12px">
+          <div style="font-size:10px;color:var(--g500);margin-top:3px">PDF, Bild oder Word-Dokument (max. 10 MB)</div>
         </div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resModal')">Abbrechen</button>
-      <button class="btn-sm btn-gold" onclick="submitReservation()">Reservierung einreichen</button>
+      <button class="btn-sm btn-gold" onclick="submitReservation()" id="res-submit-btn">Reservierung einreichen</button>
     </div>
   </div>
 </div>
@@ -1287,11 +1330,13 @@ function hide(id) { document.getElementById(id).style.display = 'none'; }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-function notify(msg, type='') {
+function notify(msg, type='', duration=4000) {
   const el = document.getElementById('notif');
   el.textContent = msg;
   el.className = 'notif show ' + type;
-  setTimeout(() => el.classList.remove('show'), 4000);
+  el.style.zIndex = '99999';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), duration);
 }
 
 function statusBadge(s) {
@@ -1362,12 +1407,38 @@ function objCard(o, isAdmin) {
         <span style="font-size:14px;font-weight:700;color:var(--pos)">${fmt((priceUnit+parkPrice)*currentProfile.commission_pct/100)}</span>
       </div>` : ''}
       ${isComingSoon && !isAdmin ? '<div style="text-align:center;padding:8px 0 2px;font-size:11px;color:var(--g500);font-weight:600;letter-spacing:.05em;text-transform:uppercase">Demnächst verfügbar</div>' : ''}
+      ${isAdmin ? `<div style="border-top:1px solid var(--g200);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;background:var(--g100)">
+        <span style="font-size:10px;color:var(--g500)">${statusBadge(o.status)}</span>
+        <button onclick="event.stopPropagation();deleteObject('${o.id}','${(o.name||'').replace(/'/g,"\\'")}')" 
+          style="background:none;border:1px solid var(--neg);color:var(--neg);padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif;letter-spacing:.04em">
+          🗑 Löschen
+        </button>
+      </div>` : ''}
     </div>
   </div>`;
 }
 
+async function deleteObject(id, name) {
+  if (!confirm(`Objekt "${name}" wirklich löschen?\n\nAlle Bilder, Dokumente und Reservierungen werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+  // Bilder aus Storage löschen
+  const { data: imgs } = await sb.storage.from('object-images').list(id);
+  if (imgs && imgs.length) {
+    await sb.storage.from('object-images').remove(imgs.map(f => id + '/' + f.name));
+  }
+  // Dokumente löschen
+  const { data: docs } = await sb.from('documents').select('storage_path').eq('object_id', id);
+  if (docs && docs.length) {
+    await sb.storage.from('documents').remove(docs.map(d => d.storage_path));
+    await sb.from('documents').delete().eq('object_id', id);
+  }
+  // Objekt löschen
+  const { error } = await sb.from('objects').delete().eq('id', id);
+  if (error) { notify('Fehler beim Löschen: ' + error.message, 'error'); return; }
+  notify(`✓ "${name}" wurde gelöscht.`, 'success', 4000);
+  loadAdminObjects();
+}
+
 function openAddObject() {
-  clearObjForm();
   pendingObjFiles = [];
   existingImages = [];
   var prev = document.getElementById('objUploadPreview');
@@ -1478,7 +1549,7 @@ async function saveObject() {
   }
 
   closeModal('objModal');
-  notify(editId ? 'Objekt aktualisiert!' : 'Objekt hinzugefügt!', 'success');
+  notify(editId ? '✓ Objekt erfolgreich aktualisiert!' : '✓ Objekt erfolgreich gespeichert!', 'success', 5000);
   loadAdminObjects();
 }
 
@@ -1643,69 +1714,148 @@ async function loadReservations() {
 
 async function openResDetail(id) {
   const { data: r } = await sb.from('reservations')
-    .select('*, objects(name,address,price_unit)').eq('id', id).single();
+    .select('*, objects(name,address,price_unit,parking_active,parking_price)').eq('id', id).single();
   if (!r) return;
 
+  const finTypeLabels = {bank:'Bankfinanzierung', kfw:'Bankfinanzierung + KfW', equity:'Eigenkapital (Vollkauf)', mixed:'Gemischte Finanzierung', pending:'Noch offen'};
+  const objKP = (r.objects?.price_unit||0) + (r.objects?.parking_active ? (r.objects?.parking_price||0) : 0);
+
+  // Dokument-Download Link
+  let docLink = '';
+  if (r.doc_path) {
+    const { data: signedUrl } = await sb.storage.from('reservation-docs').createSignedUrl(r.doc_path, 3600);
+    if (signedUrl) docLink = `<a href="${signedUrl.signedUrl}" target="_blank" style="color:var(--navy);font-weight:600;text-decoration:underline">📎 ${r.doc_name||'Dokument'} öffnen</a>`;
+  }
+
+  // Verknüpfte Kalkulation
+  let calcInfo = '—';
+  if (r.calculation_id) {
+    const { data: calc } = await sb.from('calculations').select('buyer_name,cf_nach_steuer,brutto_rendite,created_at').eq('id', r.calculation_id).single();
+    if (calc) calcInfo = `${calc.buyer_name} · CF n.St. ${fmt(calc.cf_nach_steuer/12,2)}/Mo · Rendite ${(calc.brutto_rendite||0).toFixed(2)}%`;
+  }
+
   document.getElementById('resDetailBody').innerHTML = `
-    <div style="display:grid;gap:10px">
-      <div style="background:var(--g100);padding:14px;border-left:3px solid var(--gold)">
-        <strong style="font-size:15px">${r.objects?.name}</strong>
-        <div style="font-size:12px;color:var(--g500);margin-top:2px">${r.objects?.address}</div>
+    <div style="display:grid;gap:0">
+      <!-- Objekt Banner -->
+      <div style="background:var(--navy);color:white;padding:12px 16px;margin-bottom:14px">
+        <div style="font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700">${r.objects?.name||'—'}</div>
+        <div style="font-size:11px;opacity:.6;margin-top:2px">${r.objects?.address||''}</div>
       </div>
-      ${row('Käufer', r.buyer_name)}
-      ${row('Vertriebspartner', r.vp_name + ' (' + r.vp_email + ')')}
-      ${row('Eigenkapital', fmt(r.equity))}
-      ${row('Finanzierung', r.financing_notes || '—')}
-      ${row('Status', statusBadge(r.status))}
-      ${row('Erstellt', fmtDateTime(r.created_at))}
-      ${row('Läuft ab', fmtDateTime(r.expires_at))}
-      <div style="background:var(--g100);padding:12px;margin-top:6px">
+
+      <!-- Status + Gebühr -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="border:1px solid var(--g200);padding:10px 14px">
+          <div style="font-size:10px;color:var(--g500);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:4px">Status</div>
+          <div>${statusBadge(r.status)}</div>
+          ${r.status==='approved'?`<div style="font-size:11px;color:var(--g500);margin-top:4px">Hard-Res. bis ${fmtDate(r.hard_expires_at)}</div>`:''}
+          ${r.status==='notarized'?`<div style="font-size:11px;color:var(--pos);margin-top:4px">Notarisiert am ${fmtDate(r.notarized_at)}</div>`:''}
+        </div>
+        <div style="border:1px solid var(--g200);padding:10px 14px">
+          <div style="font-size:10px;color:var(--g500);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:4px">Reservierungsgebühr (€500)</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;font-weight:700;color:${r.fee_paid?'var(--pos)':'var(--neg)'}">${r.fee_paid?'✓ Bezahlt':'✗ Ausstehend'}</span>
+            ${r.status==='approved'&&!r.fee_paid?`<button class="btn-sm btn-pos" style="font-size:10px;padding:3px 8px" onclick="markFeePaid('${id}')">Als bezahlt markieren</button>`:''}
+          </div>
+          ${r.fee_paid_at?`<div style="font-size:11px;color:var(--g500);margin-top:2px">am ${fmtDate(r.fee_paid_at)}</div>`:''}
+        </div>
+      </div>
+
+      <!-- Käufer -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:8px">Käufer</div>
+      ${row('Name', r.buyer_name||'—')}
+      ${row('Kontakt', r.buyer_contact||'—')}
+      ${row('Eigenkapital', r.equity ? fmt(r.equity) : '—')}
+
+      <!-- Finanzierung -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:8px;margin-top:12px">Finanzierung</div>
+      ${row('Art', finTypeLabels[r.financing_type]||r.financing_type||'—')}
+      ${row('Details', r.financing_notes||'—')}
+      ${row('Verknüpfte Kalkulation', calcInfo)}
+
+      <!-- VP -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:8px;margin-top:12px">Vertriebspartner</div>
+      ${row('Name', r.vp_name||'—')}
+      ${row('E-Mail', r.vp_email||'—')}
+      ${row('Eingereicht', fmtDateTime(r.created_at))}
+
+      <!-- Notizen -->
+      ${r.buyer_notes?`<div style="background:var(--g100);padding:12px;margin-top:12px;border-left:3px solid var(--gold)">
         <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:6px">Qualifizierungsnotiz</div>
-        <div style="font-size:13px;line-height:1.6">${r.buyer_notes || '—'}</div>
-      </div>
+        <div style="font-size:13px;line-height:1.7">${r.buyer_notes}</div>
+      </div>`:''}
+
+      <!-- Dokument -->
+      ${docLink?`<div style="margin-top:12px;padding:10px 14px;border:1px solid var(--g200)">${docLink}</div>`:''}
+
+      <!-- Ablehnung Grund -->
+      ${r.status==='rejected'&&r.rejection_reason?`<div style="background:#fdf0f0;border-left:3px solid var(--neg);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--neg)"><strong>Ablehnungsgrund:</strong> ${r.rejection_reason}</div>`:''}
     </div>`;
 
   const footer = document.getElementById('resDetailFooter');
   if (r.status === 'pending') {
     footer.innerHTML = `
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
-      <button class="btn-sm btn-danger" onclick="updateRes('${id}','rejected')">Ablehnen</button>
-      <button class="btn-sm btn-pos" onclick="updateRes('${id}','approved')">Genehmigen ✓</button>`;
+      <button class="btn-sm btn-danger" onclick="rejectRes('${id}')">✗ Ablehnen</button>
+      <button class="btn-sm btn-pos" onclick="updateRes('${id}','approved')">✓ Genehmigen</button>`;
+  } else if (r.status === 'approved') {
+    footer.innerHTML = `
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
+      <button class="btn-sm btn-navy" onclick="updateRes('${id}','notarized')" style="background:#1a2744">🏛 Notarisiert</button>`;
   } else {
     footer.innerHTML = `<button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>`;
   }
   openModal('resDetailModal');
 }
 
-function row(label, value) {
-  return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--g200);font-size:13px">
-    <span style="color:var(--g500)">${label}</span><span style="font-weight:600">${value}</span>
-  </div>`;
+async function markFeePaid(id) {
+  await sb.from('reservations').update({ fee_paid: true, fee_paid_at: new Date().toISOString() }).eq('id', id);
+  notify('Gebühr als bezahlt markiert!', 'success');
+  openResDetail(id);
 }
 
-async function updateRes(id, status) {
+async function rejectRes(id) {
+  const reason = prompt('Ablehnungsgrund (optional):');
+  if (reason === null) return; // Abbrechen
+  await updateRes(id, 'rejected', reason);
+}
+
+async function updateRes(id, status, rejectionReason) {
   const updates = { status };
   if (status === 'approved') {
     updates.approved_at = new Date().toISOString();
     updates.hard_expires_at = new Date(Date.now() + 21*24*60*60*1000).toISOString();
   }
+  if (status === 'notarized') {
+    updates.notarized_at = new Date().toISOString();
+  }
+  if (status === 'rejected' && rejectionReason) {
+    updates.rejection_reason = rejectionReason;
+  }
   const { error } = await sb.from('reservations').update(updates).eq('id', id);
-  if (error) { notify('Fehler', 'error'); return; }
+  if (error) { notify('Fehler: ' + error.message, 'error'); return; }
 
-  // Update object status if approved
-  if (status === 'approved') {
-    const { data: r } = await sb.from('reservations').select('object_id').eq('id', id).single();
-    if (r) await sb.from('objects').update({ status: 'reserved' }).eq('id', r.object_id);
+  // Objektstatus synchronisieren
+  const { data: r } = await sb.from('reservations').select('object_id').eq('id', id).single();
+  if (r) {
+    const objStatus = status === 'approved' ? 'reserved' : status === 'notarized' ? 'sold' : 'available';
+    if (status !== 'rejected') await sb.from('objects').update({ status: objStatus }).eq('id', r.object_id);
+    else await sb.from('objects').update({ status: 'available' }).eq('id', r.object_id);
   }
 
   closeModal('resDetailModal');
-  notify(status === 'approved' ? 'Reservierung genehmigt!' : 'Reservierung abgelehnt.', status === 'approved' ? 'success' : '');
+  const msgs = { approved:'✓ Reservierung genehmigt! Hard-Reservierung für 21 Tage aktiv.', rejected:'Reservierung abgelehnt.', notarized:'🏛 Als notarisiert markiert – Objekt ist verkauft.' };
+  notify(msgs[status]||'Aktualisiert', status === 'approved' || status === 'notarized' ? 'success' : '');
   loadReservations();
 }
 
 // ══════════════════════════════════════════════════════
 // ADMIN: PARTNERS
 // ══════════════════════════════════════════════════════
+function row(label, value) {
+  return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--g200);font-size:13px">
+    <span style="color:var(--g500)">${label}</span><span style="font-weight:600">${value||'—'}</span>
+  </div>`;
+}
 async function loadPartners() {
   const { data: partners } = await sb.from('profiles').select('*').eq('role', 'vp').order('created_at');
   const { data: invitations } = await sb.from('invitations')
@@ -2610,19 +2760,71 @@ function openReservationFromCalc() {
   openReservationModal(currentObjId);
 }
 
-function openReservationModal(id) {
+async function openReservationModal(id) {
   currentObjId = id;
-  document.getElementById('res-buyer').value = '';
-  document.getElementById('res-equity').value = '';
-  document.getElementById('res-notes').value = '';
-  document.getElementById('res-financing').value = '';
+  // Formular leeren
+  ['res-buyer','res-contact','res-equity','res-notes','res-financing'].forEach(i => {
+    const el = document.getElementById(i); if(el) el.value = '';
+  });
+  document.getElementById('res-financing-type').value = 'bank';
+  document.getElementById('res-doc').value = '';
+
+  // Berechnungen für dieses Objekt laden
+  const calcSel = document.getElementById('res-calc-id');
+  calcSel.innerHTML = '<option value="">— keine —</option>';
+  const { data: calcs } = await sb.from('calculations')
+    .select('id,buyer_name,created_at,cf_nach_steuer')
+    .eq('object_id', id).eq('vp_id', currentUser.id)
+    .order('created_at', {ascending: false});
+  if (calcs && calcs.length) {
+    calcs.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.buyer_name + ' · ' + fmtDate(c.created_at) + ' · CF n.St. ' + fmt(c.cf_nach_steuer/12, 2) + '/Mo';
+      calcSel.appendChild(opt);
+    });
+  }
+  // Falls aus Kalkulator heraus geöffnet – Kundenname + Kalkulation vorausfüllen
+  if (calcData && calcData.o && calcData.o.id === id) {
+    const recipient = document.getElementById('c-recipient')?.value;
+    if (recipient) document.getElementById('res-buyer').value = recipient;
+    // passende Kalkulation vorauswählen
+    if (calcs && calcs.length && recipient) {
+      const match = calcs.find(c => c.buyer_name === recipient);
+      if (match) calcSel.value = match.id;
+    }
+  }
   openModal('resModal');
 }
 
 async function submitReservation() {
   const buyer = document.getElementById('res-buyer').value.trim();
   const notes = document.getElementById('res-notes').value.trim();
-  if (!buyer || !notes) { notify('Bitte Käufername und Qualifizierung ausfüllen', 'error'); return; }
+  if (!buyer) { notify('Bitte Käufername eingeben', 'error'); return; }
+  if (!notes) { notify('Bitte Notizen für den Admin ausfüllen', 'error'); return; }
+
+  const btn = document.getElementById('res-submit-btn');
+  btn.disabled = true; btn.textContent = 'Wird eingereicht...';
+
+  // Dokument hochladen wenn vorhanden
+  let docPath = null, docName = null;
+  const docFile = document.getElementById('res-doc').files[0];
+  if (docFile) {
+    if (docFile.size > 10*1024*1024) {
+      notify('Datei zu groß (max. 10 MB)', 'error');
+      btn.disabled = false; btn.textContent = 'Reservierung einreichen';
+      return;
+    }
+    const ext = docFile.name.split('.').pop();
+    docPath = currentUser.id + '/' + Date.now() + '.' + ext;
+    docName = docFile.name;
+    const { error: upErr } = await sb.storage.from('reservation-docs').upload(docPath, docFile);
+    if (upErr) {
+      notify('Fehler beim Hochladen: ' + upErr.message, 'error');
+      btn.disabled = false; btn.textContent = 'Reservierung einreichen';
+      return;
+    }
+  }
 
   const { error } = await sb.from('reservations').insert({
     object_id: currentObjId,
@@ -2630,15 +2832,22 @@ async function submitReservation() {
     vp_name: currentProfile.full_name,
     vp_email: currentProfile.email,
     buyer_name: buyer,
+    buyer_contact: document.getElementById('res-contact').value.trim(),
     buyer_notes: notes,
-    equity: parseFloat(document.getElementById('res-equity').value)||null,
-    financing_notes: document.getElementById('res-financing').value,
+    equity: parseFloat(document.getElementById('res-equity').value) || null,
+    financing_type: document.getElementById('res-financing-type').value,
+    financing_notes: document.getElementById('res-financing').value.trim(),
+    calculation_id: document.getElementById('res-calc-id').value || null,
+    doc_path: docPath,
+    doc_name: docName,
     expires_at: new Date(Date.now()+72*60*60*1000).toISOString()
   });
 
+  btn.disabled = false; btn.textContent = 'Reservierung einreichen';
   if (error) { notify('Fehler beim Einreichen: ' + error.message, 'error'); return; }
+
   closeModal('resModal');
-  notify('Reservierungsanfrage eingereicht! Beqiri Capital prüft Ihre Anfrage.', 'success');
+  notify('✓ Reservierungsanfrage eingereicht! Beqiri Capital prüft Ihre Anfrage.', 'success', 6000);
   loadVPReservations();
 }
 
