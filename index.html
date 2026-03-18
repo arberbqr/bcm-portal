@@ -2006,19 +2006,9 @@ async function openCalcForObject(id) {
   document.getElementById('calcModalTitle').textContent = o.name;
   document.getElementById('calcModalAddr').textContent = o.address || '';
 
-  // VP-Logo anzeigen falls vorhanden
-  var logoEl = document.getElementById('calc-vp-logo');
-  if(currentProfile && currentProfile.company_logo && logoEl) {
-    document.getElementById('calc-vp-logo-img').src = currentProfile.company_logo;
-    document.getElementById('calc-vp-company').textContent = currentProfile.company_name || '';
-    logoEl.style.display = 'flex';
-  } else if(logoEl) {
-    logoEl.style.display = 'none';
-  }
-
   // VP-Branding im Kalkulator-Header anzeigen
   const vpBrand = document.getElementById('calc-vp-brand');
-  if(vpBrand && currentProfile.role === 'vp') {
+  if(vpBrand && currentProfile && currentProfile.role === 'vp') {
     if(currentProfile.company_logo || currentProfile.company_name) {
       vpBrand.style.display = 'flex';
       vpBrand.innerHTML = (currentProfile.company_logo
