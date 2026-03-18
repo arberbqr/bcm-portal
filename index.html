@@ -2141,7 +2141,7 @@ function applyCalcEkPct() {
   const ek = Math.round(totalNKK + (pct/100*(priceUnit+priceFurni+parkingPrice)));
   document.getElementById('c-equity').value = ek;
   const bd = document.getElementById('c-ekBreakdown');
-  if(bd) bd.innerHTML = `NKK <strong>${fmt(Math.round(totalNKK))}</strong> + ${pct}% × KP <strong>${fmt(Math.round(pct/100*totalPrice))}</strong> = <strong>${fmt(ek)}</strong>`;
+  if(bd) bd.innerHTML = `NKK <strong>${fmt(Math.round(totalNKK))}</strong> + ${pct}% × KP <strong>${fmt(Math.round(pct/100*(priceUnit+priceFurni+parkingPrice)))}</strong> = <strong>${fmt(ek)}</strong>`;
   document.getElementById('c-ekPct').value = '';
   runCalc();
 }
@@ -2612,10 +2612,10 @@ async function saveCalculation() {
     equity: gC('c-equity'),
     loan_rate: gC('c-loanr'),
     repay_rate: gC('c-repayr'),
-    kfw_amount: o.kfw_active ? gC('c-kfwamt') : 0,
-    kfw_rate: o.kfw_active ? gC('c-kfwr') : 0,
-    kfw_repay: o.kfw_active ? gC('c-kfwrep') : 0,
-    kfw_bonus: o.kfw_active ? gC('c-kfwbonus') : 0,
+    kfw_amount: gC('c-kfwamt'),
+    kfw_rate: gC('c-kfwr'),
+    kfw_repay: gC('c-kfwrep'),
+    kfw_bonus: gC('c-kfwbonus'),
     tax_rate: gC('c-taxr'),
     value_growth: gC('c-vg'),
     rent_growth: gC('c-rg'),
@@ -2852,7 +2852,7 @@ async function printCalc() {
     + '<div style="font-size:7pt;letter-spacing:.08em;text-transform:uppercase;opacity:.6">Monatliche Kreditrate gesamt</div>'
     + '<div style="font-family:Arial,sans-serif;font-size:14pt;font-weight:700;color:#d4af4a">'
     + fmt(d.monRateTotal,2)
-    + (o.kfw_active ? '<span style="font-size:7.5pt;opacity:.7;margin-left:8px">Kredit ' + fmt(d.monRate1,2) + ' + KfW ' + fmt(d.monRateKfw,2) + '</span>' : '')
+    + (d.monRateKfw > 0 ? '<span style="font-size:7.5pt;opacity:.7;margin-left:8px">Kredit ' + fmt(d.monRate1,2) + ' + KfW ' + fmt(d.monRateKfw,2) + '</span>' : '')
     + '</div></div>'
     // Wealth
     + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px">'
@@ -2874,8 +2874,8 @@ async function printCalc() {
     + r2('Kredit 1', fmt(d.loanBase))
     + r2('Kreditzins', fmtP(d.loanR*100))
     + r2('Tilgung p.a.', fmtP(d.repayR*100))
-    + (o.kfw_active?r2('KfW brutto',fmt(d.kfwUsed)):'')
-    + (d.kfwBonus>0?r2('Tilgungszuschuss',fmt(d.kfwBonus)):'')
+    + (d.kfwUsed > 0 ?r2('KfW brutto',fmt(d.kfwUsed)):'')
+    + (d.kfwBonus > 0 ? r2('Tilgungszuschuss',fmt(d.kfwBonus)) : '')
     + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #1a2744;margin-top:4px;font-weight:700;font-size:9pt;color:#1a2744"><span>Eingesetztes EK</span><span style="color:#2e7d52">'+fmt(d.ekIn)+'</span></div>'
     + '<div style="font-size:7pt;color:#888075;margin-top:1px">'+(d.gesamtkosten>0?(d.ekIn/d.gesamtkosten*100).toFixed(1):'0')+'% der Gesamtkosten</div>'
     + r2('Kaltmiete p.M.', fmt(d.coldRent))
