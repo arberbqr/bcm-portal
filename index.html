@@ -435,7 +435,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="card-header"><div class="card-header-title">Aktive Partner</div></div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Name</th><th>E-Mail</th><th>Seit</th><th>Reservierungen</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>E-Mail</th><th>Seit</th><th class="r">Provision</th><th>Status</th><th></th></tr></thead>
             <tbody id="partnersTableBody"><tr><td colspan="6" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
           </table>
         </div>
@@ -471,6 +471,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
             <option value="yield-desc">Rendite ↓</option>
             <option value="rent-desc">Miete ↓</option>
           </select>
+          <button id="vp-comm-btn" onclick="toggleVPCommission()" title="Provision ein/ausblenden"
+            style="padding:6px 12px;border:1px solid var(--g300);background:var(--navy);color:white;cursor:pointer;font-size:11px;font-weight:700;font-family:'Source Sans 3',sans-serif">
+            € Provision
+          </button>
           <div style="display:flex;gap:4px">
             <button id="vp-view-grid" onclick="setVPView('grid')" title="Kachelansicht"
               style="padding:6px 10px;border:1px solid var(--g300);background:var(--navy);color:white;cursor:pointer;font-size:13px">⊞</button>
@@ -1349,6 +1353,11 @@ function objCard(o, isAdmin) {
         <div><div class="obj-kpi-lbl">Kaltmiete p.M.</div><div class="obj-kpi-val">${isComingSoon ? '—' : fmt(o.cold_rent)}</div></div>
         <div><div class="obj-kpi-lbl">Bruttorendite</div><div class="obj-kpi-val" style="color:var(--pos)">${isComingSoon ? '—' : fmtP(brutto)}</div></div>
       </div>
+      ${!isAdmin && vpShowCommission && currentProfile && currentProfile.commission_pct && !isComingSoon ? `
+      <div style="background:rgba(46,125,82,.08);border-top:2px solid rgba(46,125,82,.2);padding:7px 14px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pos)">Provision ${currentProfile.commission_pct}%</span>
+        <span style="font-size:14px;font-weight:700;color:var(--pos)">${fmt((priceUnit+parkPrice)*currentProfile.commission_pct/100)}</span>
+      </div>` : ''}
       ${isComingSoon && !isAdmin ? '<div style="text-align:center;padding:8px 0 2px;font-size:11px;color:var(--g500);font-weight:600;letter-spacing:.05em;text-transform:uppercase">Demnächst verfügbar</div>' : ''}
     </div>
   </div>`;
@@ -1710,7 +1719,16 @@ async function loadPartners() {
       <td><strong>${p.full_name||'—'}</strong></td>
       <td>${p.email}</td>
       <td>${fmtDate(p.created_at)}</td>
-      <td class="r">—</td>
+      <td class="r" style="white-space:nowrap">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+          <input type="number" step="0.01" value="${p.commission_pct||3.57}" 
+            style="width:60px;padding:3px 6px;border:1px solid var(--g300);font-size:12px;text-align:right;font-family:'Source Sans 3',sans-serif"
+            id="comm-${p.id}" onkeydown="if(event.key==='Enter')saveCommission('${p.id}')">
+          <span style="font-size:11px;color:var(--g500)">%</span>
+          <button class="btn-sm btn-gold" style="font-size:10px;padding:3px 8px" onclick="saveCommission('${p.id}')">✓</button>
+        </div>
+        <div style="font-size:10px;color:var(--g500);text-align:right;margin-top:2px" id="comm-hint-${p.id}"></div>
+      </td>
       <td>${p.active ? '<span class="badge badge-pos">Aktiv</span>' : '<span class="badge badge-neg">Deaktiviert</span>'}</td>
       <td>
         <button class="btn-sm ${p.active?'btn-danger':'btn-pos'}" style="font-size:10px;padding:4px 10px" onclick="togglePartner('${p.id}',${!p.active})">
@@ -1744,6 +1762,19 @@ async function togglePartner(id, active) {
   await sb.from('profiles').update({ active }).eq('id', id);
   notify(active ? 'Partner aktiviert' : 'Partner deaktiviert', 'success');
   loadPartners();
+}
+
+async function saveCommission(id) {
+  const el = document.getElementById('comm-' + id);
+  if (!el) return;
+  const pct = parseFloat(el.value);
+  if (isNaN(pct) || pct < 0 || pct > 20) { notify('Ungültiger Provisionssatz (0–20%)', 'error'); return; }
+  const { error } = await sb.from('profiles').update({ commission_pct: pct }).eq('id', id);
+  if (error) { notify('Fehler: ' + error.message, 'error'); return; }
+  const hint = document.getElementById('comm-hint-' + id);
+  if (hint) { hint.textContent = '✓ gespeichert'; setTimeout(() => { hint.textContent = ''; }, 2000); }
+  // Profil aktualisieren falls eigenes
+  if (currentProfile && currentProfile.id === id) currentProfile.commission_pct = pct;
 }
 
 async function deletePartner(id, name) {
@@ -1844,6 +1875,18 @@ async function saveProfil() {
 // ══════════════════════════════════════════════════════
 // VP: OBJECTS
 // ══════════════════════════════════════════════════════
+let vpShowCommission = true;
+
+function toggleVPCommission() {
+  vpShowCommission = !vpShowCommission;
+  const btn = document.getElementById('vp-comm-btn');
+  if (btn) {
+    btn.style.background = vpShowCommission ? 'var(--navy)' : 'var(--g300)';
+    btn.style.color = vpShowCommission ? 'white' : 'var(--g500)';
+  }
+  filterVPObjects();
+}
+
 let vpAllObjects = [];
 let vpCurrentView = 'grid';
 
@@ -1957,28 +2000,36 @@ function getProjectStats(objs) {
 
 function renderVPList(data, grid) {
   grid.style.display = 'block';
+  const showComm = vpShowCommission && currentProfile && currentProfile.commission_pct;
+  grid.innerHTML = '<div style="background:white;border:1px solid var(--g200)">'
+    + '<table style="width:100%;border-collapse:collapse"><thead><tr>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px">Einheit</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Fläche</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Kaufpreis</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Kaltmiete</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Rendite</th>'
+    + (showComm ? '<th style="background:#2e7d52;color:white;padding:8px 12px;text-align:right;font-size:11px">Provision (' + currentProfile.commission_pct + '%)</th>' : '')
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:center;font-size:11px">Status</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 4px"></th>'
     + '</tr></thead><tbody>'
     + data.map(function(o, i) {
         var isCS = o.status === 'coming_soon';
-        var tp = (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0);
-        var annRent = ((o.cold_rent||0) + (o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0)) * 12;
+        var priceBase = (o.price_unit||0) + (o.parking_active ? (o.parking_price||0) : 0);
+        var tp = priceBase + (o.price_furniture||0);
+        var annRent = ((o.cold_rent||0) + (o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0))*12;
         var rend = (!isCS && tp>0) ? (annRent/tp*100).toFixed(2)+'%' : '—';
+        var prov = showComm && !isCS ? fmt(priceBase * currentProfile.commission_pct / 100) : '—';
         var bg = i%2 ? 'background:#f7f6f4' : '';
         var opacity = isCS ? 'opacity:.5;' : '';
-        return '<tr style="'+bg+';cursor:'+(isCS?'default':'pointer')+';'+opacity+'" '+(isCS?'':'"onclick="vpObjDetail(\''+o.id+'\')"')+'>'
+        return '<tr style="'+bg+';cursor:'+(isCS?'default':'pointer')+';'+opacity+'" '
+          + (isCS ? '' : 'onclick="vpObjDetail(\''+o.id+'\')"') + '>'
           + '<td style="padding:8px 12px"><div style="font-weight:700;color:var(--navy);font-size:13px">'+o.name+'</div>'
           + '<div style="font-size:11px;color:var(--g500)">'+(o.address||'')+'</div></td>'
           + '<td style="padding:8px 12px;text-align:right;font-size:13px">'+(o.area||'—')+' m²</td>'
-          + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--navy)">'
-          + '€\u00a0'+tp.toLocaleString('de-DE')+'</td>'
+          + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--navy)">€\u00a0'+tp.toLocaleString('de-DE')+'</td>'
           + '<td style="padding:8px 12px;text-align:right;font-size:13px">€\u00a0'+(o.cold_rent||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+'/Mo</td>'
-          + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:'+'var(--pos)'+'">'+rend+'</td>'
+          + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--pos)">'+rend+'</td>'
+          + (showComm ? '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:#2e7d52">'+prov+'</td>' : '')
           + '<td style="padding:8px 12px;text-align:center">'+statusBadge(o.status)+'</td>'
           + '<td style="padding:8px 6px"><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();openCalcForObject(\''+o.id+'\')">Kalkulator</button></td>'
           + '</tr>';
