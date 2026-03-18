@@ -734,9 +734,12 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
             </div>
           </div>
 
-          <div class="ci" id="c-kfw-card" style="display:none">
-            <div class="ci-h">KfW-Kredit</div>
-            <div class="ci-b">
+          <div class="ci" id="c-kfw-card">
+            <div class="ci-h" style="display:flex;align-items:center;justify-content:space-between">
+              KfW-Kredit
+              <button onclick="toggleCalcKfw()" id="c-kfw-toggle" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;font-size:9px;font-weight:700;padding:2px 8px;cursor:pointer;letter-spacing:.05em;font-family:'Source Sans 3',sans-serif">✕ ENTFERNEN</button>
+            </div>
+            <div class="ci-b" id="c-kfw-inputs">
               <div class="ci-row">
                 <div class="cf"><label>Kredithöhe (€)</label><input id="c-kfwamt" type="number" oninput="runCalc()"></div>
                 <div class="cf"><label>KfW Zins (%)</label><input id="c-kfwr" type="number" step="0.01" oninput="runCalc()"></div>
@@ -746,6 +749,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
                 <div class="cf"><label>Tilgungszuschuss (€)</label><input id="c-kfwbonus" type="number" oninput="runCalc()"></div>
               </div>
             </div>
+          </div>
+
+          <div id="c-kfw-add" style="display:none">
+            <button onclick="toggleCalcKfw()" style="width:100%;padding:8px;background:var(--g100);border:1px dashed var(--g300);color:var(--navy);font-size:11px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif">+ KfW-Kredit hinzufügen</button>
           </div>
 
           <div class="ci">
@@ -2107,11 +2114,13 @@ async function openCalcForObject(id) {
   set('c-vac', o.vacancy || 0);
 
   if (o.kfw_active) {
-    document.getElementById('c-kfw-card').style.display = '';
+    document.getElementById('c-kfw-card').style.display = 'block';
+    document.getElementById('c-kfw-add').style.display = 'none';
     set('c-kfwamt', o.kfw_amount); set('c-kfwr', o.kfw_rate);
     set('c-kfwrep', o.kfw_repay); set('c-kfwbonus', o.kfw_bonus);
   } else {
     document.getElementById('c-kfw-card').style.display = 'none';
+    document.getElementById('c-kfw-add').style.display = 'block';
   }
 
   runCalc();
@@ -2134,6 +2143,24 @@ function applyCalcEkPct() {
   const bd = document.getElementById('c-ekBreakdown');
   if(bd) bd.innerHTML = `NKK <strong>${fmt(Math.round(totalNKK))}</strong> + ${pct}% × KP <strong>${fmt(Math.round(pct/100*totalPrice))}</strong> = <strong>${fmt(ek)}</strong>`;
   document.getElementById('c-ekPct').value = '';
+  runCalc();
+}
+
+function toggleCalcKfw() {
+  const card = document.getElementById('c-kfw-card');
+  const addBtn = document.getElementById('c-kfw-add');
+  const isVisible = card.style.display !== 'none';
+  if (isVisible) {
+    card.style.display = 'none';
+    addBtn.style.display = 'block';
+    // Werte nullen
+    ['c-kfwamt','c-kfwr','c-kfwrep','c-kfwbonus'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = 0;
+    });
+  } else {
+    card.style.display = 'block';
+    addBtn.style.display = 'none';
+  }
   runCalc();
 }
 
@@ -2183,10 +2210,11 @@ function runCalc() {
   const rgR      = gC('c-rg')/100;
   const vacR     = gC('c-vac')/100;
 
-  const kfwAmt   = o.kfw_active ? gC('c-kfwamt') : 0;
-  const kfwR     = gC('c-kfwr')/100;
-  const kfwRep   = gC('c-kfwrep')/100;
-  const kfwBonus = o.kfw_active ? gC('c-kfwbonus') : 0;
+  const kfwActive = document.getElementById('c-kfw-card') && document.getElementById('c-kfw-card').style.display !== 'none';
+  const kfwAmt   = kfwActive ? gC('c-kfwamt') : 0;
+  const kfwR     = kfwActive ? gC('c-kfwr')/100 : 0;
+  const kfwRep   = kfwActive ? gC('c-kfwrep')/100 : 0;
+  const kfwBonus = kfwActive ? gC('c-kfwbonus') : 0;
 
   const nkkInKP = document.getElementById('c-nkkInKP') ? document.getElementById('c-nkkInKP').checked : false;
 
@@ -2326,7 +2354,7 @@ function runCalc() {
     monRateEl.textContent = fmt(monRateTotal, 2);
     const sub = document.getElementById('cr-monrate-sub');
     if(sub) {
-      if(o.kfw_active) {
+      if(kfwActive) {
         sub.innerHTML = fmt(monRate1,2)+'/Mo Kredit&nbsp;+&nbsp;'+fmt(monRateKfw,2)+'/Mo KfW';
       } else {
         sub.textContent = 'Annuitätendarlehen';
@@ -2382,8 +2410,8 @@ function runCalc() {
         ${irow('Kredit 1', fmt(loanBase))}
         ${irow('Kreditzins', fmtP(loanR*100))}
         ${irow('Tilgung p.a.', fmtP(repayR*100))}
-        ${o.kfw_active ? irow('KfW brutto', fmt(kfwUsed)) : ''}
-        ${o.kfw_active ? irow('Tilgungszuschuss', fmt(kfwBonus)) : ''}
+        ${kfwActive ? irow('KfW brutto', fmt(kfwUsed)) : ''}
+        ${kfwBonus > 0 ? irow('Tilgungszuschuss', fmt(kfwBonus)) : ''}
         ${irow('Kaltmiete p.M.', fmt(coldRent))}
         ${laufend>0 ? irow('Hausgeld/Instandh.', '\u2212'+fmt(hausgeld)+'/Monat') : ''}
         ${irow('Jahresmiete', fmt(annRent))}
@@ -2637,6 +2665,7 @@ function calcTableHTML(data, isAdmin) {
           + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200);text-align:right;color:var(--pos)">' + (c.brutto_rendite ? c.brutto_rendite.toFixed(2)+'%' : '—') + '</td>'
           + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200);text-align:right">' + (c.irr ? c.irr.toFixed(2)+'%' : '—') + '</td>'
           + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200)">'
+          + '<button class="btn-sm btn-navy" style="font-size:10px;padding:3px 8px;margin-right:4px" onclick="loadCalculation(\''+c.id+'\')">↗ Öffnen</button>'
           + '<button class="btn-sm btn-danger" style="font-size:10px;padding:3px 8px" onclick="deleteCalc(\''+c.id+'\')">🗑</button>'
           + '</td></tr>';
       }).join('')
@@ -2651,6 +2680,49 @@ async function loadVPCalcs() {
 async function loadAdminCalcs() {
   const { data } = await sb.from('calculations').select('*').order('created_at', {ascending:false});
   document.getElementById('adminCalcsWrap').innerHTML = calcTableHTML(data||[], true);
+}
+
+async function loadCalculation(id) {
+  const { data: calc } = await sb.from('calculations').select('*').eq('id', id).single();
+  if (!calc) { notify('Berechnung nicht gefunden', 'error'); return; }
+
+  // Kalkulator für das Objekt öffnen
+  await openCalcForObject(calc.object_id);
+
+  // Gespeicherte Werte eintragen
+  const set = (elId, val) => { const el = document.getElementById(elId); if(el && val !== null && val !== undefined) el.value = val; };
+  set('c-recipient', calc.buyer_name);
+  set('c-equity', calc.equity);
+  set('c-loanr', calc.loan_rate);
+  set('c-repayr', calc.repay_rate);
+  set('c-taxr', calc.tax_rate);
+  set('c-vg', calc.value_growth);
+  set('c-rg', calc.rent_growth);
+  set('c-vac', calc.vacancy);
+
+  // KfW
+  if (calc.kfw_amount > 0) {
+    document.getElementById('c-kfw-card').style.display = 'block';
+    document.getElementById('c-kfw-add').style.display = 'none';
+    set('c-kfwamt', calc.kfw_amount);
+    set('c-kfwr', calc.kfw_rate);
+    set('c-kfwrep', calc.kfw_repay);
+    set('c-kfwbonus', calc.kfw_bonus);
+  } else {
+    document.getElementById('c-kfw-card').style.display = 'none';
+    document.getElementById('c-kfw-add').style.display = 'block';
+  }
+
+  // NKK Toggle
+  const nkkEl = document.getElementById('c-nkkInKP');
+  if (nkkEl) nkkEl.checked = calc.nkk_in_kp || false;
+
+  // Notizen laden
+  const scBuyer = document.getElementById('sc-buyer');
+  if (scBuyer) scBuyer.value = calc.buyer_name;
+
+  runCalc();
+  notify('Berechnung für ' + calc.buyer_name + ' geladen!', 'success');
 }
 
 async function deleteCalc(id) {
