@@ -2073,7 +2073,7 @@ function applyCalcEkPct() {
   const totalPrice = priceUnit + priceFurni + parkingPrice;
   const nkkBasis = priceUnit + parkingPrice;
   const totalNKK = ((o.gst_pct||3.5)+(o.gb_kauf_pct||0.5)+(o.notar_pct||1.0)+(o.gb_pfand_pct||0.1))/100*nkkBasis;
-  const ek = Math.round(totalNKK + (pct/100*totalPrice));
+  const ek = Math.round(totalNKK + (pct/100*(priceUnit+priceFurni+parkingPrice)));
   document.getElementById('c-equity').value = ek;
   const bd = document.getElementById('c-ekBreakdown');
   if(bd) bd.innerHTML = `NKK <strong>${fmt(Math.round(totalNKK))}</strong> + ${pct}% × KP <strong>${fmt(Math.round(pct/100*totalPrice))}</strong> = <strong>${fmt(ek)}</strong>`;
@@ -2115,7 +2115,7 @@ function runCalc() {
   const priceFurni   = o.price_furniture || 0;
   const parkingPrice = o.parking_active ? (o.parking_price||0) : 0;
   const parkingRentMon = o.parking_active ? (o.parking_rent||0)*(o.parking_count||1) : 0;
-  const totalPrice   = priceUnit + priceFurni + parkingPrice;
+  const totalPrice   = totalPriceEff;
   const coldRent     = (o.cold_rent||0) + parkingRentMon;
   const hausgeld     = (o.hausgeld||0) + (o.instandhaltung||0);
 
@@ -2135,14 +2135,22 @@ function runCalc() {
 
   const nkkInKP = document.getElementById('c-nkkInKP') ? document.getElementById('c-nkkInKP').checked : false;
 
-  const nkkBasis = priceUnit + parkingPrice;
+  // NKK auf Basispreis berechnen
+  const nkkBasis  = priceUnit + parkingPrice;
+  const nkkRate   = ((o.gst_pct||3.5)+(o.gb_kauf_pct||0.5)+(o.notar_pct||1.0)+(o.gb_pfand_pct||0.1))/100;
+  const nkkBetrag = nkkBasis * nkkRate;
+
+  // Wenn NKK im KP: KP steigt um NKK, NKK-Zeile = 0
+  const priceUnitEff  = nkkInKP ? priceUnit + nkkBetrag : priceUnit;
+  const totalPriceEff = priceUnitEff + priceFurni + parkingPrice;
+
   const gstV  = nkkInKP ? 0 : (o.gst_pct||3.5)/100*nkkBasis;
   const gbKV  = nkkInKP ? 0 : (o.gb_kauf_pct||0.5)/100*nkkBasis;
   const notV  = nkkInKP ? 0 : (o.notar_pct||1.0)/100*nkkBasis;
   const gbPV  = nkkInKP ? 0 : (o.gb_pfand_pct||0.1)/100*nkkBasis;
-  const totalNKK = gstV+gbKV+notV+gbPV;
-  const gesamtkosten = totalPrice+totalNKK;
-  const effGesamtkosten = gesamtkosten - kfwBonus; // Zuschuss reduziert effektive Investitionskosten für Renditeberechnung
+  const totalNKK      = gstV+gbKV+notV+gbPV;
+  const gesamtkosten  = totalPriceEff + totalNKK; // NKK=0 wenn mitfinanziert, KP bereits erhöht
+  const effGesamtkosten = gesamtkosten - kfwBonus;
 
   const kfwUsed   = Math.min(kfwAmt, gesamtkosten);
   const loanBase  = Math.max(0, gesamtkosten-equityIn-kfwUsed);
@@ -2165,8 +2173,7 @@ function runCalc() {
   }
 
   const years = [];
-  // KfW startet mit vollem Betrag – Tilgungszuschuss wird im 1. Jahr als Einmalige Sondertilgung verbucht
-  let loanBal = loanBase, kfwBal = kfwUsed, rentCur = coldRent*12, propVal = totalPrice;
+  let loanBal = loanBase, kfwBal = kfwUsed, rentCur = coldRent*12, propVal = totalPriceEff;
   const laufend = hausgeld*12;
 
   for (let i = 0; i < 20; i++) {
@@ -2190,7 +2197,7 @@ function runCalc() {
   }
 
   const annRent  = coldRent*12;
-  const brutto   = totalPrice>0 ? annRent/totalPrice*100 : 0;
+  const brutto   = totalPriceEff>0 ? annRent/totalPriceEff*100 : 0;
   const netto    = effGesamtkosten>0 ? (annRent-laufend)/effGesamtkosten*100 : 0;
   const cf1M     = years[0].netCfB/12;
   const cf1MSt   = years[0].netCfA/12;
@@ -2199,7 +2206,7 @@ function runCalc() {
   for (let i=0;i<9;i++) cfArr.push(years[i].netCfA);
   cfArr.push(years[9].netCfA+(years[9].propVal-years[9].totalLoan));
   const irr = calcIRR(cfArr);
-  const ekBeiKauf = totalPrice-(loanBase+kfwUsed);
+  const ekBeiKauf = totalPriceEff-(loanBase+kfwUsed);
   const ekNach10  = years[9].equity;
   const wzuwachs  = ekNach10-ekBeiKauf;
   const steuerErsparnis10 = years.slice(0,10).reduce((a,y)=>a+(y.taxEff>0?y.taxEff:0),0);
@@ -2222,7 +2229,7 @@ function runCalc() {
   // Banner
   document.getElementById('cr-objName').textContent  = o.name;
   document.getElementById('cr-objAddr').textContent  = o.address||'';
-  document.getElementById('cr-totalPrice').textContent = fmt(priceUnit + parkingPrice + priceFurni);
+  document.getElementById('cr-totalPrice').textContent = fmt(priceUnitEff + parkingPrice + priceFurni);
 
   // Preisaufschlüsselung unter dem Preis
   const priceBreakEl = document.getElementById('cr-price-break');
@@ -2255,7 +2262,7 @@ function runCalc() {
   const bsEl = document.getElementById('cr-brutto-sub'); if(bsEl) bsEl.textContent = o.parking_active?'Gesamtmiete \u00f7 (KP+Stellplatz)':'Kaltmiete \u00f7 (KP+M\u00f6bel)';
   const nsEl = document.getElementById('cr-netto-sub');  if(nsEl) nsEl.textContent  = laufend>0?'abzgl. Hausgeld + NKK \u2212 KfW':'inkl. NKK, abzgl. KfW-Zuschuss';
   const cfEl = document.getElementById('cr-cf'); cfEl.textContent = fmt(cf1M,2); cfEl.className = 'ck-v';
-  const cfStEl = document.getElementById('cr-cfst'); cfStEl.textContent = fmt(cf1MSt,2); cfStEl.className = 'ck-v';
+  const cfStEl = document.getElementById('cr-cfst'); cfStEl.textContent = fmt(cf1MSt,2); cfStEl.className = 'ck-v pos';
   document.getElementById('cr-irr').textContent = fmtP(irr);
 
   // Monatliche Rate & Gesamtkosten
@@ -2277,8 +2284,8 @@ function runCalc() {
   if(ekHintEl) ekHintEl.textContent = 'davon NKK ' + fmt(totalNKK);
   const tax0 = years[0].taxEff;
   document.getElementById('cr-tax-hint').innerHTML = tax0>=0
-    ? `<span style="color:var(--pos)">\u25b2 +${fmt(tax0/12,0)}/Mo Steuerersparnis</span>`
-    : `<span style="color:var(--neg)">\u25bc ${fmt(Math.abs(tax0/12),0)}/Mo Steuerbelastung</span>`;
+    ? `<span style="color:var(--pos)">▲ +${fmt(tax0/12,0)}/Mo Steuerersparnis</span>`
+    : `<span style="color:var(--g500)">▼ ${fmt(Math.abs(tax0/12),0)}/Mo Steuerbelastung</span>`;
 
   // Wealth
   document.getElementById('cr-ek10').textContent = fmt(ekNach10);
@@ -2393,7 +2400,7 @@ function runCalc() {
   const cumTl=[],cumWert=[],cumCf=[],cumTotal=[];
   years.slice(0,10).forEach(y=>{
     runTl+=y.totalTl; runCf+=y.netCfA;
-    const bW=y.propVal-totalPrice;
+    const bW=y.propVal-totalPriceEff;
     cumTl.push(Math.round(runTl)); cumWert.push(Math.round(Math.max(0,bW)));
     cumCf.push(Math.round(runCf)); cumTotal.push(Math.round(runTl+Math.max(0,bW)+runCf));
   });
@@ -2417,9 +2424,9 @@ function runCalc() {
   if(document.getElementById('cr-chartEK')) calcCharts.ek = new Chart(document.getElementById('cr-chartEK'),{
     type:'line',
     data:{labels:ekLabels,datasets:[
-      {label:'Immobilienwert',data:[totalPrice,...years.slice(0,10).map(y=>Math.round(y.propVal))],borderColor:'rgba(184,151,42,.8)',backgroundColor:'rgba(184,151,42,.08)',fill:true,tension:.3,borderWidth:2,pointRadius:2},
+      {label:'Immobilienwert',data:[totalPriceEff,...years.slice(0,10).map(y=>Math.round(y.propVal))],borderColor:'rgba(184,151,42,.8)',backgroundColor:'rgba(184,151,42,.08)',fill:true,tension:.3,borderWidth:2,pointRadius:2},
       {label:'Kreditrestschuld',data:[yr0Loan,...years.slice(0,10).map(y=>Math.round(y.totalLoan))],borderColor:'#c0392b',backgroundColor:'rgba(192,57,43,.06)',fill:true,tension:.3,borderWidth:2,pointRadius:2},
-      {label:'Eigenkapital',data:[totalPrice-yr0Loan,...years.slice(0,10).map(y=>Math.round(y.equity))],borderColor:NAVY,fill:false,tension:0,borderWidth:2.5,pointRadius:3}
+      {label:'Eigenkapital',data:[totalPriceEff-yr0Loan,...years.slice(0,10).map(y=>Math.round(y.equity))],borderColor:NAVY,fill:false,tension:0,borderWidth:2.5,pointRadius:3}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:8}}}},
@@ -2442,7 +2449,7 @@ function runCalc() {
       scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:G200},ticks:{font:{size:9},callback:tcb}}}}
   });
 
-  calcData = {o,years,afaArr,furAfA,totalPrice,coldRent,annRent,brutto,netto,
+  calcData = {o,years,afaArr,furAfA,totalPrice:totalPriceEff,coldRent,annRent,brutto,netto,
     cf1M,cf1MSt,irr,ekNach10,wzuwachs,wert10:years[9].propVal,steuerErsparnis10,cumCfA10,
     gesamtkosten,effGesamtkosten,gstV,gbKV,notV,gbPV,totalNKK,loanBase,kfwUsed,kfwNetBal:kfwUsed,
     laufend,hausgeld,parkingPrice,parkingRentMon,vgR,rgR,vacR,taxR,loanR,repayR,kfwBonus,
