@@ -2254,7 +2254,7 @@ function runCalc() {
         ${irow('Kredit 1', fmt(loanBase))}
         ${irow('Kreditzins', fmtP(loanR*100))}
         ${irow('Tilgung p.a.', fmtP(repayR*100))}
-        ${o.kfw_active ? irow('KfW netto', fmt(kfwNetBal)) : ''}
+        ${o.kfw_active ? irow('KfW brutto', fmt(kfwUsed)) : ''}
         ${o.kfw_active ? irow('Tilgungszuschuss', fmt(kfwBonus)) : ''}
         ${irow('Kaltmiete p.M.', fmt(coldRent))}
         ${laufend>0 ? irow('Hausgeld/Instandh.', '\u2212'+fmt(hausgeld)+'/Monat') : ''}
