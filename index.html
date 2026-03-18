@@ -778,12 +778,26 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
             <div class="ck"><div class="ck-l">EK-Verzinsung n.St.</div><div class="ck-v" id="cr-irr">—</div><div class="ck-s">10 Jahre IRR</div></div>
           </div>
 
+          <!-- Monatliche Rate + Gesamtkosten -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--g300);border:1px solid var(--g300)">
+            <div class="ck" style="background:#f0f2f7">
+              <div class="ck-l">Monatliche Kreditrate</div>
+              <div class="ck-v" id="cr-monrate" style="color:var(--navy)">—</div>
+              <div class="ck-s" id="cr-monrate-sub">Kredit 1 + KfW</div>
+            </div>
+            <div class="ck" style="background:#f0f2f7">
+              <div class="ck-l">Gesamtkosten inkl. NKK</div>
+              <div class="ck-v" id="cr-gk" style="color:var(--navy)">—</div>
+              <div class="ck-s" id="cr-ek-hint">—</div>
+            </div>
+          </div>
+
           <!-- Wealth Bar -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--g200)">
+            <div class="wm"><div class="wm-l">Eingesetztes EK</div><div class="wm-v" id="cr-ek-input">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-ek-input-sub">—</div></div>
             <div class="wm"><div class="wm-l">EK nach 10 Jahren</div><div class="wm-v" id="cr-ek10">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-wzuwachs-sub">—</div></div>
             <div class="wm"><div class="wm-l">Immobilienwert 10J.</div><div class="wm-v" id="cr-wert10">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-wert10-sub">—</div></div>
             <div class="wm"><div class="wm-l">Steuerersparnis 10J.</div><div class="wm-v" id="cr-steuers">—</div></div>
-            <div class="wm"><div class="wm-l">Kum. CF n.St. 10J.</div><div class="wm-v" id="cr-cumcf">—</div></div>
           </div>
 
           <!-- Tabs + Charts/Tables -->
@@ -830,7 +844,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
             </div>
           </div>
 
-          <div style="font-size:10px;color:var(--g500);line-height:1.5;padding:8px 10px;background:white;border:1px solid var(--g200);border-top:2px solid var(--gold)">
+          <div id="cr-disclaimer" style="font-size:10px;color:var(--g500);line-height:1.5;padding:8px 10px;background:white;border:1px solid var(--g200);border-top:2px solid var(--gold)">
             Die aufgeführten Informationen dienen ausschließlich Informationszwecken. Zukünftige Wert- und Mietsteigerungen sind nicht garantiert. © Beqiri Capital Management
           </div>
 
@@ -2182,6 +2196,20 @@ function runCalc() {
   const steuerErsparnis10 = years.slice(0,10).reduce((a,y)=>a+(y.taxEff>0?y.taxEff:0),0);
   const cumCfA10  = years.slice(0,10).reduce((a,y)=>a+y.netCfA,0);
 
+  // Monatliche Raten
+  const monRate1   = (loanBase * (loanR + repayR)) / 12;
+  const monRateKfw = (kfwUsed * (kfwR + kfwRep)) / 12;
+  const monRateTotal = monRate1 + monRateKfw;
+
+  // Disclaimer mit VP-Firma
+  const disclaimerEl = document.getElementById('cr-disclaimer');
+  if(disclaimerEl) {
+    const brand = (currentProfile && currentProfile.role === 'vp' && currentProfile.company_name)
+      ? currentProfile.company_name
+      : (calcObj.branding === 'dwi' ? 'Deutsche Wert Invest' : 'Beqiri Capital Management');
+    disclaimerEl.textContent = 'Die aufgeführten Informationen dienen ausschließlich Informationszwecken. Zukünftige Wert- und Mietsteigerungen sind nicht garantiert. \u00a9 ' + brand;
+  }
+
   // Banner
   document.getElementById('cr-objName').textContent  = o.name;
   document.getElementById('cr-objAddr').textContent  = o.address||'';
@@ -2217,9 +2245,27 @@ function runCalc() {
   document.getElementById('cr-netto').textContent = fmtP(netto);
   const bsEl = document.getElementById('cr-brutto-sub'); if(bsEl) bsEl.textContent = o.parking_active?'Gesamtmiete \u00f7 (KP+Stellplatz)':'Kaltmiete \u00f7 (KP+M\u00f6bel)';
   const nsEl = document.getElementById('cr-netto-sub');  if(nsEl) nsEl.textContent  = laufend>0?'abzgl. Hausgeld + NKK \u2212 KfW':'inkl. NKK, abzgl. KfW-Zuschuss';
-  const cfEl = document.getElementById('cr-cf'); cfEl.textContent = fmt(cf1M,2); cfEl.className = 'ck-v '+clr(cf1M);
-  const cfStEl = document.getElementById('cr-cfst'); cfStEl.textContent = fmt(cf1MSt,2); cfStEl.className = 'ck-v '+clr(cf1MSt);
+  const cfEl = document.getElementById('cr-cf'); cfEl.textContent = fmt(cf1M,2); cfEl.className = 'ck-v';
+  const cfStEl = document.getElementById('cr-cfst'); cfStEl.textContent = fmt(cf1MSt,2); cfStEl.className = 'ck-v';
   document.getElementById('cr-irr').textContent = fmtP(irr);
+
+  // Monatliche Rate & Gesamtkosten
+  const monRateEl = document.getElementById('cr-monrate');
+  if(monRateEl) {
+    monRateEl.textContent = fmt(monRateTotal, 2);
+    const sub = document.getElementById('cr-monrate-sub');
+    if(sub) {
+      if(o.kfw_active) {
+        sub.innerHTML = fmt(monRate1,2)+'/Mo Kredit&nbsp;+&nbsp;'+fmt(monRateKfw,2)+'/Mo KfW';
+      } else {
+        sub.textContent = 'Annuitätendarlehen';
+      }
+    }
+  }
+  const gkEl = document.getElementById('cr-gk');
+  if(gkEl) gkEl.textContent = fmt(gesamtkosten);
+  const ekHintEl = document.getElementById('cr-ek-hint');
+  if(ekHintEl) ekHintEl.textContent = 'davon NKK ' + fmt(totalNKK);
   const tax0 = years[0].taxEff;
   document.getElementById('cr-tax-hint').innerHTML = tax0>=0
     ? `<span style="color:var(--pos)">\u25b2 +${fmt(tax0/12,0)}/Mo Steuerersparnis</span>`
@@ -2231,7 +2277,18 @@ function runCalc() {
   document.getElementById('cr-wert10').textContent = fmt(years[9].propVal);
   const w10El = document.getElementById('cr-wert10-sub'); if(w10El) w10El.textContent = vgR>0?'bei '+fmtP(vgR*100)+' p.a.':'ohne Wertsteigerung';
   document.getElementById('cr-steuers').textContent = fmt(steuerErsparnis10);
-  document.getElementById('cr-cumcf').textContent   = fmt(cumCfA10);
+  document.getElementById('cr-cumcf') && (document.getElementById('cr-cumcf').textContent = fmt(cumCfA10));
+
+  // Eingesetztes EK
+  const ekInputEl = document.getElementById('cr-ek-input');
+  if(ekInputEl) {
+    ekInputEl.textContent = fmt(ekIn);
+    const ekInSub = document.getElementById('cr-ek-input-sub');
+    if(ekInSub) {
+      const ekPct = gesamtkosten > 0 ? (ekIn/gesamtkosten*100).toFixed(1) : 0;
+      ekInSub.textContent = ekPct + '% der Gesamtkosten';
+    }
+  }
 
   // Invest Tab
   const itEl = document.getElementById('cr-investTable');
@@ -2282,9 +2339,9 @@ function runCalc() {
     const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #ece9e3;text-align:right${c?';color:'+c:''}">${v}</td>`;
     cfH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #ece9e3;font-weight:600">${(o.afa_start||2026)+i}</td>
       ${td(fmt(y.rentEff))}${td(fmt(y.totalInt),'var(--neg)')}${td(fmt(y.totalTl))}
-      ${td(fmt(y.netCfB),y.netCfB>=0?'var(--pos)':'var(--neg)')}
+      ${td(fmt(y.netCfB),'var(--navy)')}
       ${td(fmt(y.taxEff),y.taxEff>=0?'var(--pos)':'var(--neg)')}
-      ${td(fmt(y.netCfA),y.netCfA>=0?'var(--pos)':'var(--neg)')}
+      ${td(fmt(y.netCfA),'var(--navy)')}
       ${td(fmt(y.equity),y.equity>=0?'var(--pos)':'var(--neg)')}</tr>`;
   });
   cfH+=`<tr style="background:var(--navy);color:white;border-top:2px solid var(--gold)">
@@ -2311,7 +2368,7 @@ function runCalc() {
       ${td(fmt(afaArr[i]))}${td(fmt(furAfA))}
       ${td(fmt(y.einkuenfte),y.einkuenfte>=0?'var(--neg)':'var(--pos)')}
       ${td(fmt(y.taxEff),y.taxEff>=0?'var(--pos)':'var(--neg)')}
-      ${td(fmt(y.netCfA/12,2),y.netCfA>=0?'var(--pos)':'var(--neg)')}</tr>`;
+      ${td(fmt(y.netCfA/12,2),'var(--navy)')}</tr>`;
   });
   afaH+=`</tbody>`;
   document.getElementById('cr-afaTable').innerHTML = afaH;
@@ -2380,7 +2437,8 @@ function runCalc() {
     cf1M,cf1MSt,irr,ekNach10,wzuwachs,wert10:years[9].propVal,steuerErsparnis10,cumCfA10,
     gesamtkosten,effGesamtkosten,gstV,gbKV,notV,gbPV,totalNKK,loanBase,kfwUsed,kfwNetBal:kfwUsed,
     laufend,hausgeld,parkingPrice,parkingRentMon,vgR,rgR,vacR,taxR,loanR,repayR,kfwBonus,
-    priceUnit,priceFurni};
+    priceUnit,priceFurni,ekIn,
+    monRateTotal,monRate1,monRateKfw};
 }
 
 function showCalcTab(id, btn) {
@@ -2501,8 +2559,9 @@ async function printCalc() {
       + logoHtml
       + '<div><div style="font-size:11pt;font-weight:700;color:#1a2744">' + branding + '</div>'
       + '<div style="font-size:7pt;color:#b8972a;letter-spacing:.1em;text-transform:uppercase">Investmentkalkulation</div></div></div>'
-      + '<div style="text-align:right;font-size:7.5pt;color:#888075"><div>Beispielkalkulation</div>'
-      + (recipient ? '<div>F\u00fcr: ' + recipient + '</div>' : '') + '</div></div>';
+      + '<div style="text-align:right;font-size:7.5pt;color:#888075">'
+      + (recipient ? '<div style="font-weight:700;color:#1a2744;font-size:8.5pt">' + recipient + '</div><div style="margin-top:1px">Investmentkalkulation</div>' : '<div>Investmentkalkulation</div>')
+      + '</div></div>';
   }
 
   function footer() {
@@ -2537,9 +2596,16 @@ async function printCalc() {
       + '</div>' : '')
     // KPIs
     + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">'
-    + [['Bruttorendite',fmtP(d.brutto),'#2e7d52'],['Nettorendite',fmtP(d.netto),'#1a2744'],['CF p.M. v.St.',fmt(d.cf1M,2),d.cf1M>=0?'#2e7d52':'#c0392b'],['CF p.M. n.St.',fmt(d.cf1MSt,2),d.cf1MSt>=0?'#2e7d52':'#c0392b'],['EK-Verzinsung 10J.',fmtP(d.irr),'#1a2744']]
-      .map(function(x){return '<div style="border:1px solid #d0ccc4;padding:7px 9px"><div style="font-size:6pt;color:#888075;text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+x[0]+'</div><div style="font-size:12pt;font-weight:700;color:'+x[2]+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
+    + [['Bruttorendite',fmtP(d.brutto),'#2e7d52'],['Nettorendite',fmtP(d.netto),'#1a2744'],['CF p.M. v.St.',fmt(d.cf1M,2),'#1a2744'],['CF p.M. n.St.',fmt(d.cf1MSt,2),'#1a2744'],['EK-Verzinsung 10J.',fmtP(d.irr),'#2e7d52']]
+      .map(function(x){return '<div style="background:#f0f2f7;border:1px solid #d0ccc4;padding:7px 9px"><div style="font-size:6pt;color:#888075;text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+x[0]+'</div><div style="font-size:13pt;font-weight:700;color:'+x[2]+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
     + '</div>'
+    // Monatliche Rate Box
+    + '<div style="background:#1a2744;color:white;padding:8px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
+    + '<div style="font-size:7pt;letter-spacing:.08em;text-transform:uppercase;opacity:.6">Monatliche Kreditrate gesamt</div>'
+    + '<div style="font-family:Arial,sans-serif;font-size:14pt;font-weight:700;color:#d4af4a">'
+    + fmt(d.monRateTotal,2)
+    + (o.kfw_active ? '<span style="font-size:7.5pt;opacity:.7;margin-left:8px">Kredit ' + fmt(d.monRate1,2) + ' + KfW ' + fmt(d.monRateKfw,2) + '</span>' : '')
+    + '</div></div>'
     // Wealth
     + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px">'
     + [['EK nach 10 Jahren',fmt(d.ekNach10)],['Immobilienwert 10J.',fmt(d.wert10)],['Steuerersparnis 10J.',fmt(d.steuerErsparnis10)],['Kum. CF n.St. 10J.',fmt(d.cumCfA10)]]
@@ -2560,8 +2626,10 @@ async function printCalc() {
     + r2('Kredit 1', fmt(d.loanBase))
     + r2('Kreditzins', fmtP(d.loanR*100))
     + r2('Tilgung p.a.', fmtP(d.repayR*100))
-    + (o.kfw_active?r2('KfW netto',fmt(d.kfwNetBal)):'')
+    + (o.kfw_active?r2('KfW brutto',fmt(d.kfwUsed)):'')
     + (d.kfwBonus>0?r2('Tilgungszuschuss',fmt(d.kfwBonus)):'')
+    + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #1a2744;margin-top:4px;font-weight:700;font-size:9pt;color:#1a2744"><span>Eingesetztes EK</span><span style="color:#2e7d52">'+fmt(d.ekIn)+'</span></div>'
+    + '<div style="font-size:7pt;color:#888075;margin-top:1px">'+(d.gesamtkosten>0?(d.ekIn/d.gesamtkosten*100).toFixed(1):'0')+'% der Gesamtkosten</div>'
     + r2('Kaltmiete p.M.', fmt(d.coldRent))
     + r2('Jahresmiete', fmt(d.coldRent*12))
     + r2('Wertsteigerung p.a.', d.vgR>0?fmtP(d.vgR*100):'0% (deaktiviert)')
@@ -2585,9 +2653,9 @@ async function printCalc() {
     return '<tr style="'+bg+'">'
       + '<td style="padding:3.5px 6px;border-bottom:1px solid #ece9e3;font-weight:600;font-size:7.5pt">'+(( o.afa_start||2026)+i)+'</td>'
       + td(fmt(y.rentEff)) + td(fmt(y.totalInt),'#c0392b') + td(fmt(y.totalTl))
-      + td(fmt(y.netCfB), y.netCfB>=0?'#2e7d52':'#c0392b')
+      + td(fmt(y.netCfB), '#1a2744')
       + td(fmt(y.taxEff), y.taxEff>=0?'#2e7d52':'#c0392b')
-      + td(fmt(y.netCfA), y.netCfA>=0?'#2e7d52':'#c0392b')
+      + td(fmt(y.netCfA), '#1a2744')
       + td(fmt(y.equity), y.equity>=0?'#2e7d52':'#c0392b')
       + '</tr>';
   }).join('');
@@ -2599,7 +2667,7 @@ async function printCalc() {
       + td(fmt(d.afaArr[i])) + td(fmt(d.furAfA))
       + td(fmt(y.einkuenfte), y.einkuenfte>=0?'#c0392b':'#2e7d52')
       + td(fmt(y.taxEff), y.taxEff>=0?'#2e7d52':'#c0392b')
-      + td(fmt(y.netCfA/12,2), y.netCfA>=0?'#2e7d52':'#c0392b')
+      + td(fmt(y.netCfA/12,2), '#1a2744')
       + '</tr>';
   }).join('');
 
