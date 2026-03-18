@@ -2129,10 +2129,9 @@ function runCalc() {
   const gbPV  = (o.gb_pfand_pct||0.1)/100*nkkBasis;
   const totalNKK = gstV+gbKV+notV+gbPV;
   const gesamtkosten = totalPrice+totalNKK;
-  const effGesamtkosten = gesamtkosten-kfwBonus;
+  const effGesamtkosten = gesamtkosten - kfwBonus; // Zuschuss reduziert effektive Investitionskosten für Renditeberechnung
 
   const kfwUsed   = Math.min(kfwAmt, gesamtkosten);
-  const kfwNetBal = Math.max(0, kfwUsed-kfwBonus);
   const loanBase  = Math.max(0, gesamtkosten-equityIn-kfwUsed);
   const anfK = gbPV;
 
@@ -2153,7 +2152,8 @@ function runCalc() {
   }
 
   const years = [];
-  let loanBal = loanBase, kfwBal = kfwNetBal, rentCur = coldRent*12, propVal = totalPrice;
+  // KfW startet mit vollem Betrag – Tilgungszuschuss wird im 1. Jahr als Einmalige Sondertilgung verbucht
+  let loanBal = loanBase, kfwBal = kfwUsed, rentCur = coldRent*12, propVal = totalPrice;
   const laufend = hausgeld*12;
 
   for (let i = 0; i < 20; i++) {
@@ -2161,6 +2161,8 @@ function runCalc() {
     const rentEff = rentCur*(1-vacR);
     const int1 = loanBal*loanR, tl1 = loanBal*repayR; loanBal -= tl1;
     const intK = kfwBal*kfwR, tlK = kfwBal*kfwRep; kfwBal -= tlK;
+    // Tilgungszuschuss: einmalige Sondertilgung nach dem 1. Jahr (Rate bleibt gleich, Restschuld sinkt)
+    if (i === 0 && kfwBonus > 0) kfwBal = Math.max(0, kfwBal - kfwBonus);
     const totalInt = int1+intK, totalTl = tl1+tlK, totalDS = totalInt+totalTl;
     const afaG = (afaArr[i]||0)+furAfA;
     const werb = i===0 ? -anfK : 0;
@@ -2386,7 +2388,7 @@ function runCalc() {
 
   calcData = {o,years,afaArr,furAfA,totalPrice,coldRent,annRent,brutto,netto,
     cf1M,cf1MSt,irr,ekNach10,wzuwachs,wert10:years[9].propVal,steuerErsparnis10,cumCfA10,
-    gesamtkosten,effGesamtkosten,gstV,gbKV,notV,gbPV,totalNKK,loanBase,kfwUsed,kfwNetBal,
+    gesamtkosten,effGesamtkosten,gstV,gbKV,notV,gbPV,totalNKK,loanBase,kfwUsed,kfwNetBal:kfwUsed,
     laufend,hausgeld,parkingPrice,parkingRentMon,vgR,rgR,vacR,taxR,loanR,repayR,kfwBonus,
     priceUnit,priceFurni};
 }
