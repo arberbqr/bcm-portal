@@ -499,6 +499,28 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
       </div>
     </div>
   </div>
+
+  <div id="view-vp-calcs" class="view">
+    <div class="view-inner">
+      <div class="page-title">Meine Berechnungen</div>
+      <div class="page-sub">Gespeicherte Kundenberechnungen</div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title">Berechnungen</div></div>
+        <div class="tbl-wrap" id="vpCalcsWrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-admin-calcs" class="view">
+    <div class="view-inner">
+      <div class="page-title">Alle Berechnungen</div>
+      <div class="page-sub">Von allen Vertriebspartnern gespeicherte Berechnungen</div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title">Berechnungen</div></div>
+        <div class="tbl-wrap" id="adminCalcsWrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- VP Profil Modal -->
@@ -860,8 +882,38 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
     </div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('calcModal')">Schließen</button>
+      <button class="btn-sm btn-navy" onclick="openSaveCalcModal()" style="background:#2e7d52">💾 Berechnung speichern</button>
       <button class="btn-sm btn-navy" onclick="openReservationFromCalc()">Einheit reservieren</button>
       <button class="btn-sm btn-gold" onclick="printCalc()">📄 PDF drucken</button>
+    </div>
+  </div>
+</div>
+
+<!-- Berechnung speichern Modal -->
+<div class="modal-bg" id="saveCalcModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div class="modal-title">💾 Berechnung speichern</div>
+      <button class="modal-close" onclick="closeModal('saveCalcModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--g100);border-left:3px solid var(--pos);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--g700)">
+        Alle aktuellen Eingabewerte und Ergebnisse werden gespeichert und sind für Sie und den Admin einsehbar.
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-fld">
+          <label>Kundenname *</label>
+          <input id="sc-buyer" type="text" placeholder="Max Mustermann">
+        </div>
+        <div class="form-fld">
+          <label>Notizen zum Kunden</label>
+          <textarea id="sc-notes" rows="3" placeholder="z.B. Investor, 42J., Finanzierung über Volksbank München geplant..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('saveCalcModal')">Abbrechen</button>
+      <button class="btn-sm btn-pos" onclick="saveCalculation()">Speichern</button>
     </div>
   </div>
 </div>
@@ -1178,11 +1230,13 @@ function setupAppShell() {
       <button class="app-nav-btn" onclick="loadView('objects')">Objekte</button>
       <button class="app-nav-btn" onclick="loadView('reservations')">Reservierungen</button>
       <button class="app-nav-btn" onclick="loadView('partners')">Partner</button>
+      <button class="app-nav-btn" onclick="loadView('admin-calcs')">Berechnungen</button>
     `;
   } else {
     nav.innerHTML = `
       <button class="app-nav-btn" onclick="loadView('vp-objects')">Objektliste</button>
       <button class="app-nav-btn" onclick="loadView('vp-reservations')">Meine Reservierungen</button>
+      <button class="app-nav-btn" onclick="loadView('vp-calcs')">Meine Berechnungen</button>
     `;
   }
 }
@@ -1201,6 +1255,8 @@ function loadView(name) {
   else if (name === 'partners') loadPartners();
   else if (name === 'vp-objects') loadVPObjects();
   else if (name === 'vp-reservations') loadVPReservations();
+  else if (name === 'vp-calcs') loadVPCalcs();
+  else if (name === 'admin-calcs') loadAdminCalcs();
 }
 
 // ══════════════════════════════════════════════════════
@@ -2498,6 +2554,111 @@ async function submitReservation() {
   closeModal('resModal');
   notify('Reservierungsanfrage eingereicht! Beqiri Capital prüft Ihre Anfrage.', 'success');
   loadVPReservations();
+}
+
+// ══════════════════════════════════════════════════════
+// BERECHNUNGEN SPEICHERN
+// ══════════════════════════════════════════════════════
+function openSaveCalcModal() {
+  if (!calcData || !calcData.o) { notify('Bitte zuerst einen Kalkulator öffnen', 'error'); return; }
+  document.getElementById('sc-buyer').value = document.getElementById('c-recipient')?.value || '';
+  document.getElementById('sc-notes').value = '';
+  openModal('saveCalcModal');
+}
+
+async function saveCalculation() {
+  const buyer = document.getElementById('sc-buyer').value.trim();
+  if (!buyer) { notify('Bitte Kundenname eingeben', 'error'); return; }
+  const notes = document.getElementById('sc-notes').value.trim();
+  const d = calcData;
+  const o = d.o;
+
+  const { error } = await sb.from('calculations').insert({
+    vp_id: currentUser.id,
+    vp_name: currentProfile.full_name || currentProfile.email,
+    object_id: o.id,
+    object_name: o.name,
+    buyer_name: buyer,
+    buyer_notes: notes,
+    // Eingabewerte
+    equity: gC('c-equity'),
+    loan_rate: gC('c-loanr'),
+    repay_rate: gC('c-repayr'),
+    kfw_amount: o.kfw_active ? gC('c-kfwamt') : 0,
+    kfw_rate: o.kfw_active ? gC('c-kfwr') : 0,
+    kfw_repay: o.kfw_active ? gC('c-kfwrep') : 0,
+    kfw_bonus: o.kfw_active ? gC('c-kfwbonus') : 0,
+    tax_rate: gC('c-taxr'),
+    value_growth: gC('c-vg'),
+    rent_growth: gC('c-rg'),
+    vacancy: gC('c-vac'),
+    nkk_in_kp: document.getElementById('c-nkkInKP')?.checked || false,
+    // Ergebnisse
+    brutto_rendite: parseFloat(fmtP(d.brutto)) || 0,
+    netto_rendite: parseFloat(fmtP(d.netto)) || 0,
+    cf_vor_steuer: d.cf1M,
+    cf_nach_steuer: d.cf1MSt,
+    irr: d.irr,
+    gesamtkosten: d.gesamtkosten,
+    mon_rate: d.monRateTotal,
+    ek_nach_10j: d.ekNach10,
+    steuerersparnis_10j: d.steuerErsparnis10
+  });
+
+  if (error) { notify('Fehler beim Speichern: ' + error.message, 'error'); return; }
+  closeModal('saveCalcModal');
+  notify('Berechnung für ' + buyer + ' gespeichert!', 'success');
+}
+
+function calcTableHTML(data, isAdmin) {
+  if (!data.length) return '<div style="text-align:center;padding:32px;color:var(--g500)">Keine Berechnungen vorhanden</div>';
+  return '<table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px">Datum</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px">Kunde</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px">Objekt</th>'
+    + (isAdmin ? '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px">VP</th>' : '')
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">EK</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">CF n.St./Mo</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Rendite</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">IRR</th>'
+    + '<th style="background:var(--navy);color:white;padding:8px 4px"></th>'
+    + '</tr></thead><tbody>'
+    + data.map(function(c, i) {
+        var bg = i%2 ? 'background:var(--g100)' : '';
+        return '<tr style="'+bg+'">'
+          + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200);font-size:11px;color:var(--g500)">' + fmtDate(c.created_at) + '</td>'
+          + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200)"><strong>' + c.buyer_name + '</strong>'
+          + (c.buyer_notes ? '<div style="font-size:10px;color:var(--g500);margin-top:1px">' + c.buyer_notes.slice(0,60) + (c.buyer_notes.length>60?'…':'') + '</div>' : '')
+          + '</td>'
+          + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200)">' + (c.object_name||'—') + '</td>'
+          + (isAdmin ? '<td style="padding:7px 12px;border-bottom:1px solid var(--g200);font-size:11px">' + (c.vp_name||'—') + '</td>' : '')
+          + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200);text-align:right">' + fmt(c.equity) + '</td>'
+          + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200);text-align:right;color:var(--navy);font-weight:700">' + fmt(c.cf_nach_steuer,2) + '</td>'
+          + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200);text-align:right;color:var(--pos)">' + (c.brutto_rendite ? c.brutto_rendite.toFixed(2)+'%' : '—') + '</td>'
+          + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200);text-align:right">' + (c.irr ? c.irr.toFixed(2)+'%' : '—') + '</td>'
+          + '<td style="padding:7px 12px;border-bottom:1px solid var(--g200)">'
+          + '<button class="btn-sm btn-danger" style="font-size:10px;padding:3px 8px" onclick="deleteCalc(\''+c.id+'\')">🗑</button>'
+          + '</td></tr>';
+      }).join('')
+    + '</tbody></table>';
+}
+
+async function loadVPCalcs() {
+  const { data } = await sb.from('calculations').select('*').eq('vp_id', currentUser.id).order('created_at', {ascending:false});
+  document.getElementById('vpCalcsWrap').innerHTML = calcTableHTML(data||[], false);
+}
+
+async function loadAdminCalcs() {
+  const { data } = await sb.from('calculations').select('*').order('created_at', {ascending:false});
+  document.getElementById('adminCalcsWrap').innerHTML = calcTableHTML(data||[], true);
+}
+
+async function deleteCalc(id) {
+  if (!confirm('Berechnung löschen?')) return;
+  await sb.from('calculations').delete().eq('id', id);
+  notify('Berechnung gelöscht', 'success');
+  if (currentProfile.role === 'admin') loadAdminCalcs();
+  else loadVPCalcs();
 }
 
 // ══════════════════════════════════════════════════════
