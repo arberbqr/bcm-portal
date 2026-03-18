@@ -2115,7 +2115,6 @@ function runCalc() {
   const priceFurni   = o.price_furniture || 0;
   const parkingPrice = o.parking_active ? (o.parking_price||0) : 0;
   const parkingRentMon = o.parking_active ? (o.parking_rent||0)*(o.parking_count||1) : 0;
-  const totalPrice   = totalPriceEff;
   const coldRent     = (o.cold_rent||0) + parkingRentMon;
   const hausgeld     = (o.hausgeld||0) + (o.instandhaltung||0);
 
