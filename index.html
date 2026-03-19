@@ -624,15 +624,15 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="form-fld"><label>Instandhaltung p.M. (€)</label><input id="of-instand" type="number" value="0"></div>
 
         <div class="form-section">Finanzierung (Richtwerte)</div>
-        <div class="form-fld"><label>Kreditzins (%)</label><input id="of-loanr" type="number" value="4.10" step="0.01"></div>
+        <div class="form-fld"><label>Kreditzins (%)</label><input id="of-loanr" type="number" value="3.95" step="0.01"></div>
         <div class="form-fld"><label>Tilgung (%)</label><input id="of-repayr" type="number" value="1.00" step="0.01"></div>
 
         <div class="tog-row"><input type="checkbox" id="of-kfw" onchange="toggleOfKfw()"> KfW-Kredit</div>
         <div id="of-kfw-section" style="display:none;grid-column:1/-1">
           <div class="form-grid">
             <div class="form-fld"><label>KfW Betrag (€)</label><input id="of-kfwamt" type="number" value="150000"></div>
-            <div class="form-fld"><label>KfW Zins (%)</label><input id="of-kfwr" type="number" value="3.01" step="0.01"></div>
-            <div class="form-fld"><label>KfW Tilgung (%)</label><input id="of-kfwrep" type="number" value="2.30" step="0.01"></div>
+            <div class="form-fld"><label>KfW Zins (%)</label><input id="of-kfwr" type="number" value="2.94" step="0.01"></div>
+            <div class="form-fld"><label>KfW Tilgung (%)</label><input id="of-kfwrep" type="number" value="2.00" step="0.01"></div>
             <div class="form-fld"><label>Tilgungszuschuss (€)</label><input id="of-kfwbonus" type="number" value="0"></div>
           </div>
         </div>
@@ -1473,7 +1473,7 @@ function clearObjForm() {
   document.getElementById('of-taxr').value = '42';
   document.getElementById('of-vg').value = '1.5';
   document.getElementById('of-rg').value = '2.0';
-  document.getElementById('of-loanr').value = '4.1';
+  document.getElementById('of-loanr').value = '3.95';
   document.getElementById('of-repayr').value = '1.0';
   document.getElementById('of-parkcount').value = '1';
   document.getElementById('of-parktype').value = 'Stellplatz';
