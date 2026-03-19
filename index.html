@@ -2316,8 +2316,12 @@ async function openCalcForObject(id) {
 
   // Fill calc inputs from object
   const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val !== null && val !== undefined ? val : ''; };
-  set('c-loanr', o.loan_rate); set('c-repayr', o.repay_rate);
-  set('c-equity', 0); set('c-taxr', o.tax_rate);
+  set('c-loanr', o.loan_rate); set('c-repayr', o.repay_rate); set('c-taxr', o.tax_rate);
+  // EK Standard: NKK + 10% des KP
+  const nkkBasisDef = (o.price_unit||0) + (o.parking_active?(o.parking_price||0):0);
+  const nkkDef = ((o.gst_pct||3.5)+(o.gb_kauf_pct||0.5)+(o.notar_pct||1.0)+(o.gb_pfand_pct||0.1))/100*nkkBasisDef;
+  const ekDefault = Math.round(nkkDef + 0.10*((o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0)));
+  set('c-equity', ekDefault);
   set('c-vg', o.value_growth); set('c-rg', o.rent_growth);
   set('c-vac', o.vacancy || 0);
 
