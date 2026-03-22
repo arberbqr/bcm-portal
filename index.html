@@ -773,6 +773,33 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
                 </label>
                 <div style="font-size:10px;color:var(--g500);margin-top:3px;margin-left:21px">NKK werden nicht extra berechnet – z.B. wenn Nebenkosten bereits im KP enthalten sind</div>
               </div>
+              <!-- Erhaltungsaufwand -->
+              <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--g300)">
+                <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;font-weight:600;color:var(--navy)">
+                  <input type="checkbox" id="c-erh-active" onchange="toggleErhaltung()" style="width:14px;height:14px;accent-color:var(--navy)">
+                  Erhaltungsaufwand aktivieren
+                </label>
+                <div style="font-size:10px;color:var(--g500);margin-top:2px;margin-left:21px">Sofortige Steuererstattung im 1. Jahr oder verteilt auf 2–5 Jahre</div>
+                <div id="c-erh-panel" style="display:none;margin-top:10px">
+                  <div class="ci-row">
+                    <div class="cf">
+                      <label>Betrag (€)</label>
+                      <input id="c-erh-amount" type="number" placeholder="z.B. 15000" oninput="runCalc()">
+                    </div>
+                    <div class="cf">
+                      <label>Verteilung</label>
+                      <select id="c-erh-years" onchange="runCalc()" style="width:100%;padding:6px 8px;border:1px solid var(--g300);font-family:'Source Sans 3',sans-serif;font-size:12px">
+                        <option value="1">1 Jahr (sofort)</option>
+                        <option value="2">2 Jahre</option>
+                        <option value="3">3 Jahre</option>
+                        <option value="4">4 Jahre</option>
+                        <option value="5">5 Jahre</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div id="c-erh-hint" style="font-size:10px;color:var(--pos);margin-top:4px;font-weight:600"></div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -842,6 +869,9 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
             <div class="wm"><div class="wm-l">Immobilienwert 10J.</div><div class="wm-v" id="cr-wert10">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-wert10-sub">—</div></div>
             <div class="wm"><div class="wm-l">Steuerersparnis 10J.</div><div class="wm-v" id="cr-steuers">—</div></div>
           </div>
+
+          <!-- Erhaltungsaufwand Steuercashback Highlight -->
+          <div id="cr-erh-cashback" style="display:none;background:linear-gradient(135deg,#1a3a2a,#2e7d52);padding:10px 16px;border-left:3px solid #6fcf97"></div>
 
           <!-- Tabs + Charts/Tables -->
           <div style="background:white;border:1px solid var(--g200)">
@@ -2376,6 +2406,12 @@ function toggleCalcKfw() {
   runCalc();
 }
 
+function toggleErhaltung() {
+  const active = document.getElementById('c-erh-active').checked;
+  document.getElementById('c-erh-panel').style.display = active ? 'block' : 'none';
+  runCalc();
+}
+
 function gC(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
 function gcb(id) { const el = document.getElementById(id); return el ? el.checked : true; }
 
@@ -2428,7 +2464,21 @@ function runCalc() {
   const kfwRep   = kfwActive ? gC('c-kfwrep')/100 : 0;
   const kfwBonus = kfwActive ? gC('c-kfwbonus') : 0;
 
-  const nkkInKP = document.getElementById('c-nkkInKP') ? document.getElementById('c-nkkInKP').checked : false;
+  // Erhaltungsaufwand
+  const erhActive = document.getElementById('c-erh-active') ? document.getElementById('c-erh-active').checked : false;
+  const erhAmount = erhActive ? gC('c-erh-amount') : 0;
+  const erhYears  = erhActive ? (parseInt(document.getElementById('c-erh-years')?.value)||1) : 1;
+  const erhPerYear = erhAmount > 0 ? Math.round(erhAmount / erhYears) : 0;
+
+  // Hint anzeigen
+  if (erhActive && erhAmount > 0) {
+    const hint = document.getElementById('c-erh-hint');
+    const taxBack = erhPerYear * (gC('c-taxr')/100);
+    if (hint) hint.textContent = '→ ' + fmt(erhPerYear) + '/J. absetzbar · Cashback ca. ' + fmt(taxBack) + '/J.';
+  } else {
+    const hint = document.getElementById('c-erh-hint');
+    if (hint) hint.textContent = '';
+  }
 
   // NKK auf Basispreis berechnen
   const nkkBasis  = priceUnit + parkingPrice;
@@ -2480,14 +2530,15 @@ function runCalc() {
     if (i === 0 && kfwBonus > 0) kfwBal = Math.max(0, kfwBal - kfwBonus);
     const totalInt = int1+intK, totalTl = tl1+tlK, totalDS = totalInt+totalTl;
     const afaG = (afaArr[i]||0)+furAfA;
+    const erh  = (i < erhYears) ? erhPerYear : 0; // Erhaltungsaufwand für die ersten N Jahre
     const werb = i===0 ? -anfK : 0;
-    const einkuenfte = rentEff+werb-afaG-totalInt-laufend;
+    const einkuenfte = rentEff+werb-afaG-erh-totalInt-laufend;
     const taxEff = einkuenfte < 0 ? Math.abs(einkuenfte)*taxR : -(einkuenfte*taxR);
     const netCfB = rentEff-totalDS-laufend;
     const netCfA = netCfB+taxEff;
     propVal *= (1+vgR);
     years.push({rentEff,int1,tl1,intK,tlK,totalInt,totalTl,totalDS,
-      afaG,werb,einkuenfte,taxEff,netCfB,netCfA,propVal,
+      afaG,erh,werb,einkuenfte,taxEff,netCfB,netCfA,propVal,
       totalLoan:loanBal+kfwBal,equity:propVal-loanBal-kfwBal});
   }
 
@@ -2590,8 +2641,20 @@ function runCalc() {
   document.getElementById('cr-steuers').textContent = fmt(steuerErsparnis10);
   document.getElementById('cr-cumcf') && (document.getElementById('cr-cumcf').textContent = fmt(cumCfA10));
 
-  // Eingesetztes EK
-  const ekInputEl = document.getElementById('cr-ek-input');
+  // Steuercashback aus Erhaltungsaufwand anzeigen
+  const erhCashbackEl = document.getElementById('cr-erh-cashback');
+  if (erhCashbackEl) {
+    if (erhAmount > 0) {
+      const cashbackY1 = Math.round(erhPerYear * (taxR));
+      erhCashbackEl.style.display = 'block';
+      erhCashbackEl.innerHTML = `
+        <div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px">Steuercashback Erh.-aufwand</div>
+        <div style="font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700;color:#6fcf97">+${fmt(cashbackY1)}/J.</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:1px">${fmt(erhAmount)} über ${erhYears} Jahr${erhYears>1?'e':''} · je ${fmt(erhPerYear)}/J.</div>`;
+    } else {
+      erhCashbackEl.style.display = 'none';
+    }
+  }
   if(ekInputEl) {
     ekInputEl.textContent = fmt(ekIn);
     const ekInSub = document.getElementById('cr-ek-input-sub');
@@ -2664,10 +2727,12 @@ function runCalc() {
   document.getElementById('cr-cfTable').innerHTML = cfH;
 
   // AfA Table
+  const showErh = erhAmount > 0;
   let afaH = `<thead><tr>
     <th style="${thS};text-align:left">Jahr</th>
-    <th style="${thS};text-align:right">AfA Geb\u00e4ude</th>
-    <th style="${thS};text-align:right">AfA M\u00f6bel</th>
+    <th style="${thS};text-align:right">AfA Gebäude</th>
+    <th style="${thS};text-align:right">AfA Möbel</th>
+    ${showErh ? `<th style="${thS};text-align:right;background:#2e7d52">Erh.-aufwand</th>` : ''}
     <th style="${thS};text-align:right">Steuerl. Ergebnis</th>
     <th style="${thS};text-align:right">Steuerersparnis (+)</th>
     <th style="${thS};text-align:right">CF n.St. p.M.</th>
@@ -2677,6 +2742,7 @@ function runCalc() {
     const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #ece9e3;text-align:right${c?';color:'+c:''}">${v}</td>`;
     afaH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #ece9e3;font-weight:600">${(o.afa_start||2026)+i}</td>
       ${td(fmt(afaArr[i]))}${td(fmt(furAfA))}
+      ${showErh ? `<td style="padding:4px 7px;border-bottom:1px solid #ece9e3;text-align:right;font-weight:700;color:${y.erh>0?'#2e7d52':'var(--g400)'}">${y.erh>0?fmt(y.erh):'—'}</td>` : ''}
       ${td(fmt(y.einkuenfte),y.einkuenfte>=0?'var(--neg)':'var(--pos)')}
       ${td(fmt(y.taxEff),y.taxEff>=0?'var(--pos)':'var(--neg)')}
       ${td(fmt(y.netCfA/12,2),'var(--navy)')}</tr>`;
