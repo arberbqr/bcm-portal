@@ -2409,6 +2409,16 @@ function toggleCalcKfw() {
 function toggleErhaltung() {
   const active = document.getElementById('c-erh-active').checked;
   document.getElementById('c-erh-panel').style.display = active ? 'block' : 'none';
+  if (active && calcObj) {
+    // Erhaltungsaufwand = 15% des Gebäudewerts
+    // Gebäudewert = KP × (1 - Grundanteil)
+    const kp = (calcObj.price_unit||0) + (calcObj.parking_active?(calcObj.parking_price||0):0);
+    const grundanteil = (calcObj.land_share||15)/100;
+    const gebaeudeWert = kp * (1 - grundanteil);
+    const erh = Math.round(gebaeudeWert * 0.15);
+    const el = document.getElementById('c-erh-amount');
+    if (el && !el.value) el.value = erh;
+  }
   runCalc();
 }
 
@@ -2463,6 +2473,8 @@ function runCalc() {
   const kfwR     = kfwActive ? gC('c-kfwr')/100 : 0;
   const kfwRep   = kfwActive ? gC('c-kfwrep')/100 : 0;
   const kfwBonus = kfwActive ? gC('c-kfwbonus') : 0;
+
+  const nkkInKP = document.getElementById('c-nkkInKP') ? document.getElementById('c-nkkInKP').checked : false;
 
   // Erhaltungsaufwand
   const erhActive = document.getElementById('c-erh-active') ? document.getElementById('c-erh-active').checked : false;
