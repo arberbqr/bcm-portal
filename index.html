@@ -163,7 +163,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 
 /* ── KALKULATOR (vereinfacht für Modal) ── */
 .calc-modal{max-width:1100px}
-.calc-layout{display:grid;grid-template-columns:300px 1fr;gap:20px}
+.calc-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px}
 .calc-inputs{display:flex;flex-direction:column;gap:12px}
 .ci{background:white;border:1px solid var(--g200)}
 .ci-h{background:var(--navy);color:white;padding:8px 14px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;display:flex;align-items:center;gap:6px}
