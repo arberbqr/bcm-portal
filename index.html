@@ -1844,18 +1844,18 @@ async function openResDetail(id) {
   if (r.status === 'pending') {
     footer.innerHTML = `
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
-      <button class="btn-sm" style="background:var(--g200);color:var(--g600);font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>
+      <button class="btn-sm" style="background:#fee2e2;color:#c0392b;border:1px solid #f5c6c6;font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>
       <button class="btn-sm btn-danger" onclick="rejectRes('${id}')">✗ Ablehnen</button>
       <button class="btn-sm btn-pos" onclick="updateRes('${id}','approved')">✓ Genehmigen</button>`;
   } else if (r.status === 'approved') {
     footer.innerHTML = `
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
-      <button class="btn-sm" style="background:var(--g200);color:var(--g600);font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>
+      <button class="btn-sm" style="background:#fee2e2;color:#c0392b;border:1px solid #f5c6c6;font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>
       ${!r.signed_at ? `<button class="btn-sm btn-gold" onclick="sendAgreement('${id}')">📄 Vereinbarung senden</button>` : `<span style="color:var(--pos);font-size:12px;font-weight:700">✓ Unterzeichnet am ${fmtDate(r.signed_at)}</span>`}
       <button class="btn-sm btn-navy" onclick="updateRes('${id}','notarized')" style="background:#1a2744">🏛 Notarisiert</button>`;
   } else {
     footer.innerHTML = `<button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
-      <button class="btn-sm" style="background:var(--g200);color:var(--g600);font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>`;
+      <button class="btn-sm" style="background:#fee2e2;color:#c0392b;border:1px solid #f5c6c6;font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>`;
   }
   openModal('resDetailModal');
 }
@@ -2633,15 +2633,19 @@ function runCalc() {
   for (let i=0;i<9;i++) cfArr.push(years[i].netCfA);
   cfArr.push(years[9].netCfA+(years[9].propVal-years[9].totalLoan));
   const irr = calcIRR(cfArr);
-  const ekBeiKauf = totalPriceEff-(loanBase+kfwUsed);
+  const ekBeiKauf = ekIn; // Eingesetztes EK = Ausgangswert für EK-Zuwachs
   const ekNach10  = years[9].equity;
   const wzuwachs  = ekNach10-ekBeiKauf;
   const steuerErsparnis10 = years.slice(0,10).reduce((a,y)=>a+(y.taxEff>0?y.taxEff:0),0);
   const cumCfA10  = years.slice(0,10).reduce((a,y)=>a+y.netCfA,0);
 
-  // Monatliche Raten
-  const monRate1   = (loanBase * (loanR + repayR)) / 12;
-  const monRateKfw = (kfwUsed * (kfwR + kfwRep)) / 12;
+  // Monatliche Raten (echte Annuitätsformel)
+  const monR1  = loanR/12;
+  const monRep1 = repayR/12;
+  const monRate1 = loanBase > 0 ? loanBase * (monR1 + monRep1) : 0;
+  const monRK  = kfwR/12;
+  const monRepK = kfwRep/12;
+  const monRateKfw = kfwUsed > 0 ? kfwUsed * (monRK + monRepK) : 0;
   const monRateTotal = monRate1 + monRateKfw;
 
   // Disclaimer mit VP-Firma
@@ -2896,7 +2900,7 @@ function runCalc() {
     cf1M,cf1MSt,irr,ekNach10,wzuwachs,wert10:years[9].propVal,steuerErsparnis10,cumCfA10,
     gesamtkosten,effGesamtkosten,gstV,gbKV,notV,gbPV,totalNKK,loanBase,kfwUsed,kfwNetBal:kfwUsed,
     laufend,hausgeld,parkingPrice,parkingRentMon,vgR,rgR,vacR,taxR,loanR,repayR,kfwBonus,
-    priceUnit,priceFurni,ekIn,
+    priceUnit,priceFurni,ekIn,erhAmount,erhYears,
     monRateTotal,monRate1,monRateKfw};
 }
 
@@ -3301,6 +3305,7 @@ async function printCalc() {
     + r2('Jahresmiete', fmt(d.coldRent*12))
     + r2('Wertsteigerung p.a.', d.vgR>0?fmtP(d.vgR*100):'0% (deaktiviert)')
     + r2('Grenzsteuersatz', fmtP(d.taxR*100))
+    + (d.erhAmount>0?r2('Erhaltungsaufwand',fmt(d.erhAmount)+' ü '+d.erhYears+'J.'):'')
     + '</div></div>' + footer() + '</div>';
 
   // ── Seite 2: Diagramme
