@@ -1830,6 +1830,12 @@ async function openResDetail(id) {
       <!-- Dokument -->
       ${docLink?`<div style="margin-top:12px;padding:10px 14px;border:1px solid var(--g200)">${docLink}</div>`:''}
 
+      <!-- Unterzeichnetes PDF -->
+      ${r.pdf_path?`<div style="margin-top:8px;padding:10px 14px;border:1px solid var(--pos);background:rgba(46,125,82,.05);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;font-weight:700;color:var(--pos)">✓ Unterzeichnete Vereinbarung</span>
+        <button class="btn-sm btn-pos" style="font-size:11px" onclick="downloadResPdf('${r.pdf_path}')">📄 PDF öffnen</button>
+      </div>`:(r.signed_at?`<div style="margin-top:8px;padding:10px 14px;border:1px solid var(--g200);font-size:12px;color:var(--g500)">Unterschrift gespeichert – PDF wird beim nächsten Unterzeichnen gespeichert.</div>`:'')}
+
       <!-- Ablehnung Grund -->
       ${r.status==='rejected'&&r.rejection_reason?`<div style="background:#fdf0f0;border-left:3px solid var(--neg);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--neg)"><strong>Ablehnungsgrund:</strong> ${r.rejection_reason}</div>`:''}
     </div>`;
@@ -1838,17 +1844,34 @@ async function openResDetail(id) {
   if (r.status === 'pending') {
     footer.innerHTML = `
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
+      <button class="btn-sm" style="background:var(--g200);color:var(--g600);font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>
       <button class="btn-sm btn-danger" onclick="rejectRes('${id}')">✗ Ablehnen</button>
       <button class="btn-sm btn-pos" onclick="updateRes('${id}','approved')">✓ Genehmigen</button>`;
   } else if (r.status === 'approved') {
     footer.innerHTML = `
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
+      <button class="btn-sm" style="background:var(--g200);color:var(--g600);font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>
       ${!r.signed_at ? `<button class="btn-sm btn-gold" onclick="sendAgreement('${id}')">📄 Vereinbarung senden</button>` : `<span style="color:var(--pos);font-size:12px;font-weight:700">✓ Unterzeichnet am ${fmtDate(r.signed_at)}</span>`}
       <button class="btn-sm btn-navy" onclick="updateRes('${id}','notarized')" style="background:#1a2744">🏛 Notarisiert</button>`;
   } else {
-    footer.innerHTML = `<button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>`;
+    footer.innerHTML = `<button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
+      <button class="btn-sm" style="background:var(--g200);color:var(--g600);font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>`;
   }
   openModal('resDetailModal');
+}
+
+async function deleteReservation(id) {
+  if (!confirm('Reservierung wirklich löschen?\n\nDas Objekt wird wieder auf "Verfügbar" gesetzt.')) return;
+  const { data: r } = await sb.from('reservations').select('object_id,pdf_path,doc_path').eq('id', id).single();
+  if (r) {
+    if (r.pdf_path) await sb.storage.from('reservation-pdfs').remove([r.pdf_path]);
+    if (r.doc_path) await sb.storage.from('reservation-docs').remove([r.doc_path]);
+    await sb.from('objects').update({ status: 'available' }).eq('id', r.object_id);
+  }
+  await sb.from('reservations').delete().eq('id', id);
+  closeModal('resDetailModal');
+  notify('✓ Reservierung gelöscht', 'success');
+  loadReservations();
 }
 
 async function sendAgreement(resId) {
@@ -1875,6 +1898,12 @@ async function sendAgreement(resId) {
   }
   closeModal('resDetailModal');
   loadReservations();
+}
+
+async function downloadResPdf(path) {
+  const { data } = await sb.storage.from('reservation-pdfs').createSignedUrl(path, 3600);
+  if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  else notify('PDF nicht gefunden', 'error');
 }
 
 async function markFeePaid(id) {
