@@ -664,6 +664,12 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="form-fld"><label>Mietsteigerung p.a. (%)</label><input id="of-rg" type="number" value="2.0" step="0.1"></div>
         <div class="form-fld"><label>Leerstand (%)</label><input id="of-vac" type="number" value="0" step="0.1"></div>
 
+        <div class="form-section">Bankverbindung (Projektgesellschaft)</div>
+        <div class="form-fld"><label>Kontoinhaber</label><input id="of-bank-holder" type="text" placeholder="z.B. Ahornstraße 2 GmbH"></div>
+        <div class="form-fld"><label>Bank</label><input id="of-bank-name" type="text" placeholder="z.B. Sparkasse Regensburg"></div>
+        <div class="form-fld"><label>IBAN</label><input id="of-bank-iban" type="text" placeholder="DE89 3704 0044 0532 0130 00"></div>
+        <div class="form-fld"><label>BIC</label><input id="of-bank-bic" type="text" placeholder="COBADEFFXXX"></div>
+
         <div class="form-section">Fotos & Dokumente</div>
         <div class="form-fld full">
           <label>Ordnerstruktur als ZIP oder einzelne Dateien</label>
@@ -1511,6 +1517,9 @@ function clearObjForm() {
   document.getElementById('of-parking').checked = false;
   document.getElementById('of-kfw-section').style.display = 'none';
   document.getElementById('of-parking-section').style.display = 'none';
+  ['of-bank-holder','of-bank-name','of-bank-iban','of-bank-bic'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
 }
 
 function fillObjForm(o) {
@@ -1522,6 +1531,8 @@ function fillObjForm(o) {
   set('instand', o.instandhaltung); set('loanr', o.loan_rate); set('repayr', o.repay_rate);
   set('land', o.land_share); set('degafa', o.deg_afa); set('linafa', o.lin_afa); set('afast', o.afa_start);
   set('taxr', o.tax_rate); set('vg', o.value_growth); set('rg', o.rent_growth); set('vac', o.vacancy);
+  set('bank-holder', o.bank_account_holder); set('bank-name', o.bank_name);
+  set('bank-iban', o.bank_iban); set('bank-bic', o.bank_bic);
   document.getElementById('of-status').value = o.status;
   document.getElementById('of-branding').value = o.branding || 'bcm';
   document.getElementById('of-published').value = o.published ? 'true' : 'false';
@@ -1558,7 +1569,9 @@ async function saveObject() {
     land_share: g('land'), deg_afa: g('degafa'), lin_afa: g('linafa'), afa_start: g('afast')||2026,
     tax_rate: g('taxr'), value_growth: g('vg'), rent_growth: g('rg'), vacancy: g('vac'),
     parking_active: gc('parking'), parking_type: gs('parktype'), parking_count: g('parkcount')||1,
-    parking_price: g('parkprice'), parking_rent: g('parkrent')
+    parking_price: g('parkprice'), parking_rent: g('parkrent'),
+    bank_account_holder: gs('bank-holder')||null, bank_name: gs('bank-name')||null,
+    bank_iban: gs('bank-iban')||null, bank_bic: gs('bank-bic')||null
   };
 
   if (!obj.name) { notify('Bitte Objektname eingeben', 'error'); return; }
@@ -1830,11 +1843,38 @@ async function openResDetail(id) {
   } else if (r.status === 'approved') {
     footer.innerHTML = `
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
+      ${!r.signed_at ? `<button class="btn-sm btn-gold" onclick="sendAgreement('${id}')">📄 Vereinbarung senden</button>` : `<span style="color:var(--pos);font-size:12px;font-weight:700">✓ Unterzeichnet am ${fmtDate(r.signed_at)}</span>`}
       <button class="btn-sm btn-navy" onclick="updateRes('${id}','notarized')" style="background:#1a2744">🏛 Notarisiert</button>`;
   } else {
     footer.innerHTML = `<button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>`;
   }
   openModal('resDetailModal');
+}
+
+async function sendAgreement(resId) {
+  // Neuen Token generieren und agreement_sent_at setzen
+  const { data: r, error } = await sb.from('reservations')
+    .update({ agreement_sent_at: new Date().toISOString() })
+    .eq('id', resId)
+    .select('*, objects(name,address,price_unit,parking_active,parking_price,bank_name,bank_iban,bank_bic,bank_account_holder)')
+    .single();
+
+  if (error) { notify('Fehler: ' + error.message, 'error'); return; }
+
+  // Signing Link aus signing_token
+  const { data: full } = await sb.from('reservations').select('signing_token').eq('id', resId).single();
+  const baseUrl = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/$/, '');
+  const signingUrl = baseUrl + '/sign.html?token=' + full.signing_token;
+
+  // Link in Zwischenablage kopieren
+  try {
+    await navigator.clipboard.writeText(signingUrl);
+    notify('✓ Signing-Link in Zwischenablage kopiert! Jetzt per E-Mail an den Käufer senden.', 'success', 6000);
+  } catch(e) {
+    prompt('Signing-Link (kopieren und per E-Mail senden):', signingUrl);
+  }
+  closeModal('resDetailModal');
+  loadReservations();
 }
 
 async function markFeePaid(id) {
