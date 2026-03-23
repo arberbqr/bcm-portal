@@ -5,6 +5,454 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reservierungsvereinbarung – Beqiri Capital Management</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f7;color:#1a1714;min-height:100vh}
+  .page{max-width:780px;margin:0 auto;padding:24px 16px 60px}
+  .header{background:#1a2744;color:white;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:0}
+  .header-title{font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:rgba(255,255,255,.6)}
+  .header-logo{font-family:Georgia,serif;font-size:20px;font-weight:700;color:#d4af4a}
+  .doc{background:white;padding:32px 36px;border:1px solid #d0ccc4;margin-bottom:20px}
+  .doc-title{font-family:Georgia,serif;font-size:22px;font-weight:700;color:#1a2744;margin-bottom:4px}
+  .doc-sub{font-size:12px;color:#888;margin-bottom:24px}
+  .section{margin-bottom:20px}
+  .section-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#888;border-bottom:1px solid #ece9e3;padding-bottom:4px;margin-bottom:12px}
+  .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0ede8;font-size:13px}
+  .row span:first-child{color:#888}
+  .row span:last-child{font-weight:600;color:#1a2744}
+  .highlight{background:#f7f4ed;border-left:3px solid #d4af4a;padding:14px 18px;margin:16px 0;font-size:13px;line-height:1.7}
+  .bank-box{background:#1a2744;color:white;padding:16px 20px;margin:16px 0}
+  .bank-box .label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px}
+  .bank-box .value{font-size:14px;font-weight:700;font-family:'Courier New',monospace;letter-spacing:.05em;margin-bottom:10px;color:#d4af4a}
+  .bank-box .value:last-child{margin-bottom:0}
+  .legal{font-size:11px;color:#888;line-height:1.7;border-top:1px solid #ece9e3;padding-top:16px;margin-top:8px}
+  .sign-area{background:white;border:1px solid #d0ccc4;padding:24px}
+  .sign-title{font-size:14px;font-weight:700;color:#1a2744;margin-bottom:8px}
+  .sign-sub{font-size:12px;color:#888;margin-bottom:16px}
+  .email-field{margin-bottom:14px}
+  .email-field label{display:block;font-size:12px;font-weight:700;color:#1a2744;margin-bottom:5px}
+  .email-field input{width:100%;padding:9px 12px;border:1px solid #d0ccc4;font-size:13px;font-family:inherit}
+  canvas{border:1px solid #d0ccc4;background:#fafaf9;cursor:crosshair;touch-action:none;display:block;width:100%;height:160px}
+  .sign-actions{display:flex;gap:10px;margin-top:10px}
+  button{padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:none}
+  .btn-clear{background:#f0ede8;color:#666}
+  .btn-submit{background:#1a2744;color:white;flex:1}
+  .btn-submit:hover{background:#2a3a60}
+  .btn-submit:disabled{background:#ccc;cursor:not-allowed}
+  .success{text-align:center;padding:48px 20px}
+  .success-icon{font-size:64px;margin-bottom:16px}
+  .success-title{font-family:Georgia,serif;font-size:24px;color:#1a2744;margin-bottom:8px}
+  .success-text{color:#666;font-size:14px;line-height:1.7}
+  .loading{text-align:center;padding:80px 20px;color:#888}
+  .error-box{background:#fdf0f0;border:1px solid #e57373;padding:20px;text-align:center;color:#c0392b}
+  .vp-brand{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:12px 16px;border:1px solid #ece9e3;background:#fafaf9}
+  .vp-brand img{height:36px;max-width:100px;object-fit:contain}
+  .vp-brand-name{font-weight:700;color:#1a2744}
+  .vp-brand-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.07em}
+  .progress{font-size:12px;color:#888;margin-top:8px;text-align:center}
+  @media(max-width:600px){.doc{padding:20px 16px}.header{padding:14px 16px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Reservierungsvereinbarung</div>
+    <div class="header-logo">Beqiri Capital Management</div>
+  </div>
+  <div style="font-size:11px;color:rgba(255,255,255,.4);text-align:right">Bitte lesen und digital unterschreiben</div>
+</div>
+
+<div class="page" id="main">
+  <div class="loading">⏳ Vereinbarung wird geladen...</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://lnwikmhtaqkqsjrngrlg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxud2lrbWh0YXFrcXNqcm5ncmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjAxNDMsImV4cCI6MjA4OTMzNjE0M30.BqTG6vtVvjQFKiiT5_quCn9RFw2TdIMwpi5LqFlC8O0';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const token = new URLSearchParams(window.location.search).get('token');
+let resData = null, vpProfile = null;
+let canvas, ctx, drawing = false;
+
+function fmt(n) {
+  if (!n) return '—';
+  return '€\u00a0' + Math.round(n).toLocaleString('de-DE');
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+async function load() {
+  if (!token) {
+    document.getElementById('main').innerHTML = '<div class="error-box">Ungültiger Link – kein Token gefunden.</div>';
+    return;
+  }
+
+  const { data: r } = await sb.from('reservations')
+    .select('*, objects(name,address,price_unit,parking_active,parking_price,bank_name,bank_iban,bank_bic,bank_account_holder)')
+    .eq('signing_token', token)
+    .single();
+
+  if (!r) {
+    document.getElementById('main').innerHTML = '<div class="error-box">Vereinbarung nicht gefunden. Bitte kontaktieren Sie Ihren Ansprechpartner.</div>';
+    return;
+  }
+
+  if (r.signed_at) {
+    document.getElementById('main').innerHTML = showSuccess(r);
+    return;
+  }
+
+  resData = r;
+  const o = r.objects || {};
+  const totalKP = (o.price_unit||0) + (o.parking_active ? (o.parking_price||0) : 0);
+  const softExpiry = new Date(r.expires_at);
+  const hardExpiry = r.hard_expires_at ? new Date(r.hard_expires_at) : null;
+  const paymentDeadline = new Date(Date.now() + 5*24*60*60*1000);
+
+  if (r.vp_id) {
+    const { data: vp } = await sb.from('profiles').select('company_name,company_logo,full_name,email,phone').eq('id', r.vp_id).single();
+    vpProfile = vp;
+  }
+
+  // Pre-fill email from buyer_contact if it contains @
+  const preEmail = r.buyer_email || (r.buyer_contact && r.buyer_contact.includes('@') ? r.buyer_contact : '');
+
+  document.getElementById('main').innerHTML = `
+    ${vpProfile && (vpProfile.company_name || vpProfile.company_logo) ? `
+    <div class="vp-brand">
+      ${vpProfile.company_logo ? `<img src="${vpProfile.company_logo}" alt="Logo">` : ''}
+      <div>
+        <div class="vp-brand-label">Präsentiert durch</div>
+        <div class="vp-brand-name">${vpProfile.company_name || vpProfile.full_name}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="doc">
+      <div class="doc-title">Reservierungsvereinbarung</div>
+      <div class="doc-sub">Datum: ${fmtDate(new Date().toISOString())} · Vorgangsnummer: ${token.slice(0,8).toUpperCase()}</div>
+
+      <div class="section">
+        <div class="section-title">Objekt</div>
+        <div class="row"><span>Wohneinheit</span><span>${o.name||'—'}</span></div>
+        <div class="row"><span>Adresse</span><span>${o.address||'—'}</span></div>
+        <div class="row"><span>Kaufpreis</span><span>${fmt(totalKP)}</span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Käufer</div>
+        <div class="row"><span>Name</span><span>${r.buyer_name||'—'}</span></div>
+        ${r.buyer_contact ? `<div class="row"><span>Kontakt</span><span>${r.buyer_contact}</span></div>` : ''}
+      </div>
+
+      ${vpProfile ? `
+      <div class="section">
+        <div class="section-title">Vermittler</div>
+        <div class="row"><span>Name</span><span>${vpProfile.full_name||'—'}</span></div>
+        ${vpProfile.company_name ? `<div class="row"><span>Unternehmen</span><span>${vpProfile.company_name}</span></div>` : ''}
+        <div class="row"><span>E-Mail</span><span>${vpProfile.email||'—'}</span></div>
+      </div>` : ''}
+
+      <div class="section">
+        <div class="section-title">Reservierungskonditionen</div>
+        <div class="highlight">
+          <strong>Soft-Reservierung:</strong> Die Einheit ist bis zum <strong>${fmtDate(softExpiry.toISOString())}</strong> für Sie reserviert (72 Stunden).<br>
+          ${hardExpiry ? `<strong>Hard-Reservierung:</strong> Nach Genehmigung gilt die Reservierung bis zum <strong>${fmtDate(hardExpiry.toISOString())}</strong> (21 Tage).<br>` : ''}
+          <strong>Reservierungsgebühr:</strong> <strong>€ 500,00</strong> (wird auf die Provision angerechnet).<br>
+          Zahlungsfrist: bis spätestens <strong>${fmtDate(paymentDeadline.toISOString())}</strong>.
+        </div>
+      </div>
+
+      ${o.bank_iban ? `
+      <div class="section">
+        <div class="section-title">Zahlungsanweisung Reservierungsgebühr</div>
+        <div class="bank-box">
+          <div class="label">Empfänger</div>
+          <div class="value">${o.bank_account_holder||'Beqiri Capital Management'}</div>
+          <div class="label">Bank</div>
+          <div class="value">${o.bank_name||'—'}</div>
+          <div class="label">IBAN</div>
+          <div class="value">${o.bank_iban}</div>
+          ${o.bank_bic ? `<div class="label">BIC</div><div class="value">${o.bank_bic}</div>` : ''}
+          <div class="label">Verwendungszweck</div>
+          <div class="value">Reservierung ${o.name||''} – ${r.buyer_name}</div>
+          <div class="label">Betrag</div>
+          <div class="value" style="color:#6fcf97">€ 500,00</div>
+        </div>
+      </div>` : ''}
+
+      <div class="section">
+        <div class="section-title">Rechtliche Hinweise</div>
+        <div class="legal">
+          Diese Reservierungsvereinbarung begründet kein verbindliches Kaufversprechen und ersetzt nicht den notariellen Kaufvertrag.
+          Die Reservierung kann durch beide Parteien schriftlich widerrufen werden. Bei Widerruf durch den Käufer innerhalb der
+          Reservierungsfrist verfällt die Reservierungsgebühr. Beqiri Capital Management behält sich das Recht vor, die
+          Reservierung bei Nichtzahlung der Reservierungsgebühr innerhalb der Zahlungsfrist zu stornieren.
+          Mit Unterzeichnung bestätigt der Käufer, diese Vereinbarung gelesen und verstanden zu haben.
+        </div>
+      </div>
+    </div>
+
+    <div class="sign-area">
+      <div class="sign-title">Digitale Unterschrift</div>
+      <div class="sign-sub">Bitte E-Mail-Adresse angeben und im Unterschriftsfeld unterschreiben. Sie erhalten das unterzeichnete Dokument automatisch per E-Mail.</div>
+
+      <div class="email-field">
+        <label>Ihre E-Mail-Adresse *</label>
+        <input type="email" id="buyer-email" value="${preEmail}" placeholder="max.mustermann@email.de">
+      </div>
+
+      <canvas id="sigCanvas" width="700" height="160"></canvas>
+      <div class="sign-actions">
+        <button class="btn-clear" onclick="clearSig()">↺ Löschen</button>
+        <button class="btn-submit" id="submitBtn" onclick="submitSignature()">✓ Verbindlich unterzeichnen &amp; PDF erhalten</button>
+      </div>
+      <div id="progress" class="progress"></div>
+      <div style="font-size:11px;color:#888;margin-top:10px">
+        Mit der Unterzeichnung bestätigen Sie die obige Reservierungsvereinbarung.<br>
+        Ihre Unterschrift, IP-Adresse und der Zeitstempel werden gespeichert.
+      </div>
+    </div>
+  `;
+
+  initCanvas();
+}
+
+function initCanvas() {
+  canvas = document.getElementById('sigCanvas');
+  if (!canvas) return;
+  ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1a2744';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  canvas.addEventListener('mousedown', e => { drawing = true; ctx.beginPath(); const r = canvas.getBoundingClientRect(); ctx.moveTo((e.clientX-r.left)*(canvas.width/r.width), (e.clientY-r.top)*(canvas.height/r.height)); });
+  canvas.addEventListener('mousemove', e => { if(!drawing) return; const r = canvas.getBoundingClientRect(); ctx.lineTo((e.clientX-r.left)*(canvas.width/r.width), (e.clientY-r.top)*(canvas.height/r.height)); ctx.stroke(); });
+  canvas.addEventListener('mouseup', () => drawing = false);
+  canvas.addEventListener('mouseleave', () => drawing = false);
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; ctx.beginPath(); const r = canvas.getBoundingClientRect(), t = e.touches[0]; ctx.moveTo((t.clientX-r.left)*(canvas.width/r.width), (t.clientY-r.top)*(canvas.height/r.height)); });
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); if(!drawing) return; const r = canvas.getBoundingClientRect(), t = e.touches[0]; ctx.lineTo((t.clientX-r.left)*(canvas.width/r.width), (t.clientY-r.top)*(canvas.height/r.height)); ctx.stroke(); });
+  canvas.addEventListener('touchend', () => drawing = false);
+}
+
+function clearSig() {
+  if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function isCanvasEmpty() {
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  return !data.some(v => v !== 0);
+}
+
+function setProgress(msg) {
+  const el = document.getElementById('progress');
+  if (el) el.textContent = msg;
+}
+
+function generatePDF(r, sigData) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const o = r.objects || {};
+  const totalKP = (o.price_unit||0) + (o.parking_active ? (o.parking_price||0) : 0);
+  const W = 210, margin = 20;
+  let y = 20;
+
+  // Header
+  doc.setFillColor(26, 39, 68);
+  doc.rect(0, 0, W, 28, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(212, 175, 74);
+  doc.text('Beqiri Capital Management', margin, 13);
+  doc.setFontSize(9);
+  doc.setTextColor(180, 180, 200);
+  doc.text('RESERVIERUNGSVEREINBARUNG', margin, 21);
+  y = 38;
+
+  // Title
+  doc.setTextColor(26, 39, 68);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Reservierungsvereinbarung', margin, y);
+  y += 7;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120, 120, 120);
+  doc.text('Datum: ' + fmtDate(new Date().toISOString()) + '   ·   Vorgangsnummer: ' + token.slice(0,8).toUpperCase(), margin, y);
+  y += 10;
+
+  function section(title) {
+    doc.setFillColor(240, 242, 247);
+    doc.rect(margin, y, W-2*margin, 6, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 100, 120);
+    doc.text(title.toUpperCase(), margin+2, y+4.2);
+    y += 9;
+  }
+  function row(label, value) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(label, margin, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(26, 39, 68);
+    doc.text(String(value||'—'), W/2, y);
+    doc.setDrawColor(230, 230, 230);
+    doc.line(margin, y+1.5, W-margin, y+1.5);
+    y += 7;
+  }
+
+  section('Objekt');
+  row('Wohneinheit', o.name||'—');
+  row('Adresse', o.address||'—');
+  row('Kaufpreis', fmt(totalKP));
+  y += 3;
+
+  section('Käufer');
+  row('Name', r.buyer_name||'—');
+  if (r.buyer_contact) row('Kontakt', r.buyer_contact);
+  y += 3;
+
+  if (vpProfile) {
+    section('Vermittler');
+    row('Name', vpProfile.full_name||'—');
+    if (vpProfile.company_name) row('Unternehmen', vpProfile.company_name);
+    row('E-Mail', vpProfile.email||'—');
+    y += 3;
+  }
+
+  section('Reservierungskonditionen');
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(50, 50, 50);
+  const lines = [
+    'Soft-Reservierung: Einheit reserviert bis ' + fmtDate(r.expires_at) + ' (72 Stunden).',
+    r.hard_expires_at ? 'Hard-Reservierung: Gilt bis ' + fmtDate(r.hard_expires_at) + ' (21 Tage nach Genehmigung).' : '',
+    'Reservierungsgebühr: € 500,00 (wird auf Provision angerechnet).',
+  ].filter(Boolean);
+  lines.forEach(l => { doc.text(l, margin, y); y += 6; });
+  y += 3;
+
+  if (o.bank_iban) {
+    section('Zahlungsanweisung');
+    row('Empfänger', o.bank_account_holder||'Beqiri Capital Management');
+    if (o.bank_name) row('Bank', o.bank_name);
+    row('IBAN', o.bank_iban);
+    if (o.bank_bic) row('BIC', o.bank_bic);
+    row('Betrag', '€ 500,00');
+    row('Verwendungszweck', 'Reservierung ' + (o.name||'') + ' – ' + r.buyer_name);
+    y += 3;
+  }
+
+  // Signature
+  section('Unterschrift');
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text('Unterzeichnet am ' + fmtDate(new Date().toISOString()) + ' von ' + r.buyer_name, margin, y);
+  y += 5;
+  if (sigData) {
+    try {
+      doc.addImage(sigData, 'PNG', margin, y, 80, 25);
+    } catch(e) {}
+    y += 28;
+  }
+  doc.setDrawColor(26, 39, 68);
+  doc.line(margin, y, margin+80, y);
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  doc.text(r.buyer_name + '  (digitale Unterschrift)', margin, y+4);
+
+  // Footer
+  doc.setFontSize(7);
+  doc.setTextColor(160, 160, 160);
+  doc.text('Diese Vereinbarung wurde digital unterzeichnet und ist rechtlich bindend. © Beqiri Capital Management', margin, 285);
+
+  return doc.output('datauristring').split(',')[1]; // base64
+}
+
+async function submitSignature() {
+  if (isCanvasEmpty()) { alert('Bitte unterschreiben Sie zuerst.'); return; }
+  const email = document.getElementById('buyer-email').value.trim();
+  if (!email || !email.includes('@')) { alert('Bitte geben Sie eine gültige E-Mail-Adresse ein.'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  setProgress('⏳ Unterschrift wird gespeichert...');
+
+  const sigData = canvas.toDataURL('image/png');
+  const signedAt = new Date().toISOString();
+
+  const { error } = await sb.from('reservations').update({
+    signed_at: signedAt,
+    signature_data: sigData,
+    buyer_email: email
+  }).eq('signing_token', token);
+
+  if (error) {
+    btn.disabled = false;
+    setProgress('');
+    alert('Fehler beim Speichern: ' + error.message);
+    return;
+  }
+
+  setProgress('📄 PDF wird erstellt...');
+  const pdfBase64 = generatePDF({...resData, signed_at: signedAt}, sigData);
+
+  setProgress('📧 PDF wird per E-Mail versendet...');
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/send-agreement`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify({
+        to: email,
+        subject: 'Ihre Reservierungsvereinbarung – ' + (resData.objects?.name||''),
+        html: `<p>Sehr geehrte/r ${resData.buyer_name},</p>
+               <p>vielen Dank für Ihre Unterzeichnung. Anbei erhalten Sie Ihre Reservierungsvereinbarung als PDF.</p>
+               <p>Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 500,00</strong> innerhalb von 5 Werktagen.</p>
+               <p>Bei Fragen steht Ihnen Ihr Ansprechpartner gerne zur Verfügung.</p>
+               <p>Mit freundlichen Grüßen<br>Beqiri Capital Management</p>`,
+        pdfBase64,
+        fileName: 'Reservierungsvereinbarung_' + (resData.objects?.name||'').replace(/\s/g,'_') + '.pdf'
+      })
+    });
+    setProgress('✅ E-Mail wurde versandt!');
+  } catch(e) {
+    setProgress('⚠️ PDF erstellt, E-Mail konnte nicht gesendet werden.');
+  }
+
+  setTimeout(() => {
+    document.getElementById('main').innerHTML = showSuccess({...resData, signed_at: signedAt, buyer_email: email});
+  }, 1500);
+}
+
+function showSuccess(r) {
+  return `
+    <div class="success">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Vereinbarung unterzeichnet!</div>
+      <div class="success-text">
+        Vielen Dank, <strong>${r.buyer_name}</strong>.<br>
+        Ihre Reservierungsvereinbarung wurde am <strong>${fmtDate(r.signed_at||new Date().toISOString())}</strong> digital unterzeichnet.<br><br>
+        ${r.buyer_email ? `Eine Kopie wurde an <strong>${r.buyer_email}</strong> gesendet.<br><br>` : ''}
+        Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 500,00</strong> innerhalb von 5 Werktagen.<br>
+        Sie erhalten eine Bestätigung von Ihrem Ansprechpartner.
+      </div>
+    </div>`;
+}
+
+load();
+</script>
+</body>
+</html>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f7;color:#1a1714;min-height:100vh}
