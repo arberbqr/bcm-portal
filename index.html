@@ -855,8 +855,8 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
           </div>
 
           <!-- Bildergalerie -->
-          <div id="cr-gallery" style="display:none;position:relative;background:#1a1714;overflow:hidden">
-            <div id="cr-gallery-imgs" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:2px;scrollbar-width:thin">
+          <div id="cr-gallery" style="display:none;position:relative;background:#1a1714;overflow:hidden;max-height:180px">
+            <div id="cr-gallery-imgs" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:2px;height:180px;scrollbar-width:thin;scrollbar-color:#444 #1a1714">
             </div>
             <div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,.5);color:white;font-size:10px;padding:2px 7px;border-radius:2px" id="cr-gallery-count"></div>
           </div>
@@ -2557,7 +2557,7 @@ async function openCalcForObject(id) {
       if (galleryEl && galleryImgs) {
         galleryEl.style.display = 'block';
         galleryImgs.innerHTML = urls.map(u =>
-          `<img src="${u}" style="height:200px;min-width:260px;object-fit:cover;scroll-snap-align:start;flex-shrink:0;cursor:pointer" onclick="window.open('${u}','_blank')">`
+          `<img src="${u}" style="height:180px;width:auto;min-width:220px;max-width:320px;object-fit:cover;scroll-snap-align:start;flex-shrink:0;cursor:pointer" onclick="window.open('${u}','_blank')">`
         ).join('');
         if (galleryCount) galleryCount.textContent = urls.length + ' Foto' + (urls.length !== 1 ? 's' : '');
       }
