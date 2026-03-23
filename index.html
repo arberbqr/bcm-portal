@@ -850,7 +850,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
               <div style="font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700" id="cr-objName">—</div>
               <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px" id="cr-objAddr">—</div>
             </div>
-            <div style="font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--gold2)" id="cr-totalPrice">—</div>
+            <div style="text-align:right">
+              <div style="font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--gold2)" id="cr-totalPrice">—</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Kaltmiete: <span id="cr-coldrent" style="color:var(--gold2);font-weight:700">—</span>/Mo</div>
+            </div>
             <div id="cr-price-break" style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;text-align:right;display:none"></div>
           </div>
 
@@ -1001,7 +1004,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <span style="color:var(--gold)">①</span> <strong>Soft-Reservierung (72h):</strong> Einheit wird sofort blockiert<br>
         <span style="color:var(--pos)">②</span> <strong>Hard-Reservierung (21 Tage):</strong> Nach Genehmigung durch Beqiri Capital<br>
         <span style="color:var(--navy)">③</span> <strong>Notarisierung:</strong> Finaler Abschluss<br>
-        <span style="font-size:11px;color:var(--g500)">Reservierungsgebühr: €500 (wird auf Provision angerechnet)</span>
+        <span style="font-size:11px;color:var(--g500)">Reservierungsgebühr: €1.000 (wird nach Beurkundung innerhalb von 5 Werktagen zurückerstattet)</span>
       </div>
 
       <div class="form-grid" style="grid-template-columns:1fr">
@@ -1871,7 +1874,7 @@ async function openResDetail(id) {
           ${r.status==='notarized'?`<div style="font-size:11px;color:var(--pos);margin-top:4px">Notarisiert am ${fmtDate(r.notarized_at)}</div>`:''}
         </div>
         <div style="border:1px solid var(--g200);padding:10px 14px">
-          <div style="font-size:10px;color:var(--g500);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:4px">Reservierungsgebühr (€500)</div>
+          <div style="font-size:10px;color:var(--g500);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:4px">Reservierungsgebühr (€1.000)</div>
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:13px;font-weight:700;color:${r.fee_paid?'var(--pos)':'var(--neg)'}">${r.fee_paid?'✓ Bezahlt':'✗ Ausstehend'}</span>
             ${r.status==='approved'&&!r.fee_paid?`<button class="btn-sm btn-pos" style="font-size:10px;padding:3px 8px" onclick="markFeePaid('${id}')">Als bezahlt markieren</button>`:''}
@@ -2804,6 +2807,8 @@ function runCalc() {
   document.getElementById('cr-objName').textContent  = o.name;
   document.getElementById('cr-objAddr').textContent  = o.address||'';
   document.getElementById('cr-totalPrice').textContent = fmt(priceUnitEff + parkingPrice + priceFurni);
+  const coldrentEl = document.getElementById('cr-coldrent');
+  if(coldrentEl) coldrentEl.textContent = fmt(coldRent);
 
   // Preisaufschlüsselung unter dem Preis
   const priceBreakEl = document.getElementById('cr-price-break');
@@ -3403,7 +3408,7 @@ async function printCalc() {
       + '</div>' : '')
     // KPIs
     + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">'
-    + [['Bruttorendite',fmtP(d.brutto),'#2e7d52'],['Nettorendite',fmtP(d.netto),'#1a2744'],['CF p.M. v.St.',fmt(d.cf1M,2),'#1a2744'],['CF p.M. n.St.',fmt(d.cf1MSt,2),'#1a2744'],['EK-Verzinsung 10J.',fmtP(d.irr),'#2e7d52']]
+    + [['Bruttorendite',fmtP(d.brutto),'#2e7d52'],['Nettorendite',fmtP(d.netto),'#1a2744'],['Kaltmiete p.M.',fmt(d.coldRent),'#1a2744'],['CF p.M. v.St.',fmt(d.cf1M,2),'#1a2744'],['CF p.M. n.St.',fmt(d.cf1MSt,2),'#1a2744'],['EK-Verzinsung 10J.',fmtP(d.irr),'#2e7d52']]
       .map(function(x){return '<div style="background:#f0f2f7;border:1px solid #d0ccc4;padding:7px 9px"><div style="font-size:6pt;color:#888075;text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+x[0]+'</div><div style="font-size:13pt;font-weight:700;color:'+x[2]+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
     + '</div>'
     // Monatliche Rate Box
