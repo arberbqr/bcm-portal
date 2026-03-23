@@ -160,10 +160,11 @@ async function load() {
       <div class="section">
         <div class="section-title">Reservierungskonditionen</div>
         <div class="highlight">
-          <strong>Soft-Reservierung:</strong> Die Einheit ist bis zum <strong>${fmtDate(softExpiry.toISOString())}</strong> für Sie reserviert (72 Stunden).<br>
-          ${hardExpiry ? `<strong>Hard-Reservierung:</strong> Nach Genehmigung gilt die Reservierung bis zum <strong>${fmtDate(hardExpiry.toISOString())}</strong> (21 Tage).<br>` : ''}
-          <strong>Reservierungsgebühr:</strong> <strong>€ 500,00</strong> (wird auf die Provision angerechnet).<br>
-          Zahlungsfrist: bis spätestens <strong>${fmtDate(paymentDeadline.toISOString())}</strong>.
+          <strong>① Reservierung:</strong> Einheit ist ab sofort für Sie reserviert.<br>
+          <strong>② Finalisierung Finanzierung:</strong> Nach Genehmigung durch Beqiri Capital – Frist bis <strong>${hardExpiry ? fmtDate(hardExpiry.toISOString()) : fmtDate(new Date(Date.now()+21*24*60*60*1000).toISOString())}</strong> (21 Tage).<br>
+          <strong>③ Beurkundung:</strong> Finaler Abschluss beim Notar.<br>
+          <strong>Reservierungsgebühr: € 1.000,00</strong> – Zahlungsfrist bis <strong>${fmtDate(paymentDeadline.toISOString())}</strong>.<br>
+          <span style="font-size:12px;color:#666">Die Gebühr verfällt bei Rücktritt des Käufers. Erstattung binnen 5 Werktagen nach Beurkundung, bei Rücktritt durch Beqiri Capital, oder wenn trotz vollständiger Unterlagen die Finanzierung nicht innerhalb von 21 Tagen steht.</span>
         </div>
       </div>
 
@@ -181,7 +182,7 @@ async function load() {
           <div class="label">Verwendungszweck</div>
           <div class="value">Reservierung ${o.name||''} – ${r.buyer_name}</div>
           <div class="label">Betrag</div>
-          <div class="value" style="color:#6fcf97">€ 500,00</div>
+          <div class="value" style="color:#6fcf97">€ 1.000,00</div>
         </div>
       </div>` : ''}
 
@@ -328,7 +329,7 @@ function generatePDF(r, sigData) {
   const lines = [
     'Soft-Reservierung: Einheit reserviert bis ' + fmtDate(r.expires_at) + ' (72 Stunden).',
     r.hard_expires_at ? 'Hard-Reservierung: Gilt bis ' + fmtDate(r.hard_expires_at) + ' (21 Tage nach Genehmigung).' : '',
-    'Reservierungsgebühr: € 500,00 (wird auf Provision angerechnet).',
+    'Reservierungsgebühr: € 1.000,00 (wird auf Provision angerechnet).',
   ].filter(Boolean);
   lines.forEach(l => { doc.text(l, margin, y); y += 6; });
   y += 3;
@@ -339,7 +340,7 @@ function generatePDF(r, sigData) {
     if (o.bank_name) row('Bank', o.bank_name);
     row('IBAN', o.bank_iban);
     if (o.bank_bic) row('BIC', o.bank_bic);
-    row('Betrag', '€ 500,00');
+    row('Betrag', '€ 1.000,00');
     row('Verwendungszweck', 'Reservierung ' + (o.name||'') + ' – ' + r.buyer_name);
     y += 3;
   }
@@ -445,7 +446,7 @@ function showSuccess(r) {
         Vielen Dank, <strong>${r.buyer_name}</strong>.<br>
         Ihre Reservierungsvereinbarung wurde am <strong>${fmtDate(r.signed_at||new Date().toISOString())}</strong> digital unterzeichnet.<br><br>
         ${r.buyer_email ? `Eine Kopie wurde an <strong>${r.buyer_email}</strong> gesendet.<br><br>` : 'Das PDF wurde auf Ihr Gerät heruntergeladen.<br><br>'}
-        Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 500,00</strong> innerhalb von 5 Werktagen.<br>
+        Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 1.000,00</strong> innerhalb von 5 Werktagen.<br>
         Sie erhalten eine Bestätigung von Ihrem Ansprechpartner.
       </div>
     </div>`;
@@ -604,10 +605,11 @@ async function load() {
       <div class="section">
         <div class="section-title">Reservierungskonditionen</div>
         <div class="highlight">
-          <strong>Soft-Reservierung:</strong> Die Einheit ist bis zum <strong>${fmtDate(softExpiry.toISOString())}</strong> für Sie reserviert (72 Stunden).<br>
-          ${hardExpiry ? `<strong>Hard-Reservierung:</strong> Nach Genehmigung gilt die Reservierung bis zum <strong>${fmtDate(hardExpiry.toISOString())}</strong> (21 Tage).<br>` : ''}
-          <strong>Reservierungsgebühr:</strong> <strong>€ 500,00</strong> (wird auf die Provision angerechnet).<br>
-          Zahlungsfrist: bis spätestens <strong>${fmtDate(paymentDeadline.toISOString())}</strong>.
+          <strong>① Reservierung:</strong> Einheit ist ab sofort für Sie reserviert.<br>
+          <strong>② Finalisierung Finanzierung:</strong> Nach Genehmigung durch Beqiri Capital – Frist bis <strong>${hardExpiry ? fmtDate(hardExpiry.toISOString()) : fmtDate(new Date(Date.now()+21*24*60*60*1000).toISOString())}</strong> (21 Tage).<br>
+          <strong>③ Beurkundung:</strong> Finaler Abschluss beim Notar.<br>
+          <strong>Reservierungsgebühr: € 1.000,00</strong> – Zahlungsfrist bis <strong>${fmtDate(paymentDeadline.toISOString())}</strong>.<br>
+          <span style="font-size:12px;color:#666">Die Gebühr verfällt bei Rücktritt des Käufers. Erstattung binnen 5 Werktagen nach Beurkundung, bei Rücktritt durch Beqiri Capital, oder wenn trotz vollständiger Unterlagen die Finanzierung nicht innerhalb von 21 Tagen steht.</span>
         </div>
       </div>
 
@@ -625,7 +627,7 @@ async function load() {
           <div class="label">Verwendungszweck</div>
           <div class="value">Reservierung ${o.name||''} – ${r.buyer_name}</div>
           <div class="label">Betrag</div>
-          <div class="value" style="color:#6fcf97">€ 500,00</div>
+          <div class="value" style="color:#6fcf97">€ 1.000,00</div>
         </div>
       </div>` : ''}
 
@@ -723,7 +725,7 @@ function showSuccess(r) {
       <div class="success-text">
         Vielen Dank, <strong>${r.buyer_name}</strong>.<br>
         Ihre Reservierungsvereinbarung wurde am <strong>${fmtDate(r.signed_at||new Date().toISOString())}</strong> digital unterzeichnet und gespeichert.<br><br>
-        Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 500,00</strong> innerhalb von 5 Werktagen.<br>
+        Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 1.000,00</strong> innerhalb von 5 Werktagen.<br>
         Sie erhalten eine Bestätigung von Ihrem Ansprechpartner.
       </div>
     </div>`;
