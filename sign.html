@@ -199,17 +199,12 @@ async function load() {
 
     <div class="sign-area">
       <div class="sign-title">Digitale Unterschrift</div>
-      <div class="sign-sub">Bitte E-Mail-Adresse angeben und im Unterschriftsfeld unterschreiben. Sie erhalten das unterzeichnete Dokument automatisch per E-Mail.</div>
-
-      <div class="email-field">
-        <label>Ihre E-Mail-Adresse *</label>
-        <input type="email" id="buyer-email" value="${preEmail}" placeholder="max.mustermann@email.de">
-      </div>
+      <div class="sign-sub">Bitte im folgenden Feld mit dem Finger oder der Maus unterschreiben:</div>
 
       <canvas id="sigCanvas" width="700" height="160"></canvas>
       <div class="sign-actions">
         <button class="btn-clear" onclick="clearSig()">↺ Löschen</button>
-        <button class="btn-submit" id="submitBtn" onclick="submitSignature()">✓ Verbindlich unterzeichnen &amp; PDF erhalten</button>
+        <button class="btn-submit" id="submitBtn" onclick="submitSignature()">✓ Verbindlich unterzeichnen &amp; PDF herunterladen</button>
       </div>
       <div id="progress" class="progress"></div>
       <div style="font-size:11px;color:#888;margin-top:10px">
@@ -378,8 +373,6 @@ function generatePDF(r, sigData) {
 
 async function submitSignature() {
   if (isCanvasEmpty()) { alert('Bitte unterschreiben Sie zuerst.'); return; }
-  const email = document.getElementById('buyer-email').value.trim();
-  if (!email || !email.includes('@')) { alert('Bitte geben Sie eine gültige E-Mail-Adresse ein.'); return; }
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
@@ -391,7 +384,6 @@ async function submitSignature() {
   const { error } = await sb.from('reservations').update({
     signed_at: signedAt,
     signature_data: sigData,
-    buyer_email: email
   }).eq('signing_token', token);
 
   if (error) {
@@ -404,34 +396,44 @@ async function submitSignature() {
   setProgress('📄 PDF wird erstellt...');
   const pdfBase64 = generatePDF({...resData, signed_at: signedAt}, sigData);
 
-  setProgress('📧 PDF wird per E-Mail versendet...');
+  // PDF als Blob in Supabase Storage speichern
+  setProgress('💾 PDF wird gespeichert...');
+  let pdfPath = null;
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/send-agreement`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_KEY}`
-      },
-      body: JSON.stringify({
-        to: email,
-        subject: 'Ihre Reservierungsvereinbarung – ' + (resData.objects?.name||''),
-        html: `<p>Sehr geehrte/r ${resData.buyer_name},</p>
-               <p>vielen Dank für Ihre Unterzeichnung. Anbei erhalten Sie Ihre Reservierungsvereinbarung als PDF.</p>
-               <p>Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 500,00</strong> innerhalb von 5 Werktagen.</p>
-               <p>Bei Fragen steht Ihnen Ihr Ansprechpartner gerne zur Verfügung.</p>
-               <p>Mit freundlichen Grüßen<br>Beqiri Capital Management</p>`,
-        pdfBase64,
-        fileName: 'Reservierungsvereinbarung_' + (resData.objects?.name||'').replace(/\s/g,'_') + '.pdf'
-      })
-    });
-    setProgress('✅ E-Mail wurde versandt!');
+    const pdfBlob = base64ToBlob(pdfBase64, 'application/pdf');
+    const fileName = 'Reservierungsvereinbarung_' + (resData.objects?.name||'').replace(/\s/g,'_') + '_' + token.slice(0,8) + '.pdf';
+    pdfPath = token.slice(0,8) + '/' + fileName;
+    const { error: upErr } = await sb.storage.from('reservation-pdfs').upload(pdfPath, pdfBlob, { contentType: 'application/pdf', upsert: true });
+    if (!upErr) {
+      await sb.from('reservations').update({ pdf_path: pdfPath }).eq('signing_token', token);
+    }
+  } catch(e) { console.error('PDF upload error:', e); }
+
+  // PDF automatisch herunterladen
+  setProgress('📄 PDF wird heruntergeladen...');
+  try {
+    const pdfBlob = base64ToBlob(pdfBase64, 'application/pdf');
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Reservierungsvereinbarung_' + (resData.objects?.name||'').replace(/\s/g,'_') + '.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+    setProgress('✅ PDF wurde heruntergeladen!');
   } catch(e) {
-    setProgress('⚠️ PDF erstellt, E-Mail konnte nicht gesendet werden.');
+    setProgress('⚠️ PDF konnte nicht heruntergeladen werden.');
   }
 
   setTimeout(() => {
-    document.getElementById('main').innerHTML = showSuccess({...resData, signed_at: signedAt, buyer_email: email});
-  }, 1500);
+    document.getElementById('main').innerHTML = showSuccess({...resData, signed_at: signedAt});
+  }, 2000);
+}
+
+function base64ToBlob(base64, mime) {
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mime });
 }
 
 function showSuccess(r) {
@@ -442,7 +444,7 @@ function showSuccess(r) {
       <div class="success-text">
         Vielen Dank, <strong>${r.buyer_name}</strong>.<br>
         Ihre Reservierungsvereinbarung wurde am <strong>${fmtDate(r.signed_at||new Date().toISOString())}</strong> digital unterzeichnet.<br><br>
-        ${r.buyer_email ? `Eine Kopie wurde an <strong>${r.buyer_email}</strong> gesendet.<br><br>` : ''}
+        ${r.buyer_email ? `Eine Kopie wurde an <strong>${r.buyer_email}</strong> gesendet.<br><br>` : 'Das PDF wurde auf Ihr Gerät heruntergeladen.<br><br>'}
         Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 500,00</strong> innerhalb von 5 Werktagen.<br>
         Sie erhalten eine Bestätigung von Ihrem Ansprechpartner.
       </div>
