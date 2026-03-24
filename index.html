@@ -501,8 +501,8 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="card-header"><div class="card-header-title">Reservierungen</div></div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Datum</th><th>Objekt</th><th>Käufer</th><th>Status</th><th>Läuft ab</th></tr></thead>
-            <tbody id="vpResTableBody"><tr><td colspan="5" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
+            <thead><tr><th>Datum</th><th>Objekt</th><th>Käufer</th><th>Status</th><th>Läuft ab</th><th></th></tr></thead>
+            <tbody id="vpResTableBody"><tr><td colspan="6" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -710,7 +710,109 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
   </div>
 </div>
 
-<!-- Kalkulator Modal (VP) - Vollständig -->
+<!-- KVE Modal -->
+<div class="modal-bg" id="kveModal">
+  <div class="modal" style="max-width:860px;width:98%">
+    <div class="modal-header">
+      <div class="modal-title">📋 KVE beantragen</div>
+      <button class="modal-close" onclick="closeModal('kveModal')">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+
+      <!-- Objekt Info Banner -->
+      <div id="kve-obj-banner" style="background:var(--navy);color:white;padding:10px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:700" id="kve-obj-name">—</div><div style="font-size:11px;opacity:.6" id="kve-obj-addr">—</div></div>
+        <div style="text-align:right"><div style="color:var(--gold2);font-weight:700" id="kve-obj-price">—</div><div style="font-size:10px;opacity:.6" id="kve-obj-area">—</div></div>
+      </div>
+
+      <div class="form-grid">
+        <!-- Käufer 1 -->
+        <div style="grid-column:1/-1"><div class="form-section">Käufer 1</div></div>
+        <div class="form-fld"><label>Vollständiger Name *</label><input id="kve-b1-name" type="text" placeholder="Max Mustermann"></div>
+        <div class="form-fld"><label>E-Mail</label><input id="kve-b1-email" type="email" placeholder="max@email.de"></div>
+        <div class="form-fld"><label>Geburtsdatum *</label><input id="kve-b1-birthdate" type="date"></div>
+        <div class="form-fld"><label>Geburtsort *</label><input id="kve-b1-birthplace" type="text" placeholder="München"></div>
+        <div class="form-fld full"><label>Adresse *</label><input id="kve-b1-address" type="text" placeholder="Musterstraße 1"></div>
+        <div class="form-fld"><label>PLZ *</label><input id="kve-b1-zip" type="text" placeholder="80331"></div>
+        <div class="form-fld"><label>Ort *</label><input id="kve-b1-city" type="text" placeholder="München"></div>
+        <div class="form-fld"><label>Nationalität</label><input id="kve-b1-nationality" type="text" placeholder="Deutsch" value="Deutsch"></div>
+        <div class="form-fld"><label>Familienstand</label>
+          <select id="kve-b1-marital">
+            <option>ledig</option><option>verheiratet</option><option>geschieden</option><option>verwitwet</option><option>eingetragene Lebenspartnerschaft</option>
+          </select>
+        </div>
+        <div class="form-fld"><label>Ausweis-/Reisepassnummer</label><input id="kve-b1-id" type="text" placeholder="L01X00T47"></div>
+        <div class="form-fld"><label>Steuer-ID</label><input id="kve-b1-taxid" type="text" placeholder="12 345 678 901"></div>
+        <div class="form-fld"><label>IBAN</label><input id="kve-b1-iban" type="text" placeholder="DE89 3704 0044 0532 0130 00"></div>
+
+        <!-- Käufer 2 Toggle -->
+        <div style="grid-column:1/-1;margin-top:8px">
+          <div class="tog-row"><input type="checkbox" id="kve-b2-active" onchange="toggleKveB2()"> Zweiter Käufer (z.B. Ehepartner/in)</div>
+        </div>
+        <div id="kve-b2-section" style="display:none;grid-column:1/-1">
+          <div class="form-grid">
+            <div style="grid-column:1/-1"><div class="form-section">Käufer 2</div></div>
+            <div class="form-fld"><label>Vollständiger Name *</label><input id="kve-b2-name" type="text" placeholder="Erika Mustermann"></div>
+            <div class="form-fld"><label>E-Mail</label><input id="kve-b2-email" type="email" placeholder="erika@email.de"></div>
+            <div class="form-fld"><label>Geburtsdatum</label><input id="kve-b2-birthdate" type="date"></div>
+            <div class="form-fld"><label>Geburtsort</label><input id="kve-b2-birthplace" type="text"></div>
+            <div class="form-fld full"><label>Adresse (falls abweichend)</label><input id="kve-b2-address" type="text" placeholder="Wie Käufer 1 wenn leer"></div>
+            <div class="form-fld"><label>PLZ</label><input id="kve-b2-zip" type="text"></div>
+            <div class="form-fld"><label>Ort</label><input id="kve-b2-city" type="text"></div>
+            <div class="form-fld"><label>Nationalität</label><input id="kve-b2-nationality" type="text" value="Deutsch"></div>
+            <div class="form-fld"><label>Familienstand</label>
+              <select id="kve-b2-marital">
+                <option>ledig</option><option>verheiratet</option><option>geschieden</option><option>verwitwet</option><option>eingetragene Lebenspartnerschaft</option>
+              </select>
+            </div>
+            <div class="form-fld"><label>Ausweis-/Reisepassnummer</label><input id="kve-b2-id" type="text"></div>
+            <div class="form-fld"><label>Steuer-ID</label><input id="kve-b2-taxid" type="text"></div>
+            <div class="form-fld"><label>IBAN</label><input id="kve-b2-iban" type="text"></div>
+          </div>
+        </div>
+
+        <!-- Gemeinsame Angaben -->
+        <div style="grid-column:1/-1"><div class="form-section">Gemeinsame Angaben</div></div>
+        <div class="form-fld"><label>Güterstand</label>
+          <select id="kve-gueterstand">
+            <option>Zugewinngemeinschaft</option>
+            <option>Gütertrennung</option>
+            <option>Gütergemeinschaft</option>
+          </select>
+        </div>
+        <div class="form-fld"><label>Finanzierungsbank</label><input id="kve-fin-bank" type="text" placeholder="z.B. Sparkasse München"></div>
+        <div class="form-fld"><label>Finanzierungsbetrag (€)</label><input id="kve-fin-amount" type="number"></div>
+        <div class="form-fld"><label>Nebenkosten trägt</label>
+          <select id="kve-nkk-seller">
+            <option value="false">Käufer (Standard)</option>
+            <option value="true">Verkäufer</option>
+          </select>
+        </div>
+        <div class="form-fld full"><label>Anmerkungen für Notar</label><textarea id="kve-notes" rows="2" style="width:100%;padding:8px;border:1px solid var(--g300);font-family:inherit;font-size:12px"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('kveModal')">Abbrechen</button>
+      <button class="btn-sm btn-gold" onclick="submitKve()">📋 KVE beantragen & PDF erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin KVE Liste Modal -->
+<div class="modal-bg" id="kveListModal">
+  <div class="modal" style="max-width:700px;width:98%">
+    <div class="modal-header">
+      <div class="modal-title">📋 KVE Anfragen</div>
+      <button class="modal-close" onclick="closeModal('kveListModal')">×</button>
+    </div>
+    <div class="modal-body" id="kveListBody" style="padding:16px"></div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('kveListModal')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="modal-bg" id="calcModal">
   <div class="modal" style="max-width:1200px;width:98%">
     <div class="modal-header">
@@ -1346,6 +1448,7 @@ function setupAppShell() {
       <button class="app-nav-btn" onclick="loadView('reservations')">Reservierungen</button>
       <button class="app-nav-btn" onclick="loadView('partners')">Partner</button>
       <button class="app-nav-btn" onclick="loadView('admin-calcs')">Berechnungen</button>
+      <button class="app-nav-btn" onclick="openAdminKve()">KVE Anfragen</button>
     `;
   } else {
     nav.innerHTML = `
@@ -1911,10 +2014,17 @@ async function openResDetail(id) {
       ${docLink?`<div style="margin-top:12px;padding:10px 14px;border:1px solid var(--g200)">${docLink}</div>`:''}
 
       <!-- Unterzeichnetes PDF -->
-      ${r.pdf_path?`<div style="margin-top:8px;padding:10px 14px;border:1px solid var(--pos);background:rgba(46,125,82,.05);display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:12px;font-weight:700;color:var(--pos)">✓ Unterzeichnete Vereinbarung</span>
-        <button class="btn-sm btn-pos" style="font-size:11px" onclick="downloadResPdf('${r.pdf_path}')">📄 PDF öffnen</button>
-      </div>`:(r.signed_at?`<div style="margin-top:8px;padding:10px 14px;border:1px solid var(--g200);font-size:12px;color:var(--g500)">Unterschrift gespeichert – PDF wird beim nächsten Unterzeichnen gespeichert.</div>`:'')}
+      ${r.pdf_path
+        ? `<div style="margin-top:8px;padding:10px 14px;border:1px solid var(--pos);background:rgba(46,125,82,.05);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;font-weight:700;color:var(--pos)">✓ Unterzeichnete Vereinbarung</span>
+          <button class="btn-sm btn-pos" style="font-size:11px" onclick="downloadResPdf('${r.pdf_path}')">📄 PDF öffnen</button>
+        </div>`
+        : r.signed_at
+        ? `<div style="margin-top:8px;padding:10px 14px;border:1px solid var(--pos);background:rgba(46,125,82,.05);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;font-weight:700;color:var(--pos)">✓ Unterzeichnet am ${fmtDate(r.signed_at)}</span>
+          <button class="btn-sm btn-pos" style="font-size:11px" onclick="regenerateResPdf('${id}')">📄 PDF generieren</button>
+        </div>`
+        : ''}
 
       <!-- Ablehnung Grund -->
       ${r.status==='rejected'&&r.rejection_reason?`<div style="background:#fdf0f0;border-left:3px solid var(--neg);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--neg)"><strong>Ablehnungsgrund:</strong> ${r.rejection_reason}</div>`:''}
@@ -1978,6 +2088,131 @@ async function sendAgreement(resId) {
   }
   closeModal('resDetailModal');
   loadReservations();
+}
+
+async function regenerateResPdf(resId) {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ Wird generiert...';
+
+  const { data: r } = await sb.from('reservations')
+    .select('*, objects(name,address,price_unit,parking_active,parking_price,bank_name,bank_iban,bank_bic,bank_account_holder)')
+    .eq('id', resId).single();
+  if (!r) { btn.disabled=false; btn.textContent='📄 PDF generieren'; notify('Reservierung nicht gefunden','error'); return; }
+
+  let vpProfile = null;
+  if (r.vp_id) {
+    const { data: vp } = await sb.from('profiles').select('company_name,company_logo,full_name,email').eq('id', r.vp_id).single();
+    vpProfile = vp;
+  }
+
+  // jsPDF laden falls noch nicht da
+  if (!window.jspdf) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const o = r.objects || {};
+  const totalKP = (o.price_unit||0) + (o.parking_active ? (o.parking_price||0) : 0);
+  const W = 210, margin = 20;
+  let y = 20;
+
+  function fmt2(n) { return n ? '€\u00a0' + Math.round(n).toLocaleString('de-DE') : '—'; }
+  function fd(d) { return d ? new Date(d).toLocaleDateString('de-DE') : '—'; }
+
+  // Header
+  doc.setFillColor(26,39,68); doc.rect(0,0,W,28,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(212,175,74);
+  doc.text('Beqiri Capital Management', margin, 13);
+  doc.setFontSize(9); doc.setTextColor(180,180,200);
+  doc.text('RESERVIERUNGSVEREINBARUNG', margin, 21);
+  y = 38;
+
+  doc.setTextColor(26,39,68); doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text('Reservierungsvereinbarung', margin, y); y += 7;
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
+  doc.text('Datum: ' + fd(r.signed_at) + '   ·   Vorgangsnummer: ' + r.signing_token.slice(0,8).toUpperCase(), margin, y); y += 10;
+
+  function section(title) {
+    doc.setFillColor(240,242,247); doc.rect(margin,y,W-2*margin,6,'F');
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,120);
+    doc.text(title.toUpperCase(), margin+2, y+4.2); y += 9;
+  }
+  function row2(label, value) {
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text(label, margin, y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(26,39,68);
+    doc.text(String(value||'—'), W/2, y);
+    doc.setDrawColor(230,230,230); doc.line(margin, y+1.5, W-margin, y+1.5); y += 7;
+  }
+
+  section('Objekt');
+  row2('Wohneinheit', o.name||'—');
+  row2('Adresse', o.address||'—');
+  row2('Kaufpreis', fmt2(totalKP));
+  y += 3;
+
+  section('Käufer');
+  row2('Name', r.buyer_name||'—');
+  if (r.buyer_contact) row2('Kontakt', r.buyer_contact);
+  y += 3;
+
+  if (vpProfile) {
+    section('Vermittler');
+    row2('Name', vpProfile.full_name||'—');
+    if (vpProfile.company_name) row2('Unternehmen', vpProfile.company_name);
+    row2('E-Mail', vpProfile.email||'—');
+    y += 3;
+  }
+
+  section('Reservierungskonditionen & Gebühr');
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(50,50,50);
+  const lines = [
+    '① Reservierung: Einheit sofort blockiert.',
+    r.hard_expires_at ? '② Finalisierung Finanzierung: Frist bis ' + fd(r.hard_expires_at) + ' (21 Tage).' : '② Finalisierung Finanzierung: 21 Tage nach Genehmigung.',
+    '③ Beurkundung: Finaler Abschluss beim Notar.',
+    'Reservierungsgebühr: € 1.000,00',
+    'Erstattung nach Beurkundung, bei Rücktritt durch Beqiri Capital oder nicht gesicherter',
+    'Finanzierung trotz vollständiger Unterlagen innerhalb 21 Tagen.',
+    'Verfall bei Rücktritt des Käufers.'
+  ];
+  lines.forEach(l => { doc.text(l, margin, y); y += 5.5; });
+  y += 3;
+
+  if (o.bank_iban) {
+    section('Zahlungsanweisung');
+    row2('Empfänger', o.bank_account_holder||'Beqiri Capital Management');
+    if (o.bank_name) row2('Bank', o.bank_name);
+    row2('IBAN', o.bank_iban);
+    if (o.bank_bic) row2('BIC', o.bank_bic);
+    row2('Betrag', '€ 1.000,00');
+    row2('Verwendungszweck', 'Reservierung ' + (o.name||'') + ' – ' + r.buyer_name);
+    y += 3;
+  }
+
+  // Unterschrift
+  section('Unterschrift');
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  doc.text('Unterzeichnet am ' + fd(r.signed_at) + ' von ' + r.buyer_name, margin, y); y += 5;
+  if (r.signature_data) {
+    try { doc.addImage(r.signature_data, 'PNG', margin, y, 80, 25); } catch(e) {}
+    y += 28;
+  }
+  doc.setDrawColor(26,39,68); doc.line(margin, y, margin+80, y);
+  doc.setFontSize(8); doc.setTextColor(120,120,120);
+  doc.text(r.buyer_name + '  (digitale Unterschrift)', margin, y+4);
+  doc.setFontSize(7); doc.setTextColor(160,160,160);
+  doc.text('Dieses Dokument wurde digital unterzeichnet. © Beqiri Capital Management', margin, 285);
+
+  // Download
+  doc.save('Reservierungsvereinbarung_' + (o.name||'').replace(/\s/g,'_') + '_' + r.buyer_name.replace(/\s/g,'_') + '.pdf');
+  btn.disabled=false; btn.textContent='📄 PDF generieren';
+  notify('✓ PDF heruntergeladen!', 'success');
 }
 
 async function downloadResPdf(path) {
@@ -3248,6 +3483,11 @@ async function loadVPCalcs() {
   document.getElementById('vpCalcsWrap').innerHTML = calcTableHTML(data||[], false);
 }
 
+async function openAdminKve() {
+  openModal('kveListModal');
+  await loadAdminKve();
+}
+
 async function loadAdminCalcs() {
   const { data } = await sb.from('calculations').select('*').order('created_at', {ascending:false});
   document.getElementById('adminCalcsWrap').innerHTML = calcTableHTML(data||[], true);
@@ -3307,6 +3547,262 @@ async function deleteCalc(id) {
 // ══════════════════════════════════════════════════════
 // VP: RESERVATIONS
 // ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// KVE
+// ══════════════════════════════════════════════════════
+let kveResId = null;
+
+async function openKveModal(resId) {
+  kveResId = resId;
+  const { data: r } = await sb.from('reservations')
+    .select('*, objects(*)').eq('id', resId).single();
+  if (!r) return;
+  const o = r.objects || {};
+
+  // Banner befüllen
+  document.getElementById('kve-obj-name').textContent = o.name || '—';
+  document.getElementById('kve-obj-addr').textContent = o.address || '—';
+  document.getElementById('kve-obj-price').textContent = fmt((o.price_unit||0)+(o.parking_active?o.parking_price||0:0)+(o.price_furniture||0));
+  document.getElementById('kve-obj-area').textContent = (o.area||'—') + ' m² · ' + (o.rooms||'—') + ' Zimmer';
+
+  // Käufer 1 vorausfüllen aus Reservierung
+  document.getElementById('kve-b1-name').value = r.buyer_name || '';
+  document.getElementById('kve-b1-email').value = r.buyer_email || (r.buyer_contact?.includes('@') ? r.buyer_contact : '');
+
+  // Finanzierung vorausfüllen
+  if (r.financing_type) document.getElementById('kve-fin-bank').value = r.financing_type !== 'eigenkapital' ? (r.financing_type || '') : '';
+  document.getElementById('kve-fin-amount').value = o.price_unit || '';
+
+  // Bestehende KVE laden falls schon angelegt
+  const { data: existing } = await sb.from('kve_requests').select('*').eq('reservation_id', resId).single();
+  if (existing) fillKveForm(existing);
+
+  openModal('kveModal');
+}
+
+function fillKveForm(d) {
+  const set = (id, val) => { const el = document.getElementById(id); if(el && val) el.value = val; };
+  set('kve-b1-name', d.b1_name); set('kve-b1-email', d.b1_email);
+  set('kve-b1-birthdate', d.b1_birthdate?.split('T')[0]); set('kve-b1-birthplace', d.b1_birthplace);
+  set('kve-b1-address', d.b1_address); set('kve-b1-zip', d.b1_zip); set('kve-b1-city', d.b1_city);
+  set('kve-b1-nationality', d.b1_nationality); set('kve-b1-id', d.b1_id_number); set('kve-b1-taxid', d.b1_tax_id);
+  set('kve-b1-iban', d.b1_iban);
+  if (d.b1_marital_status) document.getElementById('kve-b1-marital').value = d.b1_marital_status;
+  if (d.b2_active) {
+    document.getElementById('kve-b2-active').checked = true;
+    document.getElementById('kve-b2-section').style.display = 'block';
+    set('kve-b2-name', d.b2_name); set('kve-b2-email', d.b2_email);
+    set('kve-b2-birthdate', d.b2_birthdate?.split('T')[0]); set('kve-b2-birthplace', d.b2_birthplace);
+    set('kve-b2-address', d.b2_address); set('kve-b2-zip', d.b2_zip); set('kve-b2-city', d.b2_city);
+    set('kve-b2-nationality', d.b2_nationality); set('kve-b2-id', d.b2_id_number); set('kve-b2-taxid', d.b2_tax_id);
+    set('kve-b2-iban', d.b2_iban);
+    if (d.b2_marital_status) document.getElementById('kve-b2-marital').value = d.b2_marital_status;
+  }
+  if (d.marital_property_regime) document.getElementById('kve-gueterstand').value = d.marital_property_regime;
+  set('kve-fin-bank', d.financing_bank); set('kve-fin-amount', d.financing_amount);
+  if (d.costs_by_seller !== undefined) document.getElementById('kve-nkk-seller').value = d.costs_by_seller ? 'true' : 'false';
+  set('kve-notes', d.notes);
+}
+
+function toggleKveB2() {
+  const active = document.getElementById('kve-b2-active').checked;
+  document.getElementById('kve-b2-section').style.display = active ? 'block' : 'none';
+}
+
+function getKveData() {
+  const gs = id => document.getElementById(id)?.value?.trim() || '';
+  const b2 = document.getElementById('kve-b2-active')?.checked || false;
+  return {
+    reservation_id: kveResId,
+    vp_id: currentUser.id,
+    b1_name: gs('kve-b1-name'), b1_email: gs('kve-b1-email'),
+    b1_birthdate: gs('kve-b1-birthdate') || null, b1_birthplace: gs('kve-b1-birthplace'),
+    b1_address: gs('kve-b1-address'), b1_zip: gs('kve-b1-zip'), b1_city: gs('kve-b1-city'),
+    b1_nationality: gs('kve-b1-nationality'), b1_marital_status: gs('kve-b1-marital'),
+    b1_id_number: gs('kve-b1-id'), b1_tax_id: gs('kve-b1-taxid'), b1_iban: gs('kve-b1-iban'),
+    b2_active: b2,
+    b2_name: b2?gs('kve-b2-name'):null, b2_email: b2?gs('kve-b2-email'):null,
+    b2_birthdate: b2?gs('kve-b2-birthdate')||null:null, b2_birthplace: b2?gs('kve-b2-birthplace'):null,
+    b2_address: b2?gs('kve-b2-address'):null, b2_zip: b2?gs('kve-b2-zip'):null, b2_city: b2?gs('kve-b2-city'):null,
+    b2_nationality: b2?gs('kve-b2-nationality'):null, b2_marital_status: b2?gs('kve-b2-marital'):null,
+    b2_id_number: b2?gs('kve-b2-id'):null, b2_tax_id: b2?gs('kve-b2-taxid'):null, b2_iban: b2?gs('kve-b2-iban'):null,
+    marital_property_regime: gs('kve-gueterstand'),
+    financing_bank: gs('kve-fin-bank'), financing_amount: parseFloat(gs('kve-fin-amount'))||null,
+    costs_by_seller: gs('kve-nkk-seller') === 'true',
+    notes: gs('kve-notes'), status: 'submitted'
+  };
+}
+
+async function submitKve() {
+  const d = getKveData();
+  if (!d.b1_name) { notify('Bitte Name Käufer 1 eingeben', 'error'); return; }
+  if (!d.b1_birthdate) { notify('Bitte Geburtsdatum Käufer 1 eingeben', 'error'); return; }
+
+  // Reservierungsdaten und Objekt laden für PDF
+  const { data: r } = await sb.from('reservations').select('*, objects(*)').eq('id', kveResId).single();
+  const o = r?.objects || {};
+
+  // In DB speichern
+  const existing = await sb.from('kve_requests').select('id').eq('reservation_id', kveResId).single();
+  if (existing.data) {
+    await sb.from('kve_requests').update({...d, updated_at: new Date().toISOString()}).eq('id', existing.data.id);
+  } else {
+    d.object_id = o.id;
+    await sb.from('kve_requests').insert(d);
+  }
+
+  // PDF generieren
+  generateKvePdf(d, r, o);
+  closeModal('kveModal');
+  notify('✓ KVE eingereicht & PDF heruntergeladen!', 'success', 5000);
+  loadVPReservations();
+}
+
+function generateKvePdf(d, r, o) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, M = 20;
+  let y = 20;
+
+  function fd(v) { return v ? new Date(v).toLocaleDateString('de-DE') : '—'; }
+  function fv(v) { return v || '—'; }
+
+  // Header
+  doc.setFillColor(26,39,68); doc.rect(0,0,W,28,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(212,175,74);
+  doc.text('Beqiri Capital Management', M, 13);
+  doc.setFontSize(9); doc.setTextColor(180,180,200);
+  doc.text('ANTRAG AUF KAUFVERTRAGSENTWURF (KVE)', M, 21);
+  y = 38;
+
+  // Titel
+  doc.setTextColor(26,39,68); doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text('Antrag Kaufvertragsentwurf', M, y); y += 7;
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
+  doc.text('Erstellt am: ' + new Date().toLocaleDateString('de-DE') + '   ·   Reservierungs-ID: ' + kveResId?.slice(0,8).toUpperCase(), M, y); y += 10;
+
+  function section(title) {
+    doc.setFillColor(240,242,247); doc.rect(M,y,W-2*M,6,'F');
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(80,80,120);
+    doc.text(title.toUpperCase(), M+2, y+4.2); y += 9;
+  }
+  function row(label, value) {
+    doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text(label, M, y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(26,39,68);
+    const val = String(value||'—');
+    doc.text(val.length > 45 ? val.slice(0,45)+'...' : val, W/2, y);
+    doc.setDrawColor(230,230,230); doc.line(M, y+1.5, W-M, y+1.5); y += 7;
+    if (y > 265) { doc.addPage(); y = 20; }
+  }
+
+  // Objekt
+  section('Kaufobjekt');
+  row('Wohneinheit', o.name);
+  row('Adresse', o.address);
+  row('Kaufpreis', fmt((o.price_unit||0)+(o.parking_active?o.parking_price||0:0)));
+  row('Wohnfläche', (o.area||'—') + ' m²');
+  row('Zimmer', o.rooms);
+  if (o.parking_active) row('Stellplatz', (o.parking_count||1)+'× '+o.parking_type+' · '+fmt(o.parking_price));
+  if (o.price_furniture > 0) row('Möbel / Inventar', fmt(o.price_furniture));
+  row('Nebenkosten trägt', d.costs_by_seller ? 'Verkäufer' : 'Käufer');
+  y += 3;
+
+  // Käufer 1
+  section('Käufer 1');
+  row('Name', d.b1_name);
+  row('E-Mail', d.b1_email);
+  row('Geburtsdatum', fd(d.b1_birthdate));
+  row('Geburtsort', d.b1_birthplace);
+  row('Adresse', [d.b1_address, d.b1_zip, d.b1_city].filter(Boolean).join(', '));
+  row('Nationalität', d.b1_nationality);
+  row('Familienstand', d.b1_marital_status);
+  row('Ausweis-/Reisepassnr.', d.b1_id_number);
+  row('Steuer-ID', d.b1_tax_id);
+  row('IBAN', d.b1_iban);
+  y += 3;
+
+  // Käufer 2
+  if (d.b2_active && d.b2_name) {
+    section('Käufer 2');
+    row('Name', d.b2_name);
+    row('E-Mail', d.b2_email);
+    row('Geburtsdatum', fd(d.b2_birthdate));
+    row('Geburtsort', d.b2_birthplace);
+    const b2addr = d.b2_address ? [d.b2_address, d.b2_zip, d.b2_city].filter(Boolean).join(', ') : 'Wie Käufer 1';
+    row('Adresse', b2addr);
+    row('Nationalität', d.b2_nationality);
+    row('Familienstand', d.b2_marital_status);
+    row('Ausweis-/Reisepassnr.', d.b2_id_number);
+    row('Steuer-ID', d.b2_tax_id);
+    row('IBAN', d.b2_iban);
+    y += 3;
+  }
+
+  // Gemeinsame Angaben
+  section('Gemeinsame Angaben & Finanzierung');
+  row('Güterstand', d.marital_property_regime);
+  row('Finanzierungsbank', d.financing_bank);
+  row('Finanzierungsbetrag', d.financing_amount ? fmt(d.financing_amount) : '—');
+  if (d.notes) row('Anmerkungen', d.notes);
+  y += 5;
+
+  // Footer
+  doc.setFontSize(8); doc.setTextColor(26,39,68); doc.setFont('helvetica','bold');
+  doc.text('Vertriebspartner:', M, y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  doc.text((currentProfile?.full_name||'—') + (currentProfile?.company_name ? ' · ' + currentProfile.company_name : ''), M+35, y); y += 6;
+  doc.setFontSize(7); doc.setTextColor(160,160,160);
+  doc.text('Dieses Dokument wurde automatisch generiert. © Beqiri Capital Management', M, 285);
+
+  doc.save('KVE_' + (o.name||'').replace(/\s/g,'_') + '_' + (d.b1_name||'').replace(/\s/g,'_') + '.pdf');
+}
+
+// Admin: KVE Anfragen anzeigen
+async function loadAdminKve() {
+  const { data } = await sb.from('kve_requests')
+    .select('*, reservations(buyer_name, objects(name,address)), profiles(full_name,company_name)')
+    .order('created_at', { ascending: false });
+
+  const body = document.getElementById('kveListBody');
+  if (!data?.length) {
+    body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--g500)">Noch keine KVE-Anfragen</div>';
+    return;
+  }
+  body.innerHTML = data.map(k => `
+    <div style="border:1px solid var(--g200);padding:12px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:700;color:var(--navy)">${k.reservations?.objects?.name||'—'}</div>
+        <div style="font-size:12px;color:var(--g500);margin-top:2px">${k.reservations?.buyer_name||'—'} · VP: ${k.profiles?.full_name||'—'}</div>
+        <div style="font-size:11px;color:var(--g500)">${fmtDate(k.created_at)}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:10px;padding:2px 8px;background:${k.status==='submitted'?'#fff8e8':'#e8f5e9'};color:${k.status==='submitted'?'var(--gold)':'var(--pos)'};font-weight:700">${k.status==='submitted'?'Eingereicht':'Bearbeitet'}</span>
+        <button class="btn-sm btn-gold" style="font-size:11px" onclick="downloadKvePdf('${k.id}')">📄 PDF</button>
+        ${k.status==='submitted'?`<button class="btn-sm btn-pos" style="font-size:11px" onclick="markKveProcessed('${k.id}')">✓ Bearbeitet</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+async function downloadKvePdf(kveId) {
+  const { data: k } = await sb.from('kve_requests')
+    .select('*, reservations(*, objects(*))')
+    .eq('id', kveId).single();
+  if (!k) return;
+  // VP-Profil laden
+  const { data: vp } = await sb.from('profiles').select('full_name,company_name').eq('id', k.vp_id).single();
+  const savedProfile = currentProfile;
+  if (vp) currentProfile = {...currentProfile, ...vp};
+  generateKvePdf(k, k.reservations, k.reservations?.objects || {});
+  currentProfile = savedProfile;
+}
+
+async function markKveProcessed(kveId) {
+  await sb.from('kve_requests').update({ status: 'processed' }).eq('id', kveId);
+  notify('✓ Als bearbeitet markiert', 'success');
+  loadAdminKve();
+}
+
 async function loadVPReservations() {
   const { data, error } = await sb.from('reservations')
     .select('*, objects(name,address)').eq('vp_id', currentUser.id)
@@ -3324,6 +3820,7 @@ async function loadVPReservations() {
     <td>${r.buyer_name}</td>
     <td>${statusBadge(r.status)}</td>
     <td style="font-size:11px">${fmtDateTime(r.status==='approved'?r.hard_expires_at:r.expires_at)}</td>
+    <td>${r.status==='approved'?`<button class="btn-sm btn-gold" style="font-size:10px;white-space:nowrap" onclick="openKveModal('${r.id}')">📋 KVE beantragen</button>`:'—'}</td>
   </tr>`).join('');
 }
 
