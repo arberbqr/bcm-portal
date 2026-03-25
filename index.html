@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -3570,11 +3571,11 @@ async function openKveModal(resId) {
   document.getElementById('kve-b1-email').value = r.buyer_email || (r.buyer_contact?.includes('@') ? r.buyer_contact : '');
 
   // Finanzierung vorausfüllen
-  if (r.financing_type) document.getElementById('kve-fin-bank').value = r.financing_type !== 'eigenkapital' ? (r.financing_type || '') : '';
-  document.getElementById('kve-fin-amount').value = o.price_unit || '';
+  if (r.financing_type && r.financing_type !== 'eigenkapital') document.getElementById('kve-fin-bank').value = r.financing_type || '';
+  if (o.price_unit) document.getElementById('kve-fin-amount').value = o.price_unit;
 
   // Bestehende KVE laden falls schon angelegt
-  const { data: existing } = await sb.from('kve_requests').select('*').eq('reservation_id', resId).single();
+  const { data: existing } = await sb.from('kve_requests').select('*').eq('reservation_id', resId).maybeSingle();
   if (existing) fillKveForm(existing);
 
   openModal('kveModal');
@@ -3643,9 +3644,9 @@ async function submitKve() {
   const o = r?.objects || {};
 
   // In DB speichern
-  const existing = await sb.from('kve_requests').select('id').eq('reservation_id', kveResId).single();
-  if (existing.data) {
-    await sb.from('kve_requests').update({...d, updated_at: new Date().toISOString()}).eq('id', existing.data.id);
+  const { data: existingKve } = await sb.from('kve_requests').select('id').eq('reservation_id', kveResId).maybeSingle();
+  if (existingKve) {
+    await sb.from('kve_requests').update({...d, updated_at: new Date().toISOString()}).eq('id', existingKve.id);
   } else {
     d.object_id = o.id;
     await sb.from('kve_requests').insert(d);
