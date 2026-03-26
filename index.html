@@ -1898,10 +1898,9 @@ async function loadCardImage(objId) {
   const { data: urlData } = sb.storage.from('object-images').getPublicUrl(`${objId}/${data[0].name}`);
   const container = document.getElementById('img-' + objId);
   if (!container) return;
-  container.innerHTML = `
-    <img src="${urlData.publicUrl}" style="width:100%;height:100%;object-fit:cover;display:block">
-    ${container.innerHTML.includes('NICHT VERÖFFENTLICHT') ? '<div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.6);color:white;padding:3px 8px;font-size:10px;font-weight:700">NICHT VERÖFFENTLICHT</div>' : ''}
-  ` + container.querySelector('.obj-card-status').outerHTML;
+  const unpubEl = container.querySelector('[style*="NICHT VERÖFFENTLICHT"]');
+  container.innerHTML = `<img src="${urlData.publicUrl}" style="width:100%;height:100%;object-fit:cover;display:block">`;
+  if (unpubEl) container.appendChild(unpubEl);
 }
 
 async function loadExistingImages(objId) {
