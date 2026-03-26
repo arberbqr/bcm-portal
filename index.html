@@ -1472,7 +1472,7 @@ function loadView(name) {
   if (name === 'objects') loadAdminObjects();
   else if (name === 'reservations') loadReservations();
   else if (name === 'partners') loadPartners();
-  else if (name === 'vp-objects') loadVPObjects();
+  else if (name === 'vp-objects') { vpAllObjects = []; loadVPObjects(); }
   else if (name === 'vp-reservations') loadVPReservations();
   else if (name === 'vp-calcs') loadVPCalcs();
   else if (name === 'admin-calcs') loadAdminCalcs();
@@ -1541,12 +1541,17 @@ function objCard(o, isAdmin) {
 
   const isComingSoon = o.status === 'coming_soon';
   const statusColor = {available:'#2e7d52',reserved:'#d4af4a',sold:'#c0392b',draft:'#aaa',coming_soon:'#2c3e50'}[o.status]||'#aaa';
-  return `<div class="obj-card" onclick="${isAdmin ? `editObject('${o.id}')` : (isComingSoon ? '' : `vpObjDetail('${o.id}')`)}" style="border-left:4px solid ${statusColor}"
-    style="${isComingSoon && !isAdmin ? 'cursor:default;' : ''}">
+  const statusLabel = {available:'Verfügbar',reserved:'Reserviert',sold:'Verkauft',draft:'Entwurf',coming_soon:'Coming Soon'}[o.status]||o.status;
+  const statusTextColor = {available:'white',reserved:'#1a2744',sold:'white',draft:'white',coming_soon:'rgba(255,255,255,.8)'}[o.status]||'white';
+  return `<div class="obj-card" onclick="${isAdmin ? `editObject('${o.id}')` : (isComingSoon ? '' : `vpObjDetail('${o.id}')`)}"
+    style="border-left:4px solid ${statusColor};${isComingSoon && !isAdmin ? 'cursor:default;' : ''}">
     <div class="obj-card-img" id="img-${o.id}" style="${isComingSoon ? 'filter:grayscale(80%);opacity:.7' : ''}">
       <div class="obj-card-img-placeholder">🏢</div>
-      <div class="obj-card-status status-${o.status}">${{available:'✓ Verfügbar',reserved:'⏸ Reserviert',sold:'✗ Verkauft',draft:'✏ Entwurf',coming_soon:'⏳ Coming Soon'}[o.status]||o.status}</div>
       ${!o.published && isAdmin ? '<div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.6);color:white;padding:3px 8px;font-size:10px;font-weight:700">NICHT VERÖFFENTLICHT</div>' : ''}
+    </div>
+    <!-- Statusbalken -->
+    <div style="background:${statusColor};color:${statusTextColor};padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:6px">
+      ${{available:'●',reserved:'■',sold:'✕',draft:'○',coming_soon:'◑'}[o.status]||'●'} ${statusLabel}
     </div>
     <div class="obj-card-body" style="${isComingSoon ? 'opacity:.6' : ''}">
       <div class="obj-card-name">${o.name}</div>
@@ -2262,6 +2267,7 @@ async function updateRes(id, status, rejectionReason) {
   const msgs = { approved:'✓ Reservierung genehmigt! Hard-Reservierung für 21 Tage aktiv.', rejected:'Reservierung abgelehnt.', notarized:'🏛 Als notarisiert markiert – Objekt ist verkauft.' };
   notify(msgs[status]||'Aktualisiert', status === 'approved' || status === 'notarized' ? 'success' : '');
   loadReservations();
+  if (typeof loadAdminObjects === 'function') loadAdminObjects();
 }
 
 // ══════════════════════════════════════════════════════
@@ -2465,7 +2471,7 @@ let vpCurrentView = 'grid';
 
 async function loadVPObjects() {
   const name = currentProfile.full_name ? currentProfile.full_name.split(' ')[0] : 'Willkommen';
-  document.getElementById('vp-greeting').textContent = 'Guten Tag, ' + name + ' \u2013 verf\u00fcgbare Objekte';
+  document.getElementById('vp-greeting').textContent = 'Guten Tag, ' + name + ' \u2013 verfügbare Objekte';
 
   const { data, error } = await sb.from('objects')
     .select('*').eq('published', true).order('name', { ascending: true });
