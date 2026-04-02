@@ -521,6 +521,38 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
     </div>
   </div>
 
+  <!-- Selbstauskunft View -->
+  <div id="view-vp-selbstauskunft" class="view">
+    <div class="view-inner">
+      <div class="page-title">Selbstauskunft</div>
+      <div class="page-sub">Finanzierungsanfrage für Ihren Kunden einreichen – in Zusammenarbeit mit Zinsboutique</div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="background:var(--navy);color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:700;font-size:14px">Selbstauskunft Bequiri × Zinsboutique</div>
+            <div style="font-size:11px;opacity:.6;margin-top:2px">Nach Einreichung meldet sich Zinsboutique innerhalb von 24h beim Kunden</div>
+          </div>
+          <a href="https://www.zinsboutique.de/selbstauskunft-bequiri-zinsboutique" target="_blank"
+            style="font-size:11px;color:var(--gold2);text-decoration:none;border:1px solid var(--gold2);padding:5px 12px;font-weight:700">
+            ↗ In neuem Tab öffnen
+          </a>
+        </div>
+        <div id="sa-iframe-area" style="position:relative;width:100%;min-height:700px;font-family:'Montserrat',sans-serif;">
+          <iframe
+            id="JotFormIFrame-260904626171354"
+            title="ZB Selbstauskunft - Bequiri x Zinsboutique (extern)"
+            allowtransparency="true"
+            allow="geolocation; microphone; camera; fullscreen; payment"
+            src="https://form.jotform.com/260904626171354"
+            frameborder="0"
+            scrolling="yes"
+            style="width:100%;min-width:100%;height:820px;border:none">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="view-admin-calcs" class="view">
     <div class="view-inner">
       <div class="page-title">Alle Berechnungen</div>
@@ -1456,6 +1488,7 @@ function setupAppShell() {
       <button class="app-nav-btn" onclick="loadView('vp-objects')">Objektliste</button>
       <button class="app-nav-btn" onclick="loadView('vp-reservations')">Meine Reservierungen</button>
       <button class="app-nav-btn" onclick="loadView('vp-calcs')">Meine Berechnungen</button>
+      <button class="app-nav-btn" onclick="loadView('vp-selbstauskunft')" style="color:var(--gold)">Selbstauskunft</button>
     `;
   }
 }
@@ -1475,6 +1508,7 @@ function loadView(name) {
   else if (name === 'vp-objects') { vpAllObjects = []; loadVPObjects(); }
   else if (name === 'vp-reservations') loadVPReservations();
   else if (name === 'vp-calcs') loadVPCalcs();
+  else if (name === 'vp-selbstauskunft') {} // iFrame lädt automatisch
   else if (name === 'admin-calcs') loadAdminCalcs();
 }
 
