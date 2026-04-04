@@ -1772,6 +1772,10 @@ async function saveObject() {
 
   if (!obj.name) { notify('Bitte Objektname eingeben', 'error'); return; }
 
+  // Ladebalken anzeigen
+  const saveBtn = document.querySelector('#objModal .btn-gold');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ Wird gespeichert...'; }
+
   const editId = document.getElementById('objModal').dataset.editId;
   let error;
   if (editId) {
@@ -1780,15 +1784,39 @@ async function saveObject() {
     ({ error } = await sb.from('objects').insert(obj));
   }
 
-  if (error) { notify('Fehler beim Speichern: ' + error.message, 'error'); return; }
-  // Bilder hochladen falls vorhanden
-  const objId = editId || (await sb.from('objects').select('id').eq('name', obj.name).order('created_at',{ascending:false}).limit(1).single())?.data?.id;
-  if (objId && pendingImages.length > 0) {
-    await uploadPendingImages(objId);
+  if (error) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Objekt speichern'; }
+    notify('Fehler beim Speichern: ' + error.message, 'error');
+    return;
   }
 
-  closeModal('objModal');
-  notify(editId ? '✓ Objekt erfolgreich aktualisiert!' : '✓ Objekt erfolgreich gespeichert!', 'success', 5000);
+  // Bilder hochladen falls vorhanden
+  const objId = editId || (await sb.from('objects').select('id').eq('name', obj.name).order('created_at',{ascending:false}).limit(1).single())?.data?.id;
+  if (objId && pendingObjFiles.length > 0) {
+    const total = pendingObjFiles.length;
+    if (saveBtn) saveBtn.textContent = `⏳ Lade ${total} Datei${total!==1?'en':''} hoch...`;
+    let ok = 0, err = 0;
+    for (var i = 0; i < pendingObjFiles.length; i++) {
+      const f = pendingObjFiles[i];
+      if (saveBtn) saveBtn.textContent = `⏳ ${i+1} / ${total} hochgeladen...`;
+      if (f.isImg) {
+        const r = await sb.storage.from('object-images').upload(objId+'/'+f.name, f.blob, {upsert:true, contentType: fileMime(f.ext)});
+        r.error ? err++ : ok++;
+      } else if (f.isDoc) {
+        const r2 = await sb.storage.from('documents').upload(objId+'/'+f.storagePath, f.blob, {upsert:true, contentType: fileMime(f.ext)});
+        r2.error ? err++ : ok++;
+      }
+    }
+    pendingObjFiles = [];
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Objekt speichern'; }
+    closeModal('objModal');
+    if (err > 0) notify(`⚠️ Objekt gespeichert – ${ok} Dateien hochgeladen, ${err} Fehler`, 'error', 6000);
+    else notify(`✓ Objekt erfolgreich angelegt! ${ok} Datei${ok!==1?'en':''} hochgeladen.`, 'success', 5000);
+  } else {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Objekt speichern'; }
+    closeModal('objModal');
+    notify(editId ? '✓ Objekt erfolgreich aktualisiert!' : '✓ Objekt erfolgreich angelegt!', 'success', 5000);
+  }
   loadAdminObjects();
 }
 
@@ -1917,7 +1945,7 @@ async function uploadPendingImages(objId) {
       var r = await sb.storage.from('object-images').upload(objId+'/'+f.name, f.blob, {upsert:true, contentType: fileMime(f.ext)});
       r.error ? err++ : ok++;
     } else if (f.isDoc) {
-      var r2 = await sb.storage.from('documents').upload('AH2/'+f.storagePath, f.blob, {upsert:true, contentType: fileMime(f.ext)});
+      var r2 = await sb.storage.from('documents').upload(objId+'/'+f.storagePath, f.blob, {upsert:true, contentType: fileMime(f.ext)});
       r2.error ? err++ : ok++;
     }
   }
