@@ -1772,6 +1772,11 @@ async function saveObject() {
 
   if (!obj.name) { notify('Bitte Objektname eingeben', 'error'); return; }
 
+  // Bildreihenfolge speichern
+  if (existingImages.length > 0) {
+    obj.image_order = existingImages.map(img => img.path.split('/').pop());
+  }
+
   // Ladebalken anzeigen
   const saveBtn = document.querySelector('#objModal .btn-gold');
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ Wird gespeichert...'; }
@@ -1856,27 +1861,78 @@ function renderImgPreviews() {
   if (!preview) return;
   if (!existingImages.length && !pendingObjFiles.length) { preview.style.display='none'; return; }
   preview.style.display = 'block';
-  var totalCount = existingImages.length + pendingObjFiles.length;
-  if(summary) summary.innerHTML = '<span style="color:var(--navy);font-weight:700">' + existingImages.length + ' vorhandene Bilder</span>'
-    + (pendingObjFiles.length ? ' · <span style="color:var(--pos)">' + pendingObjFiles.length + ' neu hinzugefügt</span>' : '');
-  if(items) items.innerHTML =
-    // Bestehende Bilder
-    existingImages.map(function(img, i) {
-      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid var(--g200);font-size:11px">'
-        + '<img src="' + img.url + '" style="width:40px;height:30px;object-fit:cover;border:1px solid var(--g200)">'
-        + '<div style="flex:1;min-width:0;font-size:10px;color:var(--g500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + img.path.split('/').pop() + '</div>'
-        + '<span style="font-size:9px;background:#e8f5e9;color:var(--pos);padding:1px 6px">Vorhanden</span>'
-        + '<button onclick="removeExistingImg(' + i + ').then(renderImgPreviews)" style="background:none;border:none;color:var(--neg);cursor:pointer;font-size:14px;padding:0 4px">×</button></div>';
-    }).join('')
-    // Neue Dateien
-    + pendingObjFiles.map(function(f,i) {
-      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid var(--g200);font-size:11px">'
-        +'<span style="font-size:18px">'+fileEmoji(f.ext)+'</span>'
-        +'<div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div>'
-        +'<div style="color:var(--g500);font-size:10px">'+(f.isImg ? '→ Fotos' : '→ Dokumente')+'</div></div>'
-        +'<span style="font-size:9px;background:#fff8e8;color:var(--gold);padding:1px 6px">Neu</span>'
-        +'<button onclick="removePendingImg('+i+')" style="background:none;border:none;color:var(--g500);cursor:pointer;font-size:14px;padding:0 4px">×</button></div>';
-    }).join('');
+
+  var imgCount = existingImages.filter(i=>i.isImg!==false).length;
+  if(summary) summary.innerHTML = 
+    '<span style="color:var(--navy);font-weight:700">' + existingImages.length + ' vorhandene Dateien</span>'
+    + (pendingObjFiles.length ? ' · <span style="color:var(--pos)">' + pendingObjFiles.length + ' neu hinzugefügt</span>' : '')
+    + (existingImages.length > 1 ? ' · <span style="color:var(--g500);font-size:10px">↕ Ziehen zum Sortieren</span>' : '');
+
+  if (!items) return;
+
+  // Bestehende Bilder – sortierbar per Drag & Drop
+  var existHtml = existingImages.map(function(img, i) {
+    var name = img.path.split('/').pop();
+    var isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+    return '<div class="img-sort-item" draggable="true" data-idx="' + i + '" '
+      + 'style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--g200);font-size:11px;cursor:grab;background:white">'
+      + '<span style="color:var(--g400);font-size:16px;cursor:grab">☰</span>'
+      + (isImg
+          ? '<img src="' + img.url + '" style="width:44px;height:33px;object-fit:cover;border:1px solid var(--g200);flex-shrink:0">'
+          : '<span style="font-size:20px;flex-shrink:0">' + fileEmoji(name.split('.').pop()) + '</span>')
+      + '<div style="flex:1;min-width:0;font-size:10px;color:var(--g500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</div>'
+      + '<span style="font-size:9px;background:#e8f5e9;color:var(--pos);padding:1px 6px;flex-shrink:0">#' + (i+1) + '</span>'
+      + '<button onclick="removeExistingImg(' + i + ').then(renderImgPreviews)" style="background:none;border:none;color:var(--neg);cursor:pointer;font-size:16px;padding:0 4px;flex-shrink:0">×</button>'
+      + '</div>';
+  }).join('');
+
+  // Neue Dateien
+  var newHtml = pendingObjFiles.map(function(f,i) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--g200);font-size:11px;background:#fffdf5">'
+      +'<span style="font-size:20px">'+fileEmoji(f.ext)+'</span>'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div>'
+      +'<div style="color:var(--g500);font-size:10px">'+(f.isImg ? '→ Fotos' : '→ Dokumente')+'</div></div>'
+      +'<span style="font-size:9px;background:#fff8e8;color:var(--gold);padding:1px 6px">Neu</span>'
+      +'<button onclick="removePendingImg('+i+')" style="background:none;border:none;color:var(--g500);cursor:pointer;font-size:16px;padding:0 4px">×</button></div>';
+  }).join('');
+
+  items.innerHTML = existHtml + newHtml;
+
+  // Drag & Drop Sortierung
+  initImgDragSort(items);
+}
+
+function initImgDragSort(container) {
+  var dragging = null;
+  var els = container.querySelectorAll('.img-sort-item');
+  els.forEach(function(el) {
+    el.addEventListener('dragstart', function(e) {
+      dragging = el;
+      el.style.opacity = '.4';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', function() {
+      el.style.opacity = '1';
+      dragging = null;
+      // Neue Reihenfolge in existingImages übernehmen
+      var newOrder = [];
+      container.querySelectorAll('.img-sort-item').forEach(function(item) {
+        var idx = parseInt(item.dataset.idx);
+        newOrder.push(existingImages[idx]);
+      });
+      existingImages = newOrder;
+      renderImgPreviews();
+    });
+    el.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      if (dragging && dragging !== el) {
+        var rect = el.getBoundingClientRect();
+        var mid = rect.top + rect.height/2;
+        if (e.clientY < mid) container.insertBefore(dragging, el);
+        else container.insertBefore(dragging, el.nextSibling);
+      }
+    });
+  });
 }
 function removePendingImg(i) { pendingObjFiles.splice(i,1); renderObjFilePreview(); }
 
@@ -1969,10 +2025,22 @@ async function loadExistingImages(objId) {
   existingImages = [];
   const { data, error } = await sb.storage.from('object-images').list(objId);
   if (error || !data) return;
+
+  // Gespeicherte Reihenfolge aus Objekt laden
+  const { data: objData } = await sb.from('objects').select('image_order').eq('id', objId).single();
+  const order = objData?.image_order || [];
+
+  // Bilder in gespeicherter Reihenfolge sortieren
+  const imgMap = {};
   for (const f of data) {
     const { data: urlData } = sb.storage.from('object-images').getPublicUrl(`${objId}/${f.name}`);
-    existingImages.push({ path: `${objId}/${f.name}`, url: urlData.publicUrl });
+    imgMap[f.name] = { path: `${objId}/${f.name}`, url: urlData.publicUrl };
   }
+  // Erst in gespeicherter Reihenfolge, dann Rest
+  const sorted = [];
+  order.forEach(name => { if (imgMap[name]) { sorted.push(imgMap[name]); delete imgMap[name]; } });
+  Object.values(imgMap).forEach(img => sorted.push(img));
+  existingImages = sorted;
   renderImgPreviews();
 }
 
@@ -2857,8 +2925,15 @@ async function openCalcForObject(id) {
   try {
     const { data: files } = await sb.storage.from('object-images').list(o.id, { limit: 20 });
     if (files && files.length) {
-      // URLs sammeln
-      const urls = files.map(f => sb.storage.from('object-images').getPublicUrl(o.id + '/' + f.name).data.publicUrl);
+      // Gespeicherte Reihenfolge anwenden
+      const order = o.image_order || [];
+      const fileMap = {};
+      files.forEach(f => fileMap[f.name] = f);
+      const sorted = [];
+      order.forEach(name => { if (fileMap[name]) { sorted.push(fileMap[name]); delete fileMap[name]; } });
+      Object.values(fileMap).forEach(f => sorted.push(f));
+
+      const urls = sorted.map(f => sb.storage.from('object-images').getPublicUrl(o.id + '/' + f.name).data.publicUrl);
       calcObj._photoUrls = urls;
       // Galerie anzeigen
       if (galleryEl && galleryImgs) {
