@@ -1808,8 +1808,20 @@ async function saveObject() {
         const r = await sb.storage.from('object-images').upload(objId+'/'+f.name, f.blob, {upsert:true, contentType: fileMime(f.ext)});
         r.error ? err++ : ok++;
       } else if (f.isDoc) {
-        const r2 = await sb.storage.from('documents').upload(objId+'/'+f.storagePath, f.blob, {upsert:true, contentType: fileMime(f.ext)});
-        r2.error ? err++ : ok++;
+        const storagePath = objId+'/'+f.storagePath;
+        const r2 = await sb.storage.from('documents').upload(storagePath, f.blob, {upsert:true, contentType: fileMime(f.ext)});
+        if (!r2.error) {
+          // In documents Tabelle registrieren
+          await sb.from('documents').upsert({
+            object_id: objId,
+            name: f.name,
+            file_path: storagePath,
+            storage_path: storagePath,
+            file_type: f.ext.toUpperCase(),
+            doc_type: 'other'
+          }, { onConflict: 'file_path' });
+          ok++;
+        } else { err++; }
       }
     }
     pendingObjFiles = [];
@@ -2752,6 +2764,20 @@ async function vpObjDetail(id) {
   if (!o) return;
 
   const { data: docs } = await sb.from('documents').select('*').eq('object_id', id);
+  // Fallback: Dokumente direkt aus Storage laden falls DB leer
+  let allDocs = docs || [];
+  if (!allDocs.length) {
+    const { data: storageFiles } = await sb.storage.from('documents').list(id);
+    if (storageFiles && storageFiles.length) {
+      allDocs = storageFiles.map(f => ({
+        name: f.name,
+        file_path: id + '/' + f.name,
+        storage_path: id + '/' + f.name,
+        file_type: f.name.split('.').pop().toUpperCase(),
+        doc_type: 'other'
+      }));
+    }
+  }
   const { data: imgFiles } = await sb.storage.from('object-images').list(o.id, { limit: 30 });
 
   currentObjId = id;
@@ -2769,7 +2795,7 @@ async function vpObjDetail(id) {
     <div style="display:flex;border-bottom:2px solid var(--g200);margin-bottom:0;background:white;position:sticky;top:0;z-index:10">
       <button class="det-tab active" onclick="showDetTab('det-info',this)">Überblick</button>
       <button class="det-tab" onclick="showDetTab('det-imgs',this)">Fotos ${imgUrls.length?'<span style=\'background:var(--navy);color:white;border-radius:10px;padding:0 6px;font-size:10px;margin-left:4px\'>'+imgUrls.length+'</span>':''}</button>
-      <button class="det-tab" onclick="showDetTab('det-docs',this)">Dokumente ${docs?.length?'<span style=\'background:var(--gold);color:var(--navy);border-radius:10px;padding:0 6px;font-size:10px;margin-left:4px\'>'+docs.length+'</span>':''}</button>
+      <button class="det-tab" onclick="showDetTab('det-docs',this)">Dokumente ${allDocs?.length?'<span style=\'background:var(--gold);color:var(--navy);border-radius:10px;padding:0 6px;font-size:10px;margin-left:4px\'>'+allDocs.length+'</span>':''}</button>
     </div>
 
     <!-- Überblick Tab -->
@@ -2814,7 +2840,7 @@ async function vpObjDetail(id) {
 
     <!-- Dokumente Tab -->
     <div id="det-docs" class="det-tab-pane" style="padding:12px">
-      ${docs?.length ? docs.map(d => `
+      ${allDocs?.length ? allDocs.map(d => `
         <div class="doc-item">
           <div class="doc-icon">${docIcon(d.doc_type)}</div>
           <div><div class="doc-name">${d.name}</div><div class="doc-meta">${d.doc_type} · ${d.file_type||''}</div></div>
