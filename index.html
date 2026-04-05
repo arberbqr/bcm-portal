@@ -1808,7 +1808,7 @@ async function saveObject() {
       if (saveBtn) saveBtn.textContent = `⏳ ${i+1} / ${total} hochgeladen...`;
       if (f.isImg) {
         const r = await sb.storage.from('object-images').upload(objId+'/'+f.name, f.blob, {upsert:true, contentType: fileMime(f.ext)});
-        r.error ? err++ : ok++;
+        r.error ? (err++, console.error('Upload-Fehler:', r.error.message)) : ok++;
       } else if (f.isDoc) {
         const storagePath = objId+'/'+f.storagePath;
         const r2 = await sb.storage.from('documents').upload(storagePath, f.blob, {upsert:true, contentType: fileMime(f.ext)});
@@ -1829,7 +1829,7 @@ async function saveObject() {
     pendingObjFiles = [];
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Objekt speichern'; }
     closeModal('objModal');
-    if (err > 0) notify(`⚠️ Objekt gespeichert – ${ok} Dateien hochgeladen, ${err} Fehler`, 'error', 6000);
+    if (err > 0) notify(`⚠️ Objekt gespeichert – ${ok} Datei${ok!==1?'en':''} hochgeladen, ${err} Fehler (Details in Browser-Konsole)`, 'error', 8000);
     else notify(`✓ Objekt erfolgreich angelegt! ${ok} Datei${ok!==1?'en':''} hochgeladen.`, 'success', 5000);
   } else {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Objekt speichern'; }
@@ -1843,6 +1843,13 @@ async function saveObject() {
 let pendingObjFiles = [];
 let existingImages  = [];
 
+function sanitizeFilename(name) {
+  var parts = name.split('.');
+  var ext = parts.pop();
+  var base = parts.join('.').replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+  if (!base) base = 'datei';
+  return base + '.' + ext;
+}
 function isImgExt(ext) { return ['jpg','jpeg','png','gif','webp'].includes(ext.toLowerCase()); }
 function isDocExt(ext) { return ['pdf','xlsx','xls','docx','doc','csv'].includes(ext.toLowerCase()); }
 function fileMime(ext) {
@@ -1968,13 +1975,15 @@ async function handleObjFiles(files) {
         if (!isImgExt(fext) && !isDocExt(fext)) continue;
         var blob = await entry.async('blob');
         var folderPath = parts.slice(1,-1).join('/');
-        pendingObjFiles.push({ name: name, ext: fext, blob: blob,
-          storagePath: folderPath ? folderPath+'/'+name : name,
+        var safeName = sanitizeFilename(name);
+        pendingObjFiles.push({ name: safeName, ext: fext, blob: blob,
+          storagePath: folderPath ? folderPath+'/'+safeName : safeName,
           isImg: isImgExt(fext), isDoc: isDocExt(fext) });
       }
     } else if (isImgExt(ext) || isDocExt(ext)) {
-      pendingObjFiles.push({ name: f.name, ext: ext, blob: f,
-        storagePath: f.name, isImg: isImgExt(ext), isDoc: isDocExt(ext) });
+      var safeName = sanitizeFilename(f.name);
+      pendingObjFiles.push({ name: safeName, ext: ext, blob: f,
+        storagePath: safeName, isImg: isImgExt(ext), isDoc: isDocExt(ext) });
     }
   }
   renderImgPreviews();
