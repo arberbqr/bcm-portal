@@ -391,7 +391,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
           <div class="page-title">Objekte</div>
           <div class="page-sub">Alle Projekte und Einheiten verwalten</div>
         </div>
-        <button class="btn-sm btn-gold" onclick="openAddObject()">+ Objekt hinzufügen</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm btn-outline" style="font-size:11px;color:var(--g500);border-color:var(--g300)" onclick="syncAllDocuments()">🔄 Dokumente synchronisieren</button>
+          <button class="btn-sm btn-gold" onclick="openAddObject()">+ Objekt hinzufügen</button>
+        </div>
       </div>
       <div class="stats-row" id="adminObjStats">
         <div class="stat"><div class="stat-lbl">Verfügbar</div><div class="stat-val pos" id="stat-available">—</div></div>
@@ -1544,6 +1547,45 @@ function statusBadge(s) {
 // ══════════════════════════════════════════════════════
 // ADMIN: OBJECTS
 // ══════════════════════════════════════════════════════
+async function syncAllDocuments() {
+  if (!confirm('Alle Dokumente aus dem Storage scannen und fehlende Einträge in der Datenbank ergänzen?\n\nDas kann einen Moment dauern.')) return;
+  
+  notify('⏳ Dokumente werden synchronisiert...', 'success', 30000);
+  
+  const { data: objects } = await sb.from('objects').select('id, name');
+  if (!objects?.length) { notify('Keine Objekte gefunden', 'error'); return; }
+  
+  let total = 0, skipped = 0;
+  
+  for (const obj of objects) {
+    // Storage scannen
+    const { data: files } = await sb.storage.from('documents').list(obj.id);
+    if (!files?.length) continue;
+    
+    for (const f of files) {
+      const storagePath = obj.id + '/' + f.name;
+      // Prüfen ob bereits in DB
+      const { data: existing } = await sb.from('documents')
+        .select('id').eq('file_path', storagePath).maybeSingle();
+      if (existing) { skipped++; continue; }
+      
+      // Neu eintragen
+      const ext = f.name.split('.').pop().toUpperCase();
+      await sb.from('documents').insert({
+        object_id: obj.id,
+        name: f.name,
+        file_path: storagePath,
+        storage_path: storagePath,
+        file_type: ext,
+        doc_type: 'other'
+      });
+      total++;
+    }
+  }
+  
+  notify(`✓ Synchronisierung abgeschlossen! ${total} neue Dokumente registriert, ${skipped} bereits vorhanden.`, 'success', 6000);
+}
+
 async function loadAdminObjects() {
   const { data, error } = await sb.from('objects').select('*').order('created_at', { ascending: false });
   if (error) { notify('Fehler beim Laden der Objekte', 'error'); return; }
@@ -1975,28 +2017,10 @@ async function handleObjFiles(files) {
         storagePath: f.name, isImg: isImgExt(ext), isDoc: isDocExt(ext) });
     }
   }
-  renderObjFilePreview();
+  renderImgPreviews();
 }
 
-function renderObjFilePreview() {
-  var imgs = pendingObjFiles.filter(function(f){return f.isImg;}).length;
-  var docs = pendingObjFiles.filter(function(f){return f.isDoc;}).length;
-  var preview = document.getElementById('objUploadPreview');
-  var summary = document.getElementById('objUploadSummary');
-  var items   = document.getElementById('objFileItems');
-  if (!preview) return;
-  if (!pendingObjFiles.length) { preview.style.display='none'; return; }
-  preview.style.display = 'block';
-  if(summary) summary.textContent = pendingObjFiles.length+' Dateien bereit ('+imgs+' Bilder, '+docs+' Dokumente)';
-  if(items) items.innerHTML = pendingObjFiles.map(function(f,i) {
-    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid var(--g200);font-size:11px">'
-      +'<span>'+fileEmoji(f.ext)+'</span>'
-      +'<div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div>'
-      +'<div style="color:var(--g500);font-size:10px">'+(f.storagePath !== f.name ? f.storagePath : (f.isImg ? '\u2192 Fotos' : '\u2192 Dokumente'))+'</div></div>'
-      +'<span style="color:var(--g500);font-size:10px;background:var(--g100);padding:1px 6px">'+f.ext.toUpperCase()+'</span>'
-      +'<button onclick="removePendingImg('+i+')" style="background:none;border:none;color:var(--g500);cursor:pointer;font-size:14px;padding:0 4px">\u00d7</button></div>';
-  }).join('');
-}
+function renderObjFilePreview() { renderImgPreviews(); }
 
 async function removeExistingImg(i) {
   var img = existingImages[i];
