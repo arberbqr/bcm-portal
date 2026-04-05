@@ -112,7 +112,8 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--t
 .obj-card-img img{width:100%;height:100%;object-fit:cover}
 .det-tab{padding:10px 16px;border:none;background:none;font-size:12px;font-weight:700;color:var(--g500);cursor:pointer;border-bottom:2px solid transparent;font-family:'Source Sans 3',sans-serif;letter-spacing:.03em}
 .det-tab.active{color:var(--navy);border-bottom-color:var(--navy)}
-.det-tab-pane{display:none}.det-tab-pane.active{display:block}width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;opacity:.3}
+.det-tab-pane{display:none}.det-tab-pane.active{display:block}
+.obj-card-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;opacity:.3}
 .obj-card-status{position:absolute;top:10px;right:10px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .status-available{background:var(--pos);color:white;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .status-reserved{background:var(--gold);color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.3)}
@@ -1479,18 +1480,18 @@ function setupAppShell() {
   const nav = document.getElementById('appNav');
   if (isAdmin) {
     nav.innerHTML = `
-      <button class="app-nav-btn" onclick="loadView('objects')">Objekte</button>
-      <button class="app-nav-btn" onclick="loadView('reservations')">Reservierungen</button>
-      <button class="app-nav-btn" onclick="loadView('partners')">Partner</button>
-      <button class="app-nav-btn" onclick="loadView('admin-calcs')">Berechnungen</button>
+      <button class="app-nav-btn" data-view="objects" onclick="loadView('objects')">Objekte</button>
+      <button class="app-nav-btn" data-view="reservations" onclick="loadView('reservations')">Reservierungen</button>
+      <button class="app-nav-btn" data-view="partners" onclick="loadView('partners')">Partner</button>
+      <button class="app-nav-btn" data-view="admin-calcs" onclick="loadView('admin-calcs')">Berechnungen</button>
       <button class="app-nav-btn" onclick="openAdminKve()">KVE Anfragen</button>
     `;
   } else {
     nav.innerHTML = `
-      <button class="app-nav-btn" onclick="loadView('vp-objects')">Objektliste</button>
-      <button class="app-nav-btn" onclick="loadView('vp-reservations')">Meine Reservierungen</button>
-      <button class="app-nav-btn" onclick="loadView('vp-calcs')">Meine Berechnungen</button>
-      <button class="app-nav-btn" onclick="loadView('vp-selbstauskunft')" style="color:var(--gold)">Selbstauskunft</button>
+      <button class="app-nav-btn" data-view="vp-objects" onclick="loadView('vp-objects')">Objektliste</button>
+      <button class="app-nav-btn" data-view="vp-reservations" onclick="loadView('vp-reservations')">Meine Reservierungen</button>
+      <button class="app-nav-btn" data-view="vp-calcs" onclick="loadView('vp-calcs')">Meine Berechnungen</button>
+      <button class="app-nav-btn" data-view="vp-selbstauskunft" onclick="loadView('vp-selbstauskunft')" style="color:var(--gold)">Selbstauskunft</button>
     `;
   }
 }
@@ -1500,7 +1501,7 @@ function loadView(name) {
   document.querySelectorAll('.app-nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name)?.classList.add('active');
   document.querySelectorAll('.app-nav-btn').forEach(b => {
-    if (b.textContent.toLowerCase().includes(name.split('-').pop().slice(0,4))) b.classList.add('active');
+    if (b.dataset.view === name) b.classList.add('active');
   });
 
   // Load data
@@ -1673,6 +1674,7 @@ async function generateLocationDesc() {
 }
 
 function openAddObject() {
+  clearObjForm();
   pendingObjFiles = [];
   existingImages = [];
   var prev = document.getElementById('objUploadPreview');
@@ -1958,7 +1960,7 @@ function initImgDragSort(container) {
 function removePendingImg(i) { pendingObjFiles.splice(i,1); renderObjFilePreview(); }
 
 async function handleObjFiles(files) {
-  pendingObjFiles = [];
+  // Neue Dateien zu bestehenden hinzufügen (nicht ersetzen)
   for (var fi = 0; fi < files.length; fi++) {
     var f = files[fi];
     var ext = f.name.split('.').pop().toLowerCase();
@@ -3117,7 +3119,8 @@ function runCalc() {
 
   const landPct   = (o.land_share||15)/100;
   const buildVal  = priceUnit*(1-landPct);
-  const nkkBuild  = totalNKK*(1-landPct);
+  // AfA-Basis: NKK immer aus dem Gebaeudeanteil mitnehmen (ob mitfinanziert oder nicht)
+  const nkkBuild  = nkkBetrag*(1-landPct);
   const afaBasis  = buildVal+nkkBuild;
   const degAfAPct = (o.deg_afa||0)/100;
   const linAfAPct = (o.lin_afa||3)/100;
@@ -3133,6 +3136,8 @@ function runCalc() {
 
   const years = [];
   let loanBal = loanBase, kfwBal = kfwUsed, rentCur = coldRent*12, propVal = totalPriceEff;
+  // Tilgungszuschuss sofort beim Auszahlen anwenden (reduziert Zinsschuld ab Jahr 1)
+  if (kfwBonus > 0) kfwBal = Math.max(0, kfwBal - kfwBonus);
   const laufend = hausgeld*12;
 
   for (let i = 0; i < 20; i++) {
@@ -3140,8 +3145,6 @@ function runCalc() {
     const rentEff = rentCur*(1-vacR);
     const int1 = loanBal*loanR, tl1 = loanBal*repayR; loanBal -= tl1;
     const intK = kfwBal*kfwR, tlK = kfwBal*kfwRep; kfwBal -= tlK;
-    // Tilgungszuschuss: einmalige Sondertilgung nach dem 1. Jahr (Rate bleibt gleich, Restschuld sinkt)
-    if (i === 0 && kfwBonus > 0) kfwBal = Math.max(0, kfwBal - kfwBonus);
     const totalInt = int1+intK, totalTl = tl1+tlK, totalDS = totalInt+totalTl;
     const afaG = (afaArr[i]||0)+furAfA;
     const erh  = (i < erhYears) ? erhPerYear : 0; // Erhaltungsaufwand für die ersten N Jahre
@@ -3161,8 +3164,8 @@ function runCalc() {
   const netto    = effGesamtkosten>0 ? (annRent-laufend)/effGesamtkosten*100 : 0;
   const cf1M     = years[0].netCfB/12;
   const cf1MSt   = years[0].netCfA/12;
-  const ekIn     = equityIn>0 ? equityIn : Math.max(gesamtkosten-kfwUsed,0);
-  const cfArr    = [-(ekIn)];
+  const ekIn     = equityIn; // Eingesetztes EK – 0 bleibt 0 (kein Fallback auf Gesamtkosten)
+  const cfArr    = [-(ekIn > 0 ? ekIn : gesamtkosten - kfwUsed)];
   for (let i=0;i<9;i++) cfArr.push(years[i].netCfA);
   cfArr.push(years[9].netCfA+(years[9].propVal-years[9].totalLoan));
   const irr = calcIRR(cfArr);
@@ -3247,7 +3250,7 @@ function runCalc() {
   const gkEl = document.getElementById('cr-gk');
   if(gkEl) gkEl.textContent = fmt(gesamtkosten);
   const ekHintEl = document.getElementById('cr-ek-hint');
-  if(ekHintEl) ekHintEl.textContent = 'davon NKK ' + fmt(totalNKK);
+  if(ekHintEl) ekHintEl.textContent = nkkInKP ? 'NKK im Kaufpreis enthalten' : 'davon NKK ' + fmt(totalNKK);
   const tax0 = years[0].taxEff;
   document.getElementById('cr-tax-hint').innerHTML = tax0>=0
     ? `<span style="color:var(--pos)">▲ +${fmt(tax0/12,0)}/Mo Steuerersparnis</span>`
@@ -3277,11 +3280,11 @@ function runCalc() {
   }
   const ekInputEl = document.getElementById('cr-ek-input');
   if(ekInputEl) {
-    ekInputEl.textContent = fmt(ekIn);
+    ekInputEl.textContent = equityIn > 0 ? fmt(ekIn) : '—';
     const ekInSub = document.getElementById('cr-ek-input-sub');
     if(ekInSub) {
-      const ekPct = gesamtkosten > 0 ? (ekIn/gesamtkosten*100).toFixed(1) : 0;
-      ekInSub.textContent = ekPct + '% der Gesamtkosten';
+      const ekPct = (gesamtkosten > 0 && ekIn > 0) ? (ekIn/gesamtkosten*100).toFixed(1) : 0;
+      ekInSub.textContent = ekPct > 0 ? ekPct + '% der Gesamtkosten' : 'kein EK eingesetzt';
     }
   }
 
@@ -3580,8 +3583,8 @@ async function saveCalculation() {
     vacancy: gC('c-vac'),
     nkk_in_kp: document.getElementById('c-nkkInKP')?.checked || false,
     // Ergebnisse
-    brutto_rendite: parseFloat(fmtP(d.brutto)) || 0,
-    netto_rendite: parseFloat(fmtP(d.netto)) || 0,
+    brutto_rendite: parseFloat(d.brutto.toFixed(4)) || 0,
+    netto_rendite: parseFloat(d.netto.toFixed(4)) || 0,
     cf_vor_steuer: d.cf1M,
     cf_nach_steuer: d.cf1MSt,
     irr: d.irr,
@@ -4056,7 +4059,7 @@ async function printCalc() {
       + (o.parking_active ? '<span><strong>' + (o.parking_count||1) + '\u00d7 ' + o.parking_type + ':</strong> ' + fmt(d.parkingPrice) + ' KP \u00b7 ' + fmt(d.parkingRentMon) + '/Monat</span>' : '')
       + '</div>' : '')
     // KPIs
-    + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">'
+    + '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:10px">'
     + [['Bruttorendite',fmtP(d.brutto),'#2e7d52'],['Nettorendite',fmtP(d.netto),'#1a2744'],['Kaltmiete p.M.',fmt(d.coldRent),'#1a2744'],['CF p.M. v.St.',fmt(d.cf1M,2),'#1a2744'],['CF p.M. n.St.',fmt(d.cf1MSt,2),'#1a2744'],['EK-Verzinsung 10J.',fmtP(d.irr),'#2e7d52']]
       .map(function(x){return '<div style="background:#f0f2f7;border:1px solid #d0ccc4;padding:7px 9px"><div style="font-size:6pt;color:#888075;text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+x[0]+'</div><div style="font-size:13pt;font-weight:700;color:'+x[2]+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
     + '</div>'
