@@ -532,10 +532,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
       <div class="card" style="padding:0;overflow:hidden">
         <div style="background:var(--navy);color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center">
           <div>
-            <div style="font-weight:700;font-size:14px">Selbstauskunft Bequiri × Zinsboutique</div>
+            <div style="font-weight:700;font-size:14px">Selbstauskunft Beqiri × Zinsboutique</div>
             <div style="font-size:11px;opacity:.6;margin-top:2px">Nach Einreichung meldet sich Zinsboutique innerhalb von 24h beim Kunden</div>
           </div>
-          <a href="https://www.zinsboutique.de/selbstauskunft-bequiri-zinsboutique" target="_blank"
+          <a href="https://www.zinsboutique.de/selbstauskunft-beqiri-zinsboutique" target="_blank"
             style="font-size:11px;color:var(--gold2);text-decoration:none;border:1px solid var(--gold2);padding:5px 12px;font-weight:700">
             ↗ In neuem Tab öffnen
           </a>
@@ -543,7 +543,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div id="sa-iframe-area" style="position:relative;width:100%;min-height:700px;font-family:'Montserrat',sans-serif;">
           <iframe
             id="JotFormIFrame-260904626171354"
-            title="ZB Selbstauskunft - Bequiri x Zinsboutique (extern)"
+            title="ZB Selbstauskunft - Beqiri x Zinsboutique (extern)"
             allowtransparency="true"
             allow="geolocation; microphone; camera; fullscreen; payment"
             src="https://form.jotform.com/260904626171354"
@@ -934,7 +934,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
                   <input type="checkbox" id="c-erh-active" onchange="toggleErhaltung()" style="width:14px;height:14px;accent-color:var(--navy)">
                   Erhaltungsaufwand aktivieren
                 </label>
-                <div style="font-size:10px;color:var(--g500);margin-top:2px;margin-left:21px">Sofortige Steuererstattung im 1. Jahr oder verteilt auf 2–5 Jahre</div>
+                <div style="font-size:10px;color:var(--g500);margin-top:2px;margin-left:21px">Sofortige Steuererstattung im 1. Jahr oder verteilt auf 2–5 Jahre · Vorschlagswert: 15% netto × 1,19 = 17,85% brutto des Gebäudewerts (§ 6 Abs. 1 Nr. 1a EStG)</div>
                 <div id="c-erh-panel" style="display:none;margin-top:10px">
                   <div class="ci-row">
                     <div class="cf">
@@ -2902,16 +2902,46 @@ async function openCalcForObject(id) {
     }
   }
 
-  // Fill calc inputs from object
+  // Fill calc inputs from object — VOLLSTÄNDIGER RESET vor jedem Öffnen
   const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val !== null && val !== undefined ? val : ''; };
+
+  // Empfänger zurücksetzen
+  set('c-recipient', '');
+
+  // Finanzierung aus Objekt
   set('c-loanr', o.loan_rate); set('c-repayr', o.repay_rate); set('c-taxr', o.tax_rate);
+
   // EK Standard: NKK + 10% des KP
   const nkkBasisDef = (o.price_unit||0) + (o.parking_active?(o.parking_price||0):0);
   const nkkDef = ((o.gst_pct||3.5)+(o.gb_kauf_pct||0.5)+(o.notar_pct||1.0)+(o.gb_pfand_pct||0.1))/100*nkkBasisDef;
   const ekDefault = Math.round(nkkDef + 0.10*((o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0)));
   set('c-equity', ekDefault);
+  const bdEl = document.getElementById('c-ekBreakdown');
+  if(bdEl) bdEl.innerHTML = '';
+
+  // Annahmen
   set('c-vg', o.value_growth); set('c-rg', o.rent_growth);
   set('c-vac', o.vacancy || 0);
+
+  // Wertsteigerung-Checkbox aktivieren
+  const useVgEl = document.getElementById('c-useVg');
+  if(useVgEl) useVgEl.checked = true;
+
+  // NKK-Toggle zurücksetzen
+  const nkkEl = document.getElementById('c-nkkInKP');
+  if(nkkEl) nkkEl.checked = false;
+
+  // Erhaltungsaufwand vollständig zurücksetzen
+  const erhActiveEl = document.getElementById('c-erh-active');
+  const erhPanelEl  = document.getElementById('c-erh-panel');
+  const erhAmountEl = document.getElementById('c-erh-amount');
+  const erhYearsEl  = document.getElementById('c-erh-years');
+  const erhHintEl   = document.getElementById('c-erh-hint');
+  if(erhActiveEl) erhActiveEl.checked = false;
+  if(erhPanelEl)  erhPanelEl.style.display = 'none';
+  if(erhAmountEl) erhAmountEl.value = '';   // leeren → beim nächsten Aktivieren wird Standardwert berechnet
+  if(erhYearsEl)  erhYearsEl.value = '1';
+  if(erhHintEl)   erhHintEl.textContent = '';
 
   if (o.kfw_active) {
     document.getElementById('c-kfw-card').style.display = 'block';
@@ -3014,14 +3044,23 @@ function toggleErhaltung() {
   const active = document.getElementById('c-erh-active').checked;
   document.getElementById('c-erh-panel').style.display = active ? 'block' : 'none';
   if (active && calcObj) {
-    // Erhaltungsaufwand = 15% des Gebäudewerts
-    // Gebäudewert = KP × (1 - Grundanteil)
     const kp = (calcObj.price_unit||0) + (calcObj.parking_active?(calcObj.parking_price||0):0);
     const grundanteil = (calcObj.land_share||15)/100;
     const gebaeudeWert = kp * (1 - grundanteil);
-    const erh = Math.round(gebaeudeWert * 0.15);
+    // § 6 Abs. 1 Nr. 1a EStG: 15%-Grenze gilt NETTO (ohne MwSt.).
+    // Privater Vermieter kann keine Vorsteuer abziehen → zahlt und setzt BRUTTO ab.
+    // Max. sofort abzugsfähig = 15% netto × 1,19 = 17,85% brutto des Gebäudewerts.
+    const erh = Math.round(gebaeudeWert * 0.1785);
     const el = document.getElementById('c-erh-amount');
-    if (el && !el.value) el.value = erh;
+    // Immer setzen wenn leer (nach Reset) — nie überschreiben wenn Nutzer bereits einen Wert eingegeben hat
+    if (el && (!el.value || el.value === '0')) el.value = erh;
+  }
+  if (!active) {
+    // Beim Deaktivieren: Feld leeren damit beim nächsten Aktivieren frisch berechnet wird
+    const el = document.getElementById('c-erh-amount');
+    if (el) el.value = '';
+    const hint = document.getElementById('c-erh-hint');
+    if (hint) hint.textContent = '';
   }
   runCalc();
 }
