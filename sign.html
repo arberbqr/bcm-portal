@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dokument unterzeichnen</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f7;color:#1a1714;min-height:100vh}
+  .page{max-width:780px;margin:0 auto;padding:24px 16px 60px}
+  .header{background:#1a2744;color:white;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:0}
+  .header-title{font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:rgba(255,255,255,.6)}
+  .header-logo{font-family:Georgia,serif;font-size:20px;font-weight:700;color:#d4af4a}
+  .doc{background:white;padding:32px 36px;border:1px solid #d0ccc4;margin-bottom:20px}
+  .doc-title{font-family:Georgia,serif;font-size:22px;font-weight:700;color:#1a2744;margin-bottom:4px}
+  .doc-sub{font-size:12px;color:#888;margin-bottom:24px}
+  .section{margin-bottom:20px}
+  .section-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#888;border-bottom:1px solid #ece9e3;padding-bottom:4px;margin-bottom:12px}
+  .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0ede8;font-size:13px}
+  .row span:first-child{color:#888}
+  .row span:last-child{font-weight:600;color:#1a2744}
+  .highlight{background:#f7f4ed;border-left:3px solid #d4af4a;padding:14px 18px;margin:16px 0;font-size:13px;line-height:1.7}
+  .bank-box{background:#1a2744;color:white;padding:16px 20px;margin:16px 0}
+  .bank-box .label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px}
+  .bank-box .value{font-size:14px;font-weight:700;font-family:'Courier New',monospace;letter-spacing:.05em;margin-bottom:10px;color:#d4af4a}
+  .bank-box .value:last-child{margin-bottom:0}
+  .legal{font-size:11px;color:#888;line-height:1.7;border-top:1px solid #ece9e3;padding-top:16px;margin-top:8px}
+  .sign-area{background:white;border:1px solid #d0ccc4;padding:24px}
+  .sign-title{font-size:14px;font-weight:700;color:#1a2744;margin-bottom:8px}
+  .sign-sub{font-size:12px;color:#888;margin-bottom:16px}
+  .email-field{margin-bottom:14px}
+  .email-field label{display:block;font-size:12px;font-weight:700;color:#1a2744;margin-bottom:5px}
+  .email-field input{width:100%;padding:9px 12px;border:1px solid #d0ccc4;font-size:13px;font-family:inherit}
+  canvas{border:1px solid #d0ccc4;background:#fafaf9;cursor:crosshair;touch-action:none;display:block;width:100%;height:160px}
+  .sign-actions{display:flex;gap:10px;margin-top:10px}
+  button{padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:none}
+  .btn-clear{background:#f0ede8;color:#666}
+  .btn-submit{background:#1a2744;color:white;flex:1}
+  .btn-submit:hover{background:#2a3a60}
+  .btn-submit:disabled{background:#ccc;cursor:not-allowed}
+  .success{text-align:center;padding:48px 20px}
+  .success-icon{font-size:64px;margin-bottom:16px}
+  .success-title{font-family:Georgia,serif;font-size:24px;color:#1a2744;margin-bottom:8px}
+  .success-text{color:#666;font-size:14px;line-height:1.7}
+  .loading{text-align:center;padding:80px 20px;color:#888}
+  .error-box{background:#fdf0f0;border:1px solid #e57373;padding:20px;text-align:center;color:#c0392b}
+  .vp-brand{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:12px 16px;border:1px solid #ece9e3;background:#fafaf9}
+  .vp-brand img{height:36px;max-width:100px;object-fit:contain}
+  .vp-brand-name{font-weight:700;color:#1a2744}
+  .vp-brand-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.07em}
+  .progress{font-size:12px;color:#888;margin-top:8px;text-align:center}
+  @media(max-width:600px){.doc{padding:20px 16px}.header{padding:14px 16px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Reservierungsvereinbarung</div>
+    <div class="header-logo" id="headerLogo">Vertriebsportal</div>
+  </div>
+  <div style="font-size:11px;color:rgba(255,255,255,.4);text-align:right">Bitte lesen und digital unterschreiben</div>
+</div>
+
+<div class="page" id="main">
+  <div class="loading">⏳ Vereinbarung wird geladen...</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://lnwikmhtaqkqsjrngrlg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxud2lrbWh0YXFrcXNqcm5ncmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjAxNDMsImV4cCI6MjA4OTMzNjE0M30.BqTG6vtVvjQFKiiT5_quCn9RFw2TdIMwpi5LqFlC8O0';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const token = new URLSearchParams(window.location.search).get('token');
+const protocolToken = new URLSearchParams(window.location.search).get('protocol');
+let resData = null, vpProfile = null, protoData = null;
+let canvas, ctx, drawing = false;
+
+function fmt(n) {
+  if (!n) return '—';
+  return '€\u00a0' + Math.round(n).toLocaleString('de-DE');
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+async function load() {
+  // ── Beratungsprotokoll mode ──────────────────────────────────────────────
+  if (protocolToken) {
+    document.querySelector('.header-title').textContent = 'Beratungsprotokoll';
+    document.getElementById('headerLogo').textContent = 'Vertriebsportal';
+    await loadProtocol();
+    return;
+  }
+
+  // ── Reservierungsvereinbarung mode ───────────────────────────────────────
+  if (!token) {
+    document.getElementById('main').innerHTML = '<div class="error-box">Ungültiger Link – kein Token gefunden.</div>';
+    return;
+  }
+
+  const { data: r } = await sb.from('reservations')
+    .select('*, objects(name,address,price_unit,parking_active,parking_price,bank_name,bank_iban,bank_bic,bank_account_holder)')
+    .eq('signing_token', token)
+    .single();
+
+  if (!r) {
+    document.getElementById('main').innerHTML = '<div class="error-box">Vereinbarung nicht gefunden. Bitte kontaktieren Sie Ihren Ansprechpartner.</div>';
+    return;
+  }
+
+  if (r.signed_at) {
+    document.getElementById('main').innerHTML = showSuccess(r);
+    return;
+  }
+
+  resData = r;
+  const o = r.objects || {};
+  const totalKP = (o.price_unit||0) + (o.parking_active ? (o.parking_price||0) : 0);
+  const hardExpiry = r.hard_expires_at ? new Date(r.hard_expires_at) : null;
+  const paymentDeadline = new Date(Date.now() + 5*24*60*60*1000);
+
+  if (r.vp_id) {
+    const { data: vp } = await sb.from('profiles').select('company_name,company_logo,full_name,email,phone').eq('id', r.vp_id).single();
+    vpProfile = vp;
+  }
+
+  // Header-Logo dynamisch setzen
+  const headerLogo = document.getElementById('headerLogo');
+  if (headerLogo && vpProfile?.company_name) {
+    headerLogo.textContent = vpProfile.company_name;
+  }
+
+  const preEmail = r.buyer_email || (r.buyer_contact && r.buyer_contact.includes('@') ? r.buyer_contact : '');
+
+  document.getElementById('main').innerHTML = `
+    ${vpProfile && (vpProfile.company_name || vpProfile.company_logo) ? `
+    <div class="vp-brand">
+      ${vpProfile.company_logo ? `<img src="${vpProfile.company_logo}" alt="Logo">` : ''}
+      <div>
+        <div class="vp-brand-label">Präsentiert durch</div>
+        <div class="vp-brand-name">${vpProfile.company_name || vpProfile.full_name}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="doc">
+      <div class="doc-title">Reservierungsvereinbarung</div>
+      <div class="doc-sub">Datum: ${fmtDate(new Date().toISOString())} · Vorgangsnummer: ${token.slice(0,8).toUpperCase()}</div>
+
+      <div class="section">
+        <div class="section-title">Objekt</div>
+        <div class="row"><span>Wohneinheit</span><span>${o.name||'—'}</span></div>
+        <div class="row"><span>Adresse</span><span>${o.address||'—'}</span></div>
+        <div class="row"><span>Kaufpreis</span><span>${fmt(totalKP)}</span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Käufer</div>
+        <div class="row"><span>Name</span><span>${r.buyer_name||'—'}</span></div>
+        ${r.buyer_contact ? `<div class="row"><span>Kontakt</span><span>${r.buyer_contact}</span></div>` : ''}
+      </div>
+
+      ${vpProfile ? `
+      <div class="section">
+        <div class="section-title">Vermittler</div>
+        <div class="row"><span>Name</span><span>${vpProfile.full_name||'—'}</span></div>
+        ${vpProfile.company_name ? `<div class="row"><span>Unternehmen</span><span>${vpProfile.company_name}</span></div>` : ''}
+        <div class="row"><span>E-Mail</span><span>${vpProfile.email||'—'}</span></div>
+      </div>` : ''}
+
+      <div class="section">
+        <div class="section-title">Reservierungskonditionen</div>
+        <div class="highlight">
+          <strong>① Reservierung:</strong> Einheit ist ab sofort für Sie reserviert.<br>
+          <strong>② Finalisierung Finanzierung:</strong> Nach Genehmigung – Frist bis <strong>${hardExpiry ? fmtDate(hardExpiry.toISOString()) : fmtDate(new Date(Date.now()+21*24*60*60*1000).toISOString())}</strong> (21 Tage).<br>
+          <strong>③ Beurkundung:</strong> Finaler Abschluss beim Notar.<br>
+          <strong>Reservierungsgebühr: € 1.000,00</strong> – Zahlungsfrist bis <strong>${fmtDate(paymentDeadline.toISOString())}</strong>.<br>
+          <span style="font-size:12px;color:#666">Die Gebühr verfällt bei Rücktritt des Käufers. Erstattung binnen 5 Werktagen nach Beurkundung, bei Rücktritt des Verkäufers, oder wenn trotz vollständiger Unterlagen die Finanzierung nicht innerhalb von 21 Tagen steht.</span>
+        </div>
+      </div>
+
+      ${o.bank_iban ? `
+      <div class="section">
+        <div class="section-title">Zahlungsanweisung Reservierungsgebühr</div>
+        <div class="bank-box">
+          <div class="label">Empfänger</div>
+          <div class="value">${o.bank_account_holder||'—'}</div>
+          <div class="label">Bank</div>
+          <div class="value">${o.bank_name||'—'}</div>
+          <div class="label">IBAN</div>
+          <div class="value">${o.bank_iban}</div>
+          ${o.bank_bic ? `<div class="label">BIC</div><div class="value">${o.bank_bic}</div>` : ''}
+          <div class="label">Verwendungszweck</div>
+          <div class="value">Reservierung ${o.name||''} – ${r.buyer_name}</div>
+          <div class="label">Betrag</div>
+          <div class="value" style="color:#6fcf97">€ 1.000,00</div>
+        </div>
+      </div>` : ''}
+
+      <div class="section">
+        <div class="section-title">Rechtliche Hinweise</div>
+        <div class="legal">
+          Diese Reservierungsvereinbarung begründet kein verbindliches Kaufversprechen und ersetzt nicht den notariellen Kaufvertrag.
+          Die Reservierung kann durch beide Parteien schriftlich widerrufen werden. Bei Widerruf durch den Käufer innerhalb der
+          Reservierungsfrist verfällt die Reservierungsgebühr. Der Verkäufer behält sich das Recht vor, die
+          Reservierung bei Nichtzahlung der Reservierungsgebühr innerhalb der Zahlungsfrist zu stornieren.
+          Mit Unterzeichnung bestätigt der Käufer, diese Vereinbarung gelesen und verstanden zu haben.
+        </div>
+      </div>
+    </div>
+
+    <div class="sign-area">
+      <div class="sign-title">Digitale Unterschrift</div>
+      <div class="sign-sub">Bitte im folgenden Feld mit dem Finger oder der Maus unterschreiben:</div>
+
+      <canvas id="sigCanvas" width="700" height="160"></canvas>
+      <div class="sign-actions">
+        <button class="btn-clear" onclick="clearSig()">↺ Löschen</button>
+        <button class="btn-submit" id="submitBtn" onclick="submitSignature()">✓ Verbindlich unterzeichnen &amp; PDF herunterladen</button>
+      </div>
+      <div id="progress" class="progress"></div>
+      <div style="font-size:11px;color:#888;margin-top:10px">
+        Mit der Unterzeichnung bestätigen Sie die obige Reservierungsvereinbarung.<br>
+        Ihre Unterschrift, IP-Adresse und der Zeitstempel werden gespeichert.
+      </div>
+    </div>
+  `;
+
+  initCanvas();
+}
+
+function initCanvas() {
+  canvas = document.getElementById('sigCanvas');
+  if (!canvas) return;
+  ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1a2744';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  canvas.addEventListener('mousedown', e => { drawing = true; ctx.beginPath(); const r = canvas.getBoundingClientRect(); ctx.moveTo((e.clientX-r.left)*(canvas.width/r.width), (e.clientY-r.top)*(canvas.height/r.height)); });
+  canvas.addEventListener('mousemove', e => { if(!drawing) return; const r = canvas.getBoundingClientRect(); ctx.lineTo((e.clientX-r.left)*(canvas.width/r.width), (e.clientY-r.top)*(canvas.height/r.height)); ctx.stroke(); });
+  canvas.addEventListener('mouseup', () => drawing = false);
+  canvas.addEventListener('mouseleave', () => drawing = false);
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; ctx.beginPath(); const r = canvas.getBoundingClientRect(), t = e.touches[0]; ctx.moveTo((t.clientX-r.left)*(canvas.width/r.width), (t.clientY-r.top)*(canvas.height/r.height)); });
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); if(!drawing) return; const r = canvas.getBoundingClientRect(), t = e.touches[0]; ctx.lineTo((t.clientX-r.left)*(canvas.width/r.width), (t.clientY-r.top)*(canvas.height/r.height)); ctx.stroke(); });
+  canvas.addEventListener('touchend', () => drawing = false);
+}
+
+function clearSig() {
+  if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function isCanvasEmpty() {
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  return !data.some(v => v !== 0);
+}
+
+function setProgress(msg) {
+  const el = document.getElementById('progress');
+  if (el) el.textContent = msg;
+}
+
+function generatePDF(r, sigData) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const o = r.objects || {};
+  const totalKP = (o.price_unit||0) + (o.parking_active ? (o.parking_price||0) : 0);
+  const W = 210, margin = 20;
+  let y = 20;
+
+  // Header – VP-Firmenname wenn vorhanden, sonst neutral
+  const headerName = vpProfile?.company_name || 'Vertriebsportal';
+  doc.setFillColor(26, 39, 68);
+  doc.rect(0, 0, W, 28, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(212, 175, 74);
+  doc.text(headerName, margin, 13);
+  doc.setFontSize(9);
+  doc.setTextColor(180, 180, 200);
+  doc.text('RESERVIERUNGSVEREINBARUNG', margin, 21);
+  y = 38;
+
+  // Title
+  doc.setTextColor(26, 39, 68);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Reservierungsvereinbarung', margin, y);
+  y += 7;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120, 120, 120);
+  doc.text('Datum: ' + fmtDate(new Date().toISOString()) + '   ·   Vorgangsnummer: ' + token.slice(0,8).toUpperCase(), margin, y);
+  y += 10;
+
+  function section(title) {
+    doc.setFillColor(240, 242, 247);
+    doc.rect(margin, y, W-2*margin, 6, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 100, 120);
+    doc.text(title.toUpperCase(), margin+2, y+4.2);
+    y += 9;
+  }
+  function row(label, value) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(label, margin, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(26, 39, 68);
+    doc.text(String(value||'—'), W/2, y);
+    doc.setDrawColor(230, 230, 230);
+    doc.line(margin, y+1.5, W-margin, y+1.5);
+    y += 7;
+  }
+
+  section('Objekt');
+  row('Wohneinheit', o.name||'—');
+  row('Adresse', o.address||'—');
+  row('Kaufpreis', fmt(totalKP));
+  y += 3;
+
+  section('Käufer');
+  row('Name', r.buyer_name||'—');
+  if (r.buyer_contact) row('Kontakt', r.buyer_contact);
+  y += 3;
+
+  if (vpProfile) {
+    section('Vermittler');
+    row('Name', vpProfile.full_name||'—');
+    if (vpProfile.company_name) row('Unternehmen', vpProfile.company_name);
+    row('E-Mail', vpProfile.email||'—');
+    y += 3;
+  }
+
+  section('Reservierungskonditionen');
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(50, 50, 50);
+  const lines = [
+    'Soft-Reservierung: Einheit reserviert bis ' + fmtDate(r.expires_at) + ' (72 Stunden).',
+    r.hard_expires_at ? 'Hard-Reservierung: Gilt bis ' + fmtDate(r.hard_expires_at) + ' (21 Tage nach Genehmigung).' : '',
+    'Reservierungsgebühr: € 1.000,00 (wird auf Provision angerechnet).',
+  ].filter(Boolean);
+  lines.forEach(l => { doc.text(l, margin, y); y += 6; });
+  y += 3;
+
+  if (o.bank_iban) {
+    section('Zahlungsanweisung');
+    if (o.bank_account_holder) row('Empfänger', o.bank_account_holder);
+    if (o.bank_name) row('Bank', o.bank_name);
+    row('IBAN', o.bank_iban);
+    if (o.bank_bic) row('BIC', o.bank_bic);
+    row('Betrag', '€ 1.000,00');
+    row('Verwendungszweck', 'Reservierung ' + (o.name||'') + ' – ' + r.buyer_name);
+    y += 3;
+  }
+
+  // Signature
+  section('Unterschrift');
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text('Unterzeichnet am ' + fmtDate(new Date().toISOString()) + ' von ' + r.buyer_name, margin, y);
+  y += 5;
+  if (sigData) {
+    try { doc.addImage(sigData, 'PNG', margin, y, 80, 25); } catch(e) {}
+    y += 28;
+  }
+  doc.setDrawColor(26, 39, 68);
+  doc.line(margin, y, margin+80, y);
+  doc.setFontSize(8);
+  doc.setTextColor(120, 120, 120);
+  doc.text(r.buyer_name + '  (digitale Unterschrift)', margin, y+4);
+
+  // Footer – neutral
+  doc.setFontSize(7);
+  doc.setTextColor(160, 160, 160);
+  doc.text('Diese Vereinbarung wurde digital unterzeichnet und ist rechtlich bindend.', margin, 285);
+
+  return doc.output('datauristring').split(',')[1];
+}
+
+async function submitSignature() {
+  if (isCanvasEmpty()) { alert('Bitte unterschreiben Sie zuerst.'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  setProgress('⏳ Unterschrift wird gespeichert...');
+
+  const sigData = canvas.toDataURL('image/png');
+  const signedAt = new Date().toISOString();
+
+  const { error } = await sb.from('reservations').update({
+    signed_at: signedAt,
+    signature_data: sigData,
+  }).eq('signing_token', token);
+
+  if (error) {
+    btn.disabled = false;
+    setProgress('');
+    alert('Fehler beim Speichern: ' + error.message);
+    return;
+  }
+
+  setProgress('📄 PDF wird erstellt...');
+  const pdfBase64 = generatePDF({...resData, signed_at: signedAt}, sigData);
+
+  setProgress('💾 PDF wird gespeichert...');
+  try {
+    const pdfBlob = base64ToBlob(pdfBase64, 'application/pdf');
+    const fileName = 'Reservierungsvereinbarung_' + (resData.objects?.name||'').replace(/\s/g,'_') + '_' + token.slice(0,8) + '.pdf';
+    const pdfPath = token.slice(0,8) + '/' + fileName;
+    const { error: upErr } = await sb.storage.from('reservation-pdfs').upload(pdfPath, pdfBlob, { contentType: 'application/pdf', upsert: true });
+    if (!upErr) {
+      await sb.from('reservations').update({ pdf_path: pdfPath }).eq('signing_token', token);
+    }
+  } catch(e) { console.error('PDF upload error:', e); }
+
+  setProgress('📄 PDF wird heruntergeladen...');
+  try {
+    const pdfBlob = base64ToBlob(pdfBase64, 'application/pdf');
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Reservierungsvereinbarung_' + (resData.objects?.name||'').replace(/\s/g,'_') + '.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+    setProgress('✅ PDF wurde heruntergeladen!');
+  } catch(e) {
+    setProgress('⚠️ PDF konnte nicht heruntergeladen werden.');
+  }
+
+  setTimeout(() => {
+    document.getElementById('main').innerHTML = showSuccess({...resData, signed_at: signedAt});
+  }, 2000);
+}
+
+function base64ToBlob(base64, mime) {
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+function showSuccess(r) {
+  return `
+    <div class="success">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Vereinbarung unterzeichnet!</div>
+      <div class="success-text">
+        Vielen Dank, <strong>${r.buyer_name}</strong>.<br>
+        Ihre Reservierungsvereinbarung wurde am <strong>${fmtDate(r.signed_at||new Date().toISOString())}</strong> digital unterzeichnet.<br><br>
+        ${r.buyer_email ? `Eine Kopie wurde an <strong>${r.buyer_email}</strong> gesendet.<br><br>` : 'Das PDF wurde auf Ihr Gerät heruntergeladen.<br><br>'}
+        Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 1.000,00</strong> innerhalb von 5 Werktagen.<br>
+        Sie erhalten eine Bestätigung von Ihrem Ansprechpartner.
+      </div>
+    </div>`;
+}
+
+// ── BERATUNGSPROTOKOLL ────────────────────────────────────────────────────────
+// ── helpers for protocol rendering ───────────────────────────────────────────
+const RISK_LABEL = { low: 'Gering (Sicherheit)', medium: 'Mittel (Chance)', high: 'Hoch (Spekulativ)' };
+const HORIZ_LABEL = { '5': 'Bis 5 Jahre', '10': 'Bis 10 Jahre', '10+': 'Über 10 Jahre' };
+
+function yesno(v) {
+  return v === 'nein'
+    ? '<span style="color:#c0392b;font-weight:700">Nein</span>'
+    : '<span style="color:#2e7d52;font-weight:700">Ja</span>';
+}
+
+async function loadProtocol() {
+  const { data: p } = await sb.from('advisory_protocols')
+    .select('*').eq('signing_token', protocolToken).single();
+
+  if (!p) {
+    document.getElementById('main').innerHTML = '<div class="error-box">Beratungsprotokoll nicht gefunden. Bitte kontaktieren Sie Ihren Berater.</div>';
+    return;
+  }
+  if (p.signed_at) {
+    document.getElementById('main').innerHTML = showProtocolSuccess(p);
+    return;
+  }
+
+  protoData = p;
+  const m = p.meta || {};
+
+  // Load VP profile for branding
+  let vp = null;
+  if (p.vp_id) {
+    const { data: vpRec } = await sb.from('profiles').select('company_name,company_logo,full_name,email,phone').eq('id', p.vp_id).single();
+    vp = vpRec;
+  }
+  vpProfile = vp; // make available globally for PDF generation
+  const headerLogo = document.getElementById('headerLogo');
+  if (vp?.company_name) headerLogo.textContent = vp.company_name;
+
+  // Load object data if available
+  let objData = null;
+  if (p.object_id) {
+    const { data: obj } = await sb.from('objects').select('name,address,price_unit,parking_active,parking_price,area,rooms').eq('id', p.object_id).single();
+    objData = obj;
+  }
+
+  const convDate = p.conversation_date ? new Date(p.conversation_date).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+  const convTime = p.conversation_time ? p.conversation_time.slice(0,5) : '—';
+  const convTimeTo = m.time_to ? m.time_to.slice(0,5) : null;
+  const timeRange = convTimeTo ? convTime + ' – ' + convTimeTo + ' Uhr' : convTime + ' Uhr';
+  const cl = m.checklist || {};
+  const goals = m.goals || [];
+
+  document.getElementById('main').innerHTML = `
+    ${vp && (vp.company_name || vp.company_logo) ? `
+    <div class="vp-brand">
+      ${vp.company_logo ? `<img src="${vp.company_logo}" alt="Logo">` : ''}
+      <div>
+        <div class="vp-brand-label">Beratung durch</div>
+        <div class="vp-brand-name">${vp.company_name || vp.full_name}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="doc">
+      <div class="doc-title">Beratungsprotokoll</div>
+      <div class="doc-sub">Nr.: ${protocolToken.slice(0,8).toUpperCase()} · Erstellt am ${fmtDate(new Date().toISOString())}</div>
+
+      <!-- Gesprächsdaten -->
+      <div class="section">
+        <div class="section-title">Gesprächsdaten</div>
+        <div class="row"><span>Datum</span><span>${convDate}</span></div>
+        <div class="row"><span>Uhrzeit</span><span>${timeRange}</span></div>
+        ${m.location ? `<div class="row"><span>Ort</span><span>${m.location}</span></div>` : ''}
+      </div>
+
+      <!-- Kundendaten -->
+      <div class="section">
+        <div class="section-title">Kunde / Interessent</div>
+        <div class="row"><span>Name</span><span>${p.customer_name||'—'}</span></div>
+        ${m.coapplicant ? `<div class="row"><span>Mitantragsteller</span><span>${m.coapplicant}</span></div>` : ''}
+        ${m.address ? `<div class="row"><span>Anschrift</span><span>${m.address}</span></div>` : ''}
+        ${p.customer_email ? `<div class="row"><span>E-Mail</span><span>${p.customer_email}</span></div>` : ''}
+        ${m.phone ? `<div class="row"><span>Telefon</span><span>${m.phone}</span></div>` : ''}
+      </div>
+
+      <!-- Berater -->
+      ${vp ? `
+      <div class="section">
+        <div class="section-title">Berater / Vermittler</div>
+        <div class="row"><span>Name</span><span>${vp.full_name||'—'}</span></div>
+        ${vp.company_name ? `<div class="row"><span>Unternehmen</span><span>${vp.company_name}</span></div>` : ''}
+        ${vp.email ? `<div class="row"><span>E-Mail</span><span>${vp.email}</span></div>` : ''}
+      </div>` : ''}
+
+      <!-- Objekt -->
+      ${objData ? `
+      <div class="section">
+        <div class="section-title">Besprochene Immobilie</div>
+        <div class="row"><span>Wohneinheit</span><span>${objData.name||'—'}</span></div>
+        <div class="row"><span>Adresse</span><span>${objData.address||'—'}</span></div>
+        ${objData.area ? `<div class="row"><span>Wohnfläche</span><span>${objData.area} m²</span></div>` : ''}
+        ${objData.price_unit ? `<div class="row"><span>Kaufpreis</span><span>${fmt((objData.price_unit||0)+(objData.parking_active?(objData.parking_price||0):0))}</span></div>` : ''}
+      </div>` : ''}
+
+      <!-- Anlageziele + Risikobereitschaft -->
+      ${goals.length || m.risk || m.horizon ? `
+      <div class="section">
+        <div class="section-title">Anlageziele &amp; Anlegerprofil</div>
+        ${goals.length ? `<div class="row"><span>Anlageziele</span><span style="text-align:right">${goals.join(' · ')}</span></div>` : ''}
+        ${m.risk ? `<div class="row"><span>Risikobereitschaft</span><span>${RISK_LABEL[m.risk]||m.risk}</span></div>` : ''}
+        ${m.horizon ? `<div class="row"><span>Anlagehorizont</span><span>${HORIZ_LABEL[m.horizon]||m.horizon}</span></div>` : ''}
+      </div>` : ''}
+
+      <!-- Checkliste -->
+      <div class="section">
+        <div class="section-title">Checkliste – Aufklärung durch den Berater</div>
+        <div class="row"><span>Chancen und Risiken eines Immobilienkaufs erläutert</span>${yesno(cl.cl1||'ja')}</div>
+        <div class="row"><span>Exposé, Kaufvertragsentwurf und Teilungserklärung ausgehändigt</span>${yesno(cl.cl2||'ja')}</div>
+        <div class="row"><span>Mögliche Bauzeitzinsen und Bereitstellungszinsen erläutert</span>${yesno(cl.cl3||'ja')}</div>
+        <div class="row"><span>Besichtigung der Immobilie und des Standorts angeboten</span>${yesno(cl.cl4||'ja')}</div>
+      </div>
+
+      <!-- Ausführlicher Rechtstext -->
+      <div class="section">
+        <div class="section-title">Aufklärung über Chancen und Risiken</div>
+        <div class="legal" style="font-size:12px;line-height:1.8;color:#333">
+          <p style="margin-bottom:10px">Ich/Wir wurde/n vor Erwerb der Immobilie über folgende Punkte ausführlich informiert:</p>
+
+          <p style="margin-bottom:10px"><strong>Langfristigkeit der Anlage:</strong> Ich/Wir wurden darauf hingewiesen, dass die Immobilie als langfristige Vermögensanlage zu sehen ist. Ein frühzeitiger Verkauf kann unter Umständen hohe Verluste bedeuten und wird auf keinen Fall empfohlen.</p>
+
+          <p style="margin-bottom:10px"><strong>Wertentwicklung:</strong> Ich/Wir wissen, dass Immobilien als Sachwerte weitgehend Schutz gegen Kaufkraftverlust und Inflation bieten. Diese Wertentwicklung unterliegt jedoch Schwankungen, so dass die Wertsteigerung im langfristigen Bereich gesehen werden muss. Die beim Kauf anfallenden Nebenkosten sind nicht automatisch durch die Inflation gedeckt.</p>
+
+          <p style="margin-bottom:10px"><strong>Monatlicher Aufwand:</strong> Ich/Wir wissen, dass nach Abzug der zu erwartenden Mieteinnahmen der monatliche Gesamtaufwand vor Steuer höher ausfallen kann und dass dieser Betrag monatlich zu tragen ist.</p>
+
+          <p style="margin-bottom:10px"><strong>Wirtschaftliches und steuerliches Ergebnis:</strong> Ich/Wir wurde/n darüber aufgeklärt, dass die steuerlichen Vorteile aus dem Erwerb der Immobilie nicht zwingend die Höhe der monatlichen Zahlungen erreichen und sich die steuerlichen Rahmenbedingungen in Zukunft ändern können. Mir/Uns wurde empfohlen, steuerliche Beratungen von einem Angehörigen der steuerberatenden Berufe vornehmen zu lassen. Weder der Bauträger, die Vertriebsgesellschaft noch der Vermittler haften für die Wirtschaftlichkeit des Immobilienerwerbs oder haben steuerlich beraten.</p>
+
+          <p style="margin-bottom:10px"><strong>Finanzierung:</strong> Mir/Uns ist bekannt, dass das für den Erwerb erforderliche Darlehen in der Regel höher als der von der Bank ermittelte Verkehrswert ist. Die Konditionen der Fremdmittel werden zum Zeitpunkt der Kreditaufnahme festgelegt. Ich/Wir wurde/n darüber aufgeklärt, dass die monatlichen Aufwendungen nach Ablauf der Zinsfestschreibung durch Zinsänderungen niedriger, aber auch höher ausfallen können. Der Vermittler hat bei der Finanzierung nicht vermittelt.</p>
+
+          <p style="margin-bottom:10px"><strong>Angabenvorbehalt:</strong> Ich/Wir wissen, dass alle Angaben und Berechnungen in den Musterberechnungen mit größter Sorgfalt zusammengestellt wurden. Änderungen können durch künftige wirtschaftliche Entwicklungen oder Gesetzesänderungen eintreten. Für das Erreichen der wirtschaftlichen und steuerlichen Ziele des Erwerbs kann keine Garantie übernommen werden.</p>
+
+          <p style="margin-bottom:0"><strong>Nebenabreden:</strong> Ich/Wir wissen, dass mündliche Nebenabreden mit dem Berater/Vermittler niemanden binden und der Berater/Vermittler nicht ermächtigt ist, verbindliche Aussagen zur Wirtschaftlichkeit der Investition zu treffen.</p>
+        </div>
+      </div>
+
+      <!-- 12 Chancen & Risiken -->
+      <div class="section">
+        <div class="section-title">Chancen und Risiken beim Erwerb von Immobilien zur Kapitalanlage</div>
+        <div class="legal" style="font-size:12px;line-height:1.8;color:#333">
+          <p style="margin-bottom:8px"><strong>1.</strong> Immobilien als Kapitalanlage sind als langfristige Anlageform zu sehen. Sie dienen nicht zu Spekulationszwecken oder primär als Steuersparmodell. Der Zeitraum eines angestrebten Wiederverkaufs sollte aus steuerlichen und wirtschaftlichen Gründen mindestens 10 Jahre betragen. Eine Steuerberatung durch den Vermittler findet nicht statt.</p>
+          <p style="margin-bottom:8px"><strong>2.</strong> Es besteht seitens des Verkäufers und des Vertriebs keine Rücknahmegarantie. Der Wiederverkauf ist von den zum Zeitpunkt des Wiederverkaufs gültigen wirtschaftlichen Gegebenheiten abhängig. Eine positive Wertentwicklung der Immobilie kann nicht garantiert werden.</p>
+          <p style="margin-bottom:8px"><strong>3.</strong> Steuererstattungen aus dem Erwerb der Immobilie sollten vom Käufer im eigenen Interesse als zusätzliche Sicherheit angespart werden. Steuererstattungen wurden vom Berater nicht zugesichert.</p>
+          <p style="margin-bottom:8px"><strong>4.</strong> Die Eigentümer sind verpflichtet, eine angemessene Instandhaltungsrücklage zu bilden, die eventuell anfallende Reparaturkosten des Gesamtobjektes abdeckt.</p>
+          <p style="margin-bottom:8px"><strong>5.</strong> Die Geschäftspartner bzw. Vermittler sind ausschließlich zur Vermittlung des Vertragsabschlusses beauftragt. Für jegliche über den Inhalt der Verkaufsunterlagen hinausgehenden Informationen oder eventuellen Zusagen kann keine Verantwortung übernommen werden, es sei denn, diese wurden schriftlich bestätigt.</p>
+          <p style="margin-bottom:8px"><strong>6.</strong> Das für den Erwerb erforderliche Darlehen ist in der Regel höher als der von der Bank ermittelte Verkehrswert. Daraus ergibt sich, dass ein Teil des Darlehens durch die persönliche Bonität des Käufers abgesichert ist. Nach Ablauf der Zinsfestschreibung kann sich der Zinssatz verändern.</p>
+          <p style="margin-bottom:8px"><strong>7.</strong> Der Käufer bestätigt ausdrücklich, dass die von ihm übergebenen Einkommensnachweise und die ausgefüllte Selbstauskunft zutreffend die Vermögens- und Einkommenssituation wiedergeben.</p>
+          <p style="margin-bottom:8px"><strong>8.</strong> Für mögliche Konsequenzen aus der laufenden Steuer- und Rechtsprechung übernehmen der Verkäufer sowie der Vermittler und dessen Kooperationspartner keine Haftung. Dem Käufer wird geraten, sich sachkundigen Rat eines Berufsträgers einzuholen.</p>
+          <p style="margin-bottom:8px"><strong>9.</strong> Der Käufer bestätigt, dass er das zum Kauf beabsichtigte Objekt besichtigt hat bzw. eine Besichtigung angeboten wurde und er mit dem derzeitigen Zustand einverstanden ist.</p>
+          <p style="margin-bottom:8px"><strong>10.</strong> Neben den Rücklagen für das Gemeinschaftseigentum wird der Käufer darauf hingewiesen, dass es empfehlenswert ist, auch Rücklagen für das Sondereigentum zu bilden. Die Werthaltigkeit einer Mietgarantie hängt von der Bonität des Mietgarantiegebers ab.</p>
+          <p style="margin-bottom:8px"><strong>11.</strong> Der Erwerb der Kapitalanlage ist in keinem Zusammenhang mit einem Kreditvertrag zu verstehen. Die Immobilie ist ausschließlich zur Kapitalanlage gedacht.</p>
+          <p style="margin-bottom:0"><strong>12.</strong> Der Käufer bestätigt, dass die Beratung des Vermittlers sich ausschließlich auf den Kauf des hier genannten Objekts bezogen hat und eine darüber hinausgehende Beratung weder stattgefunden hat noch vom Käufer gewünscht worden ist.</p>
+        </div>
+      </div>
+
+      <!-- Schlussbestätigung -->
+      <div class="section">
+        <div class="section-title">Bestätigung</div>
+        <div class="highlight" style="font-size:12px;line-height:1.8">
+          Ich/Wir bestätige/n, alle genannten Punkte sowie das gesamte Beratungsprotokoll gelesen und verstanden zu haben.<br><br>
+          Ich/Wir akzeptiere/n die Verarbeitung und Speicherung der angegebenen Daten zum Zweck der Abwicklung gemäß Datenschutzrichtlinien.<br><br>
+          Ich/Wir bestätige/n hiermit den Gesamtinhalt dieses Protokolls sowie die Richtigkeit der darin enthaltenen Angaben. Mündliche Nebenabreden wurden nicht getroffen.
+        </div>
+      </div>
+    </div>
+
+    <div class="sign-area">
+      <div class="sign-title">Digitale Unterschrift</div>
+      <div class="sign-sub">Bitte im folgenden Feld unterschreiben, um das Beratungsprotokoll zu bestätigen:</div>
+      <canvas id="sigCanvas" width="700" height="160"></canvas>
+      <div class="sign-actions">
+        <button class="btn-clear" onclick="clearSig()">↺ Löschen</button>
+        <button class="btn-submit" id="submitBtn" onclick="submitProtocolSignature()">✓ Beratungsprotokoll bestätigen &amp; unterschreiben</button>
+      </div>
+      <div id="progress" class="progress"></div>
+      <div style="font-size:11px;color:#888;margin-top:10px">
+        Mit der Unterzeichnung bestätigen Sie den Erhalt und die Kenntnisnahme des vollständigen Beratungsprotokolls.<br>
+        Ihre Unterschrift, IP-Adresse und der Zeitstempel werden gespeichert.
+      </div>
+    </div>
+  `;
+  initCanvas();
+}
+
+async function submitProtocolSignature() {
+  if (isCanvasEmpty()) { alert('Bitte unterschreiben Sie zuerst.'); return; }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  setProgress('⏳ Unterschrift wird gespeichert...');
+
+  const sigData = canvas.toDataURL('image/png');
+  const signedAt = new Date().toISOString();
+
+  const { error } = await sb.from('advisory_protocols').update({
+    signed_at: signedAt,
+    signature_data: sigData
+  }).eq('signing_token', protocolToken);
+
+  if (error) {
+    btn.disabled = false;
+    setProgress('');
+    alert('Fehler beim Speichern: ' + error.message);
+    return;
+  }
+
+  setProgress('📄 PDF wird erstellt...');
+  const pdfBase64 = generateProtocolPDF({...protoData, signed_at: signedAt}, sigData);
+
+  setProgress('💾 PDF wird gespeichert...');
+  try {
+    const pdfBlob = base64ToBlob(pdfBase64, 'application/pdf');
+    const fileName = 'Beratungsprotokoll_' + (protoData.customer_name||'').replace(/\s/g,'_') + '_' + protocolToken.slice(0,8) + '.pdf';
+    const pdfPath = 'protocol/' + protocolToken.slice(0,8) + '/' + fileName;
+    const { error: upErr } = await sb.storage.from('reservation-pdfs').upload(pdfPath, pdfBlob, { contentType: 'application/pdf', upsert: true });
+    if (!upErr) {
+      await sb.from('advisory_protocols').update({ pdf_path: pdfPath }).eq('signing_token', protocolToken);
+    }
+  } catch(e) { console.error('Protocol PDF upload error:', e); }
+
+  setProgress('📄 PDF wird heruntergeladen...');
+  try {
+    const pdfBlob = base64ToBlob(pdfBase64, 'application/pdf');
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Beratungsprotokoll_' + (protoData.customer_name||'').replace(/\s/g,'_') + '.pdf';
+    a.click(); URL.revokeObjectURL(url);
+    setProgress('✅ PDF wurde heruntergeladen!');
+  } catch(e) { setProgress('⚠️ PDF konnte nicht heruntergeladen werden.'); }
+
+  setTimeout(() => {
+    document.getElementById('main').innerHTML = showProtocolSuccess({...protoData, signed_at: signedAt});
+  }, 2000);
+}
+
+function generateProtocolPDF(p, sigData) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, margin = 18, textW = W - 2 * margin;
+  let y = 20;
+  const m = p.meta || {};
+  const cl = m.checklist || {};
+  const goals = m.goals || [];
+  const headerName = document.getElementById('headerLogo')?.textContent || 'Vertriebsportal';
+  const convDate = p.conversation_date ? new Date(p.conversation_date).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+  const convTime = p.conversation_time ? p.conversation_time.slice(0,5) : '—';
+  const convTimeTo = m.time_to ? m.time_to.slice(0,5) : null;
+  const timeRange = convTimeTo ? convTime + ' – ' + convTimeTo + ' Uhr' : convTime + ' Uhr';
+
+  function header() {
+    doc.setFillColor(26,39,68); doc.rect(0,0,W,28,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(212,175,74);
+    doc.text(headerName, margin, 13);
+    doc.setFontSize(9); doc.setTextColor(180,180,200);
+    doc.text('BERATUNGSPROTOKOLL', margin, 21);
+    doc.setFontSize(8); doc.setTextColor(180,180,200);
+    doc.text('Nr. ' + protocolToken.slice(0,8).toUpperCase(), W-margin, 21, {align:'right'});
+    y = 36;
+  }
+  function newPage() {
+    doc.addPage(); header();
+  }
+  function checkY(need) { if (y + need > 278) { newPage(); } }
+  function section(title) {
+    checkY(12);
+    doc.setFillColor(240,242,247); doc.rect(margin, y, textW, 6, 'F');
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(80,80,110);
+    doc.text(title.toUpperCase(), margin+2, y+4.2); y += 10;
+  }
+  function row(label, val) {
+    checkY(8);
+    doc.setFontSize(9.5); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text(label, margin, y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(26,39,68);
+    const maxW = textW * 0.48;
+    const wrapped = doc.splitTextToSize(String(val||'—'), maxW);
+    doc.text(wrapped, W/2, y);
+    const h = wrapped.length * 5 + 2;
+    doc.setDrawColor(225,225,225); doc.line(margin, y+h-2, W-margin, y+h-2);
+    y += h;
+  }
+  function paraBlock(text) {
+    const lines = doc.splitTextToSize(text, textW);
+    checkY(lines.length * 5 + 4);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(50,50,50);
+    lines.forEach(l => { checkY(5); doc.text(l, margin, y); y += 5; });
+    y += 3;
+  }
+
+  header();
+
+  // Title
+  doc.setTextColor(26,39,68); doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text('Beratungsprotokoll', margin, y); y += 7;
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
+  doc.text('Datum: ' + convDate + '  ·  ' + timeRange + '  ·  Unterzeichnet: ' + fmtDate(new Date().toISOString()), margin, y); y += 10;
+
+  // Gesprächsdaten
+  section('Gesprächsdaten');
+  row('Datum', convDate);
+  row('Uhrzeit', timeRange);
+  if (m.location) row('Ort', m.location);
+  y += 3;
+
+  // Kundendaten
+  section('Kunde / Interessent');
+  row('Name', p.customer_name||'—');
+  if (m.coapplicant) row('Mitantragsteller', m.coapplicant);
+  if (m.address) row('Anschrift', m.address);
+  if (p.customer_email) row('E-Mail', p.customer_email);
+  if (m.phone) row('Telefon', m.phone);
+  y += 3;
+
+  // Berater (from vpProfile stored in global)
+  if (vpProfile) {
+    section('Berater / Vermittler');
+    row('Name', vpProfile.full_name||'—');
+    if (vpProfile.company_name) row('Unternehmen', vpProfile.company_name);
+    if (vpProfile.email) row('E-Mail', vpProfile.email);
+    y += 3;
+  }
+
+  // Anlageziele
+  if (goals.length || m.risk || m.horizon) {
+    section('Anlageziele & Anlegerprofil');
+    if (goals.length) row('Anlageziele', goals.join(', '));
+    if (m.risk) row('Risikobereitschaft', RISK_LABEL[m.risk]||m.risk);
+    if (m.horizon) row('Anlagehorizont', HORIZ_LABEL[m.horizon]||m.horizon);
+    y += 3;
+  }
+
+  // Checkliste
+  section('Checkliste – Aufklärung durch den Berater');
+  row('Chancen und Risiken erläutert', (cl.cl1||'ja').toUpperCase());
+  row('Exposé und Kaufvertragsentwurf ausgehändigt', (cl.cl2||'ja').toUpperCase());
+  row('Bauzeitzinsen und Bereitstellungszinsen erläutert', (cl.cl3||'ja').toUpperCase());
+  row('Besichtigung des Objekts angeboten', (cl.cl4||'ja').toUpperCase());
+  y += 3;
+
+  // Rechtstext
+  section('Aufklärung über Chancen und Risiken');
+  paraBlock('Ich/Wir wurde/n vor Erwerb der Immobilie über folgende Punkte ausführlich informiert:');
+  paraBlock('Langfristigkeit: Die Immobilie ist als langfristige Vermögensanlage zu sehen. Ein frühzeitiger Verkauf kann hohe Verluste bedeuten.');
+  paraBlock('Wertentwicklung: Immobilien bieten weitgehend Schutz gegen Kaufkraftverlust und Inflation. Diese Wertentwicklung unterliegt jedoch Schwankungen. Die beim Kauf anfallenden Nebenkosten sind nicht automatisch durch die Inflation gedeckt.');
+  paraBlock('Monatlicher Aufwand: Nach Abzug der zu erwartenden Mieteinnahmen kann der monatliche Gesamtaufwand vor Steuer höher ausfallen.');
+  paraBlock('Steuerliches Ergebnis: Die steuerlichen Vorteile erreichen nicht zwingend die Höhe der monatlichen Zahlungen. Die steuerlichen Rahmenbedingungen können sich in Zukunft ändern. Eine Steuerberatung durch einen Steuerberater wird ausdrücklich empfohlen. Weder Bauträger, Vertriebsgesellschaft noch Vermittler haften für die Wirtschaftlichkeit des Immobilienerwerbs.');
+  paraBlock('Finanzierung: Das erforderliche Darlehen ist in der Regel höher als der von der Bank ermittelte Verkehrswert. Nach Ablauf der Zinsfestschreibung können die monatlichen Aufwendungen durch Zinsänderungen niedriger oder höher ausfallen. Der Vermittler hat bei der Finanzierung nicht vermittelt.');
+  paraBlock('Angabenvorbehalt: Alle Angaben und Berechnungen basieren auf den gemachten Angaben und den zum Zeitpunkt der Erstellung geltenden Vorschriften. Für das Erreichen der wirtschaftlichen und steuerlichen Ziele kann keine Garantie übernommen werden.');
+  paraBlock('Nebenabreden: Mündliche Nebenabreden binden niemanden. Der Vermittler ist nicht ermächtigt, verbindliche Aussagen zur Wirtschaftlichkeit zu treffen.');
+  y += 2;
+
+  // 12 Punkte
+  section('Chancen und Risiken beim Erwerb von Immobilien zur Kapitalanlage');
+  const riskPts = [
+    'Immobilien als Kapitalanlage sind als langfristige Anlageform zu sehen (Mindesthaltedauer empfohlen: 10 Jahre). Eine Steuerberatung durch den Vermittler findet nicht statt.',
+    'Es besteht keine Rücknahmegarantie. Eine positive Wertentwicklung der Immobilie kann nicht garantiert werden.',
+    'Steuererstattungen wurden nicht zugesichert. Empfehlung: als zusätzliche Sicherheit ansparen.',
+    'Die Eigentümer sind verpflichtet, eine angemessene Instandhaltungsrücklage zu bilden.',
+    'Der Vermittler ist ausschließlich zur Vermittlung des Vertragsabschlusses beauftragt. Über den Inhalt der Verkaufsunterlagen hinausgehende Zusagen wurden nicht gemacht.',
+    'Das Darlehen ist in der Regel höher als der Verkehrswert. Ein Teil ist durch die persönliche Bonität abgesichert.',
+    'Die übergebenen Einkommensnachweise und die Selbstauskunft geben die Vermögens- und Einkommenssituation zutreffend wieder.',
+    'Für Konsequenzen aus der laufenden Steuer- und Rechtsprechung wird keine Haftung übernommen.',
+    'Das Objekt wurde besichtigt oder eine Besichtigung wurde angeboten; der Zustand ist bekannt.',
+    'Rücklagen sollten auch für das Sondereigentum gebildet werden. Die Werthaltigkeit einer Mietgarantie hängt von der Bonität des Garantiegebers ab.',
+    'Der Erwerb der Kapitalanlage steht in keinem Zusammenhang mit einem Kreditvertrag.',
+    'Die Beratung bezog sich ausschließlich auf das hier genannte Objekt.'
+  ];
+  riskPts.forEach((pt, i) => paraBlock((i+1) + '. ' + pt));
+  y += 2;
+
+  // Schlussbestätigung
+  section('Bestätigung des Kunden');
+  paraBlock('Ich/Wir bestätige/n, alle genannten Punkte sowie das gesamte Beratungsprotokoll gelesen und verstanden zu haben.');
+  paraBlock('Ich/Wir akzeptiere/n die Verarbeitung und Speicherung der angegebenen Daten gemäß Datenschutzrichtlinien.');
+  paraBlock('Ich/Wir bestätige/n hiermit den Gesamtinhalt dieses Protokolls sowie die Richtigkeit der darin enthaltenen Angaben. Mündliche Nebenabreden wurden nicht getroffen.');
+  y += 4;
+
+  // Unterschrift
+  section('Unterschrift Kunde');
+  checkY(40);
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  doc.text('Unterzeichnet am ' + fmtDate(new Date().toISOString()) + ' von ' + (p.customer_name||'Kunde'), margin, y); y += 6;
+  if (sigData) { try { doc.addImage(sigData, 'PNG', margin, y, 80, 25); } catch(e) {} y += 28; }
+  doc.setDrawColor(26,39,68); doc.line(margin, y, margin+90, y); y += 5;
+  doc.setFontSize(8); doc.setTextColor(120,120,120);
+  doc.text((p.customer_name||'Kunde') + '   (digitale Unterschrift)', margin, y);
+
+  doc.setFontSize(7); doc.setTextColor(160,160,160);
+  doc.text('Digital unterzeichnet und rechtlich bindend. Erstellt durch ' + headerName + '.', margin, 288);
+
+  return doc.output('datauristring').split(',')[1];
+}
+
+function showProtocolSuccess(p) {
+  const convDate = p.conversation_date ? new Date(p.conversation_date).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  return `
+    <div class="success">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Beratungsprotokoll unterzeichnet!</div>
+      <div class="success-text">
+        Vielen Dank, <strong>${p.customer_name||'Kunde'}</strong>.<br>
+        Sie haben den Erhalt der Risikohinweise vom <strong>${convDate}</strong> digital bestätigt.<br><br>
+        Das PDF wurde auf Ihr Gerät heruntergeladen.<br>
+        Ihr Berater erhält eine Benachrichtigung.
+      </div>
+    </div>`;
+}
+
+load();
+</script>
+</body>
+</html>
