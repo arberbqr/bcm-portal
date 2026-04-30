@@ -1404,46 +1404,61 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
       <!-- Anlageziele -->
       <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:10px;margin-top:16px">Anlageziele</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
-        ${['Regelmäßige Einnahmen','Langfristiger Wertzuwachs','Inflationsschutz','Altersvorsorge','Steuervorteile','Vermögensaufbau'].map(g =>
-          `<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--g200);background:white">
-            <input type="checkbox" class="proto-goal" value="${g}" style="accent-color:var(--navy)"> ${g}
-          </label>`).join('')}
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--g200);background:white"><input type="checkbox" class="proto-goal" value="Regelmäßige Einnahmen" style="accent-color:var(--navy)"> Regelmäßige Einnahmen</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--g200);background:white"><input type="checkbox" class="proto-goal" value="Langfristiger Wertzuwachs" style="accent-color:var(--navy)"> Langfristiger Wertzuwachs</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--g200);background:white"><input type="checkbox" class="proto-goal" value="Inflationsschutz" style="accent-color:var(--navy)"> Inflationsschutz</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--g200);background:white"><input type="checkbox" class="proto-goal" value="Altersvorsorge" style="accent-color:var(--navy)"> Altersvorsorge</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--g200);background:white"><input type="checkbox" class="proto-goal" value="Steuervorteile" style="accent-color:var(--navy)"> Steuervorteile</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid var(--g200);background:white"><input type="checkbox" class="proto-goal" value="Vermögensaufbau" style="accent-color:var(--navy)"> Vermögensaufbau</label>
       </div>
 
       <!-- Risikobereitschaft + Horizont -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
         <div>
           <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:8px">Risikobereitschaft</div>
-          ${[['low','Gering (Sicherheit)'],['medium','Mittel (Chance)'],['high','Hoch (Spekulativ)']].map(([v,l],i) =>
-            `<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px;cursor:pointer">
-              <input type="radio" name="proto-risk" value="${v}" ${i===0?'checked':''} style="accent-color:var(--navy)"> ${l}
-            </label>`).join('')}
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px;cursor:pointer"><input type="radio" name="proto-risk" value="low" checked style="accent-color:var(--navy)"> Gering (Sicherheit)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px;cursor:pointer"><input type="radio" name="proto-risk" value="medium" style="accent-color:var(--navy)"> Mittel (Chance)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px;cursor:pointer"><input type="radio" name="proto-risk" value="high" style="accent-color:var(--navy)"> Hoch (Spekulativ)</label>
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:8px">Anlagehorizont</div>
-          ${[['5','Bis 5 Jahre'],['10','Bis 10 Jahre'],['10+','Über 10 Jahre']].map(([v,l],i) =>
-            `<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px;cursor:pointer">
-              <input type="radio" name="proto-horizon" value="${v}" ${i===2?'checked':''} style="accent-color:var(--navy)"> ${l}
-            </label>`).join('')}
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px;cursor:pointer"><input type="radio" name="proto-horizon" value="5" style="accent-color:var(--navy)"> Bis 5 Jahre</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px;cursor:pointer"><input type="radio" name="proto-horizon" value="10" style="accent-color:var(--navy)"> Bis 10 Jahre</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:5px;cursor:pointer"><input type="radio" name="proto-horizon" value="10+" checked style="accent-color:var(--navy)"> Über 10 Jahre</label>
         </div>
       </div>
 
       <!-- Checkliste -->
       <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:10px;margin-top:4px">Checkliste</div>
       <div style="font-size:11px;color:var(--g500);margin-bottom:8px">Hat der Berater den Kunden über folgende Punkte informiert?</div>
-      ${[
-        ['cl1','Chancen und Risiken eines Immobilienkaufs'],
-        ['cl2','Exposé, Kaufvertragsentwurf und Teilungserklärung ausgehändigt'],
-        ['cl3','Mögliche Bauzeitzinsen und Bereitstellungszinsen'],
-        ['cl4','Besichtigung der Immobilie und des Standorts angeboten']
-      ].map(([id,label]) =>
-        `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--g100);font-size:12px">
-          <span>${label}</span>
-          <div style="display:flex;gap:12px">
-            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--pos)"><input type="radio" name="${id}" value="ja" checked style="accent-color:#2e7d52"> Ja</label>
-            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--neg)"><input type="radio" name="${id}" value="nein" style="accent-color:#c0392b"> Nein</label>
-          </div>
-        </div>`).join('')}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--g100);font-size:12px">
+        <span>Chancen und Risiken eines Immobilienkaufs</span>
+        <div style="display:flex;gap:12px">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--pos)"><input type="radio" name="cl1" value="ja" checked style="accent-color:#2e7d52"> Ja</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--neg)"><input type="radio" name="cl1" value="nein" style="accent-color:#c0392b"> Nein</label>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--g100);font-size:12px">
+        <span>Exposé, Kaufvertragsentwurf und Teilungserklärung ausgehändigt</span>
+        <div style="display:flex;gap:12px">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--pos)"><input type="radio" name="cl2" value="ja" checked style="accent-color:#2e7d52"> Ja</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--neg)"><input type="radio" name="cl2" value="nein" style="accent-color:#c0392b"> Nein</label>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--g100);font-size:12px">
+        <span>Mögliche Bauzeitzinsen und Bereitstellungszinsen erläutert</span>
+        <div style="display:flex;gap:12px">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--pos)"><input type="radio" name="cl3" value="ja" checked style="accent-color:#2e7d52"> Ja</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--neg)"><input type="radio" name="cl3" value="nein" style="accent-color:#c0392b"> Nein</label>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--g100);font-size:12px">
+        <span>Besichtigung der Immobilie und des Standorts angeboten</span>
+        <div style="display:flex;gap:12px">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--pos)"><input type="radio" name="cl4" value="ja" checked style="accent-color:#2e7d52"> Ja</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:var(--neg)"><input type="radio" name="cl4" value="nein" style="accent-color:#c0392b"> Nein</label>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('protocolModal')">Abbrechen</button>
