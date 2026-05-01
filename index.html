@@ -213,7 +213,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 
 /* ── DOC LIST ── */
 .doc-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--g200)}
-.doc-icon{width:36px;height:36px;background:var(--g200);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.doc-icon{width:36px;height:36px;background:var(--g200);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
 .doc-name{font-weight:600;font-size:13px;color:var(--navy)}
 .doc-meta{font-size:11px;color:var(--g500)}
 .doc-dl{margin-left:auto}
@@ -502,7 +502,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
         <div class="page-sub" style="margin-bottom:0">Klicken Sie auf ein Objekt um den Kalkulator zu öffnen</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <input type="text" id="vp-search" placeholder="🔍 Suchen..." oninput="filterVPObjects()"
+          <input type="text" id="vp-search" placeholder="Suchen..." oninput="filterVPObjects()"
             style="padding:7px 10px;border:1px solid var(--g300);font-family:'Source Sans 3',sans-serif;font-size:12px;width:160px;outline:none">
           <select id="vp-sort" onchange="filterVPObjects()"
             style="padding:7px 10px;border:1px solid var(--g300);font-family:'Source Sans 3',sans-serif;font-size:12px;background:white;outline:none;cursor:pointer">
@@ -633,7 +633,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="form-fld">
           <label>Logo hochladen</label>
           <div style="display:flex;align-items:center;gap:12px">
-            <div id="prof-logo-preview" style="width:60px;height:60px;background:var(--g200);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🏢</div>
+            <div id="prof-logo-preview" style="width:60px;height:60px;background:var(--g200);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--g500);flex-shrink:0;font-family:'Libre Baskerville',serif">Logo</div>
             <div>
               <button class="btn-sm btn-navy" style="font-size:11px" onclick="document.getElementById('prof-logo-input').click()">Bild auswählen</button>
               <input type="file" id="prof-logo-input" accept="image/*" style="display:none" onchange="onLogoSelect(event)">
@@ -855,7 +855,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 <div class="modal-bg" id="kveModal">
   <div class="modal" style="max-width:860px;width:98%">
     <div class="modal-header">
-      <div class="modal-title">📋 KVE beantragen</div>
+      <div class="modal-title">KVE beantragen</div>
       <button class="modal-close" onclick="closeModal('kveModal')">×</button>
     </div>
     <div class="modal-body" style="padding:20px">
@@ -934,7 +934,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
     </div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('kveModal')">Abbrechen</button>
-      <button class="btn-sm btn-gold" onclick="submitKve()">📋 KVE beantragen & PDF erstellen</button>
+      <button class="btn-sm btn-gold" onclick="submitKve()">KVE beantragen & PDF erstellen</button>
     </div>
   </div>
 </div>
@@ -943,7 +943,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 <div class="modal-bg" id="kveListModal">
   <div class="modal" style="max-width:700px;width:98%">
     <div class="modal-header">
-      <div class="modal-title">📋 KVE Anfragen</div>
+      <div class="modal-title">KVE Anfragen</div>
       <button class="modal-close" onclick="closeModal('kveListModal')">×</button>
     </div>
     <div class="modal-body" id="kveListBody" style="padding:16px"></div>
@@ -989,7 +989,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
                 <div style="display:flex;gap:5px">
                   <input id="c-equity" type="number" value="0" oninput="runCalc()" style="flex:1">
                   <select id="c-ekPct" onchange="applyCalcEkPct()" title="Schnellberechnung NKK+%" style="flex:0 0 90px;font-size:10px;padding:5px 4px;border:1px solid var(--g300);background:var(--g100);font-family:'Source Sans 3',sans-serif">
-                    <option value="">⚡ NKK+%</option>
+                    <option value="">NKK+%</option>
                     <option value="5">NKK+5%</option>
                     <option value="10">NKK+10%</option>
                     <option value="15">NKK+15%</option>
@@ -1334,6 +1334,81 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 </div>
 
 <!-- Object Detail Modal (VP) -->
+<!-- ══ STEUER VOLLANSICHT MODAL ══ -->
+<div class="modal-bg" id="steuerModal" style="display:none">
+  <div class="modal" style="max-width:880px;width:95%">
+    <div class="modal-header">
+      <div class="modal-title">Steuerliche Analyse</div>
+      <button class="modal-close" onclick="closeModal('steuerModal')">×</button>
+    </div>
+    <div class="modal-body" style="max-height:85vh;overflow-y:auto;padding:24px">
+      <!-- Slider -->
+      <div style="background:var(--g100);border:1px solid var(--g200);padding:16px 20px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500)">Ihr Bruttoeinkommen p.a.</div>
+          <div style="font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;color:var(--navy)" id="sm-income-display">€ 60.000</div>
+        </div>
+        <input type="range" id="sm-slider" min="20000" max="250000" step="1000" value="60000"
+          oninput="updateSteuerModal()" style="width:100%;accent-color:var(--navy);height:5px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--g500);margin-top:4px">
+          <span>€ 20.000</span><span>€ 250.000</span>
+        </div>
+      </div>
+
+      <!-- Gegenüberstellung -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:10px">Steuerliche Gegenüberstellung</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--g300);margin-bottom:20px">
+        <div style="background:var(--g100);padding:16px 18px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--g300)">OHNE Immobilie</div>
+          <div id="sm-col-before"></div>
+        </div>
+        <div style="background:white;padding:16px 18px;border-left:3px solid var(--navy)">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--navy)">MIT Immobilie</div>
+          <div id="sm-col-after"></div>
+        </div>
+      </div>
+
+      <!-- Ergebnis-Leiste -->
+      <div style="background:var(--navy);color:white;padding:16px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;margin-bottom:20px" id="sm-summary"></div>
+
+      <!-- Erklärungen -->
+      <div style="background:#fffdf5;border:1px solid var(--gold);padding:16px 18px;margin-bottom:20px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">So funktioniert das</div>
+        <div id="sm-erklaerung" style="font-size:12px;line-height:1.8;color:var(--text)"></div>
+      </div>
+
+      <!-- 10-Jahres Tabelle -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:10px">10-Jahres-Projektion</div>
+      <div style="font-size:11px;color:var(--g500);margin-bottom:10px">Kumulierte Steuerersparnis und Cashflow über 10 Jahre bei gleichbleibendem Einkommen</div>
+      <div style="overflow-x:auto;margin-bottom:20px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px" id="sm-table-10y">
+          <thead>
+            <tr style="background:var(--navy);color:white">
+              <th style="padding:8px 10px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.05em">Jahr</th>
+              <th style="padding:8px 10px;text-align:right;font-weight:600;font-size:10px;letter-spacing:.05em">AfA-Basis</th>
+              <th style="padding:8px 10px;text-align:right;font-weight:600;font-size:10px;letter-spacing:.05em">Steuerersparnis</th>
+              <th style="padding:8px 10px;text-align:right;font-weight:600;font-size:10px;letter-spacing:.05em">Kumuliert</th>
+              <th style="padding:8px 10px;text-align:right;font-weight:600;font-size:10px;letter-spacing:.05em">Cashflow/Mo.</th>
+              <th style="padding:8px 10px;text-align:right;font-weight:600;font-size:10px;letter-spacing:.05em">Kum. Cashflow</th>
+            </tr>
+          </thead>
+          <tbody id="sm-tbody"></tbody>
+        </table>
+      </div>
+
+      <div style="font-size:10px;color:var(--g500);line-height:1.7;margin-bottom:20px">
+        * Grundtabelle 2024 · Finanzierung: 70% FK zu 3,8% Zinsen / 5,8% eff. Annuität · AfA-Basis = Gebäudewert ohne Grundstück · Degressive AfA sinkt jährlich · Zinsen linear geschätzt · Individuelle Steuerberatung empfohlen.
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button onclick="closeModal('steuerModal')" class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)">Schließen</button>
+        <button onclick="exportSteuerPDF()" class="btn-sm btn-gold">Als PDF exportieren</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══ END STEUER MODAL ══ -->
+
 <div class="modal-bg" id="objDetailModal">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
@@ -1370,7 +1445,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 <div class="modal-bg" id="protocolModal">
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
-      <div class="modal-title">📋 Beratungsprotokoll erstellen</div>
+      <div class="modal-title">Beratungsprotokoll erstellen</div>
       <button class="modal-close" onclick="closeModal('protocolModal')">×</button>
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto">
@@ -1909,7 +1984,7 @@ function setupAppShell() {
       <button class="app-nav-btn" data-view="vp-reservations" onclick="loadView('vp-reservations')">Meine Reservierungen</button>
       <button class="app-nav-btn" data-view="vp-calcs" onclick="loadView('vp-calcs')">Meine Berechnungen</button>
       <button class="app-nav-btn" data-view="vp-selbstauskunft" onclick="loadView('vp-selbstauskunft')" style="color:var(--gold)">Selbstauskunft</button>
-      ${currentProfile.faq_enabled ? '<button class="app-nav-btn" data-view="vp-faq" onclick="loadView(\'vp-faq\')">📚 Handbuch</button>' : ''}
+      ${currentProfile.faq_enabled ? '<button class="app-nav-btn" data-view="vp-faq" onclick="loadView(\'vp-faq\')">Handbuch</button>' : ''}
     `;
   }
 }
@@ -1993,7 +2068,7 @@ function renderFAQ() {
     <div style="margin-bottom:16px">
       <div style="background:var(--navy);color:white;padding:12px 18px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none"
         onclick="toggleFaqSection(${si})">
-        <span>${section.icon}</span>
+        <span style="width:20px;height:20px;background:var(--gold);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--navy);flex-shrink:0">${si+1}</span>
         <span>${section.title}</span>
         <span id="faq-sec-arrow-${si}" style="margin-left:auto;transition:transform .2s">▼</span>
       </div>
@@ -2098,7 +2173,7 @@ async function loadAdminObjects() {
 
   const grid = document.getElementById('adminObjGrid');
   if (!data.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏢</div><div class="empty-txt">Noch keine Objekte</div><div class="empty-sub">Klicke auf "+ Objekt hinzufügen" um zu starten</div></div>`;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon" style="font-size:32px;opacity:.2;font-family:'Libre Baskerville',serif;font-weight:700;color:var(--navy)">BCM</div><div class="empty-txt">Noch keine Objekte</div><div class="empty-sub">Klicke auf "+ Objekt hinzufügen" um zu starten</div></div>`;
     return;
   }
 
@@ -2119,7 +2194,7 @@ function objCard(o, isAdmin) {
   return `<div class="obj-card" onclick="${isAdmin ? `editObject('${o.id}')` : (isComingSoon ? '' : `vpObjDetail('${o.id}')`)}"
     style="border-left:4px solid ${statusColor};${isComingSoon && !isAdmin ? 'cursor:default;' : ''}">
     <div class="obj-card-img" id="img-${o.id}" style="${isComingSoon ? 'filter:grayscale(80%);opacity:.7' : ''}">
-      <div class="obj-card-img-placeholder">🏢</div>
+      <div class="obj-card-img-placeholder" style="font-family:'Libre Baskerville',serif;font-weight:700;font-size:22px;color:var(--navy);opacity:.18;letter-spacing:.05em">BCM</div>
       ${!o.published && isAdmin ? '<div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.6);color:white;padding:3px 8px;font-size:10px;font-weight:700">NICHT VERÖFFENTLICHT</div>' : ''}
     </div>
     <!-- Statusbalken -->
@@ -2156,7 +2231,7 @@ function objCard(o, isAdmin) {
       ${isAdmin ? `<div style="border-top:1px solid var(--g200);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;background:var(--g100)">
         <span style="font-size:10px;color:var(--g500);display:flex;align-items:center;gap:6px">
           ${statusBadge(o.status)}
-          ${o.restricted ? '<span style="background:rgba(26,39,68,.1);color:var(--navy);padding:2px 7px;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">🔒 Eingeschränkt</span>' : ''}
+          ${o.restricted ? '<span style="background:rgba(26,39,68,.1);color:var(--navy);padding:2px 7px;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase">Eingeschränkt</span>' : ''}
         </span>
         <div style="display:flex;gap:6px">
           <button onclick="event.stopPropagation();duplicateObject('${o.id}')"
@@ -2494,7 +2569,7 @@ async function saveObject() {
     pendingObjFiles = [];
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Objekt speichern'; }
     closeModal('objModal');
-    if (err > 0) notify(`⚠️ Objekt gespeichert – ${ok} Datei${ok!==1?'en':''} hochgeladen, ${err} Fehler (Details in Browser-Konsole)`, 'error', 8000);
+    if (err > 0) notify(`Objekt gespeichert – ${ok} Datei${ok!==1?'en':''} hochgeladen, ${err} Fehler (Details in Browser-Konsole)`, 'error', 8000);
     else notify(`✓ Objekt erfolgreich angelegt! ${ok} Datei${ok!==1?'en':''} hochgeladen.`, 'success', 5000);
   } else {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Objekt speichern'; }
@@ -2736,10 +2811,10 @@ async function loadExistingDocs(objId) {
   const { data: docs } = await sb.from('documents').select('*').eq('object_id', objId).order('created_at');
   if (!docs || !docs.length) { wrap.style.display = 'none'; return; }
 
-  const iconMap = { PDF:'📄', XLSX:'📊', XLS:'📊', DOCX:'📝', DOC:'📝', ZIP:'🗜' };
+  const extBadge = (ext) => { const c={PDF:'#1a2744',XLSX:'#2e7d52',XLS:'#2e7d52',DOCX:'#555',DOC:'#555',ZIP:'#888'}; return `<span style="font-size:9px;font-weight:700;color:${c[ext]||'#888'};letter-spacing:.04em">${ext||'DOK'}</span>`; };
   list.innerHTML = docs.map(d => {
     const ext = (d.file_type || '').toUpperCase();
-    const icon = iconMap[ext] || '📎';
+    const icon = extBadge(ext);
     return `<div class="doc-item">
       <div class="doc-icon">${icon}</div>
       <div style="flex:1;min-width:0">
@@ -2748,9 +2823,9 @@ async function loadExistingDocs(objId) {
       </div>
       <div style="display:flex;gap:6px">
         <button onclick="downloadAdminDoc('${d.storage_path}','${d.name.replace(/'/g,"\\'")}','${objId}')"
-          class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px">⬇ Download</button>
+          class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px">Download</button>
         <button onclick="deleteAdminDoc('${d.id}','${d.storage_path}','${objId}')"
-          style="background:none;border:1px solid var(--neg);color:var(--neg);padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif">🗑</button>
+          style="background:none;border:1px solid var(--neg);color:var(--neg);padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif">Löschen</button>
       </div>
     </div>`;
   }).join('');
@@ -3392,7 +3467,7 @@ function openProfilModal() {
   if(vpLogoBase64) {
     prev.innerHTML = '<img src="'+vpLogoBase64+'" style="width:60px;height:60px;object-fit:contain">';
   } else {
-    prev.innerHTML = '🏢';
+    prev.innerHTML = '<span style="font-family:\'Libre Baskerville\',serif;font-weight:700;font-size:11px;color:var(--g500)">Logo</span>';
   }
   openModal('profilModal');
 }
@@ -3495,7 +3570,7 @@ function filterVPObjects() {
 
   const grid = document.getElementById('vpObjGrid');
   if (!filtered.length) {
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-txt">Keine Einheiten gefunden</div></div>';
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon" style="font-size:28px;opacity:.2;font-family:\'Libre Baskerville\',serif;font-weight:700;color:var(--navy)">BCM</div><div class="empty-txt">Keine Einheiten gefunden</div></div>';
     return;
   }
 
@@ -3652,7 +3727,7 @@ async function vpObjDetail(id) {
       ${o.location_info ? '<button class="det-tab" onclick="showDetTab(\'det-standort\',this)">📍 Standort</button>' : ''}
       <button class="det-tab" onclick="showDetTab('det-imgs',this)">Fotos ${imgUrls.length?'<span style=\'background:var(--navy);color:white;border-radius:10px;padding:0 6px;font-size:10px;margin-left:4px\'>'+imgUrls.length+'</span>':''}</button>
       <button class="det-tab" onclick="showDetTab('det-docs',this)">Dokumente ${allDocs?.length?'<span style=\'background:var(--gold);color:var(--navy);border-radius:10px;padding:0 6px;font-size:10px;margin-left:4px\'>'+allDocs.length+'</span>':''}</button>
-      <button class="det-tab" onclick="showDetTab('det-steuer',this)">📊 Steuer</button>
+      <button class="det-tab" onclick="showDetTab('det-steuer',this)">Steuer</button>
     </div>
 
     <!-- Überblick Tab -->
@@ -3734,8 +3809,9 @@ async function vpObjDetail(id) {
         </div>
       </div>
       <div style="background:var(--navy);color:white;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center" id="steuer-summary"></div>
-      <div style="font-size:10px;color:var(--g500);margin-top:12px;line-height:1.6">
-        * Grundtabelle 2024. Zinsen geschätzt: 70% FK zu 3,8% p.a. Cashflow: Miete − Rate (70% FK, 5,8% eff.) − Hausgeld − Instandhaltung + monatl. Steuerersparnis. Individuelle Abstimmung mit Steuerberater empfohlen.
+      <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div style="font-size:10px;color:var(--g500);line-height:1.6;flex:1">* Grundtabelle 2024. Zinsen geschätzt: 70% FK zu 3,8% p.a. Cashflow: Miete − Rate (70% FK, 5,8% eff.) − Hausgeld − Instandhaltung + monatl. Steuerersparnis.</div>
+        <button onclick="openSteuerModal()" class="btn-sm btn-navy" style="white-space:nowrap;flex-shrink:0">Vollansicht & 10-Jahres-Analyse</button>
       </div>
     </div>`;
 
@@ -3842,6 +3918,280 @@ function updateSteuerTab() {
      <div style="font-size:18px;font-weight:700;color:${cfMon>=0?'#6fcf97':'#e57373'}">${cfMon>=0?'+':'−'}€ ${Math.abs(Math.round(cfMon)).toLocaleString('de-DE')}</div></div>`;
 }
 
+function openSteuerModal() {
+  const mainSlider = document.getElementById('steuer-slider');
+  const smSlider = document.getElementById('sm-slider');
+  if (mainSlider && smSlider) smSlider.value = mainSlider.value;
+  updateSteuerModal();
+  document.getElementById('steuerModal').style.display = 'flex';
+}
+
+function updateSteuerModal() {
+  const sl = document.getElementById('sm-slider');
+  const disp = document.getElementById('sm-income-display');
+  const colBefore = document.getElementById('sm-col-before');
+  const colAfter = document.getElementById('sm-col-after');
+  const summary = document.getElementById('sm-summary');
+  const erklaerung = document.getElementById('sm-erklaerung');
+  const tbody = document.getElementById('sm-tbody');
+  if (!sl || !colBefore) return;
+
+  const bruttoPA = parseInt(sl.value);
+  disp.textContent = '€ ' + bruttoPA.toLocaleString('de-DE');
+
+  const o = currentSteuerObj;
+  if (!o) {
+    colBefore.innerHTML = '<div style="color:var(--g500);font-size:12px;padding:8px 0">Kein Objekt ausgewählt.</div>';
+    colAfter.innerHTML = ''; return;
+  }
+
+  const isDeg = o.deg_afa > 0;
+  const afaPct = isDeg ? (o.deg_afa / 100) : ((o.lin_afa || 2) / 100);
+  const kpAfA = (o.price_unit || 0) + (o.price_furniture || 0);
+  const gesamtKP = kpAfA + (o.parking_active ? (o.parking_price || 0) : 0);
+  const fkBasis = gesamtKP * 0.70;
+  const zinsenPA = fkBasis * 0.038;
+  const hausgeldPA = (o.hausgeld || 0) * 12;
+  const instandPA = (o.instandhaltung || 0) * 12;
+  const rentPA = ((o.cold_rent || 0) + (o.parking_active ? (o.parking_rent || 0) * (o.parking_count || 1) : 0)) * 12;
+  const finRateMon = (fkBasis * 0.058) / 12;
+  const afaPA = kpAfA * afaPct;
+  const totalDeduction = afaPA + zinsenPA + hausgeldPA + instandPA;
+  const netRental = rentPA - totalDeduction;
+  const taxableAfter = Math.max(0, bruttoPA + netRental);
+  const taxBefore = calcESt2024(bruttoPA);
+  const taxAfter = calcESt2024(taxableAfter);
+  const soliBefore = calcSoli(taxBefore);
+  const soliAfter = calcSoli(taxAfter);
+  const totalBefore = taxBefore + soliBefore;
+  const totalAfter = taxAfter + soliAfter;
+  const totalSaving = Math.max(0, totalBefore - totalAfter);
+  const savingMon = totalSaving / 12;
+  const cfMon = rentPA / 12 - finRateMon - (o.hausgeld || 0) - (o.instandhaltung || 0) + savingMon;
+
+  const fmtE = n => '€ ' + Math.abs(Math.round(n)).toLocaleString('de-DE');
+  function srow(label, val, color) {
+    return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;font-size:12px">
+      <span style="color:var(--g500)">${label}</span>
+      <span style="font-weight:600;color:${color||'var(--navy)'}">${val}</span></div>`;
+  }
+  function stotal(label, val) {
+    return `<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;font-weight:700;border-top:2px solid var(--g300);margin-top:4px">
+      <span>${label}</span><span>${val}</span></div>`;
+  }
+
+  colBefore.innerHTML =
+    srow('Bruttoeinkommen', fmtE(bruttoPA)) +
+    srow('Einkommensteuer', '&minus; ' + fmtE(taxBefore), '#c0392b') +
+    srow('Solidaritätszuschlag', '&minus; ' + fmtE(soliBefore), '#c0392b') +
+    stotal('Netto p.a.', fmtE(bruttoPA - totalBefore));
+
+  const afaLabel = isDeg ? `Deg. AfA (${o.deg_afa}%)` : `Lin. AfA (${o.lin_afa||2}%)`;
+  colAfter.innerHTML =
+    srow('Bruttoeinkommen', fmtE(bruttoPA)) +
+    srow(afaLabel, '&minus; ' + fmtE(afaPA), '#2e7d52') +
+    srow('Finanzierungszinsen', '&minus; ' + fmtE(zinsenPA), '#2e7d52') +
+    srow('Hausgeld & Instandhaltung', '&minus; ' + fmtE(hausgeldPA+instandPA), '#2e7d52') +
+    srow('Mieteinnahmen', '+ ' + fmtE(rentPA), '#1a5276') +
+    srow('z.v.E. nach Immobilie', fmtE(taxableAfter)) +
+    srow('Einkommensteuer', '&minus; ' + fmtE(taxAfter), taxAfter<taxBefore?'#2e7d52':'#c0392b') +
+    srow('Solidaritätszuschlag', '&minus; ' + fmtE(soliAfter), '#777') +
+    stotal('Netto p.a. mit Immobilie', fmtE(bruttoPA - totalAfter));
+
+  summary.innerHTML =
+    `<div><div style="font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px">Steuerersparnis / Mo.</div>
+     <div style="font-size:22px;font-weight:700;color:#6fcf97">+€ ${Math.round(savingMon).toLocaleString('de-DE')}</div></div>` +
+    `<div><div style="font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px">Steuerersparnis / Jahr</div>
+     <div style="font-size:22px;font-weight:700;color:#6fcf97">+€ ${Math.round(totalSaving).toLocaleString('de-DE')}</div></div>` +
+    `<div><div style="font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px">Cashflow / Mo.</div>
+     <div style="font-size:22px;font-weight:700;color:${cfMon>=0?'#6fcf97':'#e57373'}">${cfMon>=0?'+':'−'}€ ${Math.abs(Math.round(cfMon)).toLocaleString('de-DE')}</div></div>`;
+
+  // Erklärungen
+  erklaerung.innerHTML = `
+    <p style="margin:0 0 10px"><strong>Wie entsteht die Steuerersparnis?</strong><br>
+    Als Immobilieneigentümer können Sie Werbungskosten aus Vermietung und Verpachtung (§ 21 EStG) steuerlich geltend machen. Diese Kosten reduzieren Ihr zu versteuerndes Einkommen (z.v.E.) — und damit direkt Ihre Einkommensteuerlast.</p>
+    <p style="margin:0 0 10px"><strong>Absetzbare Positionen in dieser Berechnung:</strong><br>
+    <strong>AfA (Abschreibung):</strong> € ${Math.round(afaPA).toLocaleString('de-DE')} p.a. — Bemessungsgrundlage € ${Math.round(kpAfA).toLocaleString('de-DE')} mit ${isDeg?`degressiver AfA von ${o.deg_afa}% p.a. (jährlich sinkend auf den Restwert)`:`linearer AfA von ${o.lin_afa||2}% p.a. (konstant über die Nutzungsdauer)`}.<br>
+    <strong>Finanzierungszinsen:</strong> € ${Math.round(zinsenPA).toLocaleString('de-DE')} p.a. — kalkuliert auf 70% Fremdkapital zu 3,8% Zinssatz.<br>
+    <strong>Hausgeld & Instandhaltung:</strong> € ${Math.round(hausgeldPA+instandPA).toLocaleString('de-DE')} p.a. — vollständig absetzbar.<br>
+    <strong>Mieteinnahmen:</strong> € ${Math.round(rentPA).toLocaleString('de-DE')} p.a. werden dem Einkommen hinzugerechnet.</p>
+    <p style="margin:0 0 8px"><strong>Ergebnis Jahr 1:</strong><br>
+    Ihr z.v.E. reduziert sich von € ${Math.round(bruttoPA).toLocaleString('de-DE')} auf € ${Math.round(taxableAfter).toLocaleString('de-DE')} — Steuerersparnis: <strong style="color:#2e7d52">€ ${Math.round(totalSaving).toLocaleString('de-DE')} p.a.</strong></p>
+    <p style="margin:0;color:var(--g500);font-size:11px"><em>Hinweis: Orientierungsrechnung nach Grundtabelle 2024. Individuelle Steuerberatung empfohlen.</em></p>`;
+
+  // 10-Jahres-Tabelle
+  let cumSaving = 0, cumCf = 0, bookValue = kpAfA;
+  let rows = '';
+  for (let yr = 1; yr <= 10; yr++) {
+    let afaYr;
+    if (isDeg) { afaYr = bookValue * afaPct; bookValue = Math.max(0, bookValue - afaYr); }
+    else afaYr = kpAfA * afaPct;
+    const deductYr = afaYr + zinsenPA + hausgeldPA + instandPA;
+    const taxableYr = Math.max(0, bruttoPA + rentPA - deductYr);
+    const taxYr = calcESt2024(taxableYr);
+    const soliYr = calcSoli(taxYr);
+    const savingYr = Math.max(0, totalBefore - (taxYr + soliYr));
+    const cfYr = rentPA / 12 - finRateMon - (o.hausgeld||0) - (o.instandhaltung||0) + savingYr / 12;
+    cumSaving += savingYr;
+    cumCf += cfYr * 12;
+    rows += `<tr style="background:${yr%2===0?'var(--g100)':'white'}">
+      <td style="padding:7px 10px;font-weight:600">${yr}. Jahr</td>
+      <td style="padding:7px 10px;text-align:right;color:var(--g500)">€ ${Math.round(isDeg?bookValue+afaYr:kpAfA).toLocaleString('de-DE')}</td>
+      <td style="padding:7px 10px;text-align:right;color:#2e7d52;font-weight:600">€ ${Math.round(savingYr).toLocaleString('de-DE')}</td>
+      <td style="padding:7px 10px;text-align:right;font-weight:700;color:var(--navy)">€ ${Math.round(cumSaving).toLocaleString('de-DE')}</td>
+      <td style="padding:7px 10px;text-align:right;color:${cfYr>=0?'#2e7d52':'#c0392b'}">${cfYr>=0?'+':'−'}€ ${Math.abs(Math.round(cfYr)).toLocaleString('de-DE')}</td>
+      <td style="padding:7px 10px;text-align:right;font-weight:700;color:${cumCf>=0?'#2e7d52':'#c0392b'}">${cumCf>=0?'+':'−'}€ ${Math.abs(Math.round(cumCf)).toLocaleString('de-DE')}</td>
+    </tr>`;
+  }
+  rows += `<tr style="background:var(--navy);color:white;font-weight:700">
+    <td style="padding:8px 10px" colspan="2">Gesamt 10 Jahre</td>
+    <td style="padding:8px 10px;text-align:right" colspan="2">Steuerersparnis: € ${Math.round(cumSaving).toLocaleString('de-DE')}</td>
+    <td style="padding:8px 10px;text-align:right" colspan="2">Kum. Cashflow: ${cumCf>=0?'+':'−'}€ ${Math.abs(Math.round(cumCf)).toLocaleString('de-DE')}</td>
+  </tr>`;
+  tbody.innerHTML = rows;
+}
+
+function exportSteuerPDF() {
+  const o = currentSteuerObj;
+  if (!o || typeof jspdf === 'undefined') { alert('PDF-Export nicht verfügbar.'); return; }
+  const { jsPDF } = jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, M = 16;
+
+  // Header
+  doc.setFillColor(26,39,68); doc.rect(0,0,W,28,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+  doc.text('STEUERLICHE ANALYSE', M, 12);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  const objName = (o.name||o.address||'Objekt') + (o.city?', '+o.city:'');
+  doc.text(objName, M, 21);
+  doc.setTextColor(184,151,42); doc.text('BCM Vertriebsportal', W-M, 21, {align:'right'});
+
+  let y = 34;
+  const bruttoPA = parseInt(document.getElementById('sm-slider')?.value||60000);
+  doc.setTextColor(80,80,80); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text(`Bruttoeinkommen: € ${bruttoPA.toLocaleString('de-DE')} p.a.  ·  Berechnung nach EStG Grundtabelle 2024`, M, y);
+  y += 8;
+
+  const isDeg = o.deg_afa > 0;
+  const afaPct = isDeg ? (o.deg_afa/100) : ((o.lin_afa||2)/100);
+  const kpAfA = (o.price_unit||0)+(o.price_furniture||0);
+  const gesamtKP = kpAfA+(o.parking_active?(o.parking_price||0):0);
+  const fkBasis = gesamtKP*0.70;
+  const zinsenPA = fkBasis*0.038;
+  const hausgeldPA = (o.hausgeld||0)*12;
+  const instandPA = (o.instandhaltung||0)*12;
+  const rentPA = ((o.cold_rent||0)+(o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0))*12;
+  const finRateMon = (fkBasis*0.058)/12;
+  const afaPA = kpAfA*afaPct;
+  const taxableAfter = Math.max(0, bruttoPA+rentPA-afaPA-zinsenPA-hausgeldPA-instandPA);
+  const taxBefore = calcESt2024(bruttoPA);
+  const taxAfter = calcESt2024(taxableAfter);
+  const soliBefore = calcSoli(taxBefore);
+  const soliAfter = calcSoli(taxAfter);
+  const totalBefore = taxBefore+soliBefore;
+  const totalAfter = taxAfter+soliAfter;
+  const totalSaving = Math.max(0, totalBefore-totalAfter);
+  const savingMon = totalSaving/12;
+  const cfMon = rentPA/12-finRateMon-(o.hausgeld||0)-(o.instandhaltung||0)+savingMon;
+  const fmtE = n=>'€ '+Math.abs(Math.round(n)).toLocaleString('de-DE');
+
+  function pSecHeader(title, yp) {
+    doc.setFillColor(26,39,68); doc.rect(M,yp,W-M*2,7,'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.text(title, M+3, yp+5);
+    doc.setTextColor(60,60,60);
+    return yp+11;
+  }
+  function pRow(label, val, yp, shade, rgb) {
+    if (shade) { doc.setFillColor(248,248,248); doc.rect(M,yp-4,W-M*2,7,'F'); }
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(100,100,100);
+    doc.text(label, M+3, yp);
+    if (rgb) doc.setTextColor(...rgb); else doc.setTextColor(26,39,68);
+    doc.setFont('helvetica','bold');
+    doc.text(val, W-M-3, yp, {align:'right'});
+    return yp+7;
+  }
+
+  y = pSecHeader('STEUERLICHE GEGENÜBERSTELLUNG — OHNE Immobilie', y);
+  y = pRow('Bruttoeinkommen', fmtE(bruttoPA), y, false);
+  y = pRow('Einkommensteuer', '− '+fmtE(taxBefore), y, true, [192,57,43]);
+  y = pRow('Solidaritätszuschlag', '− '+fmtE(soliBefore), y, false, [192,57,43]);
+  y = pRow('Netto p.a.', fmtE(bruttoPA-totalBefore), y, true); y+=4;
+
+  y = pSecHeader('MIT Immobilie', y);
+  const afaLabel = isDeg?`Deg. AfA (${o.deg_afa}%)`:`Lin. AfA (${o.lin_afa||2}%)`;
+  y = pRow('Bruttoeinkommen', fmtE(bruttoPA), y, false);
+  y = pRow(afaLabel, '− '+fmtE(afaPA), y, true, [46,125,82]);
+  y = pRow('Finanzierungszinsen', '− '+fmtE(zinsenPA), y, false, [46,125,82]);
+  y = pRow('Hausgeld & Instandhaltung', '− '+fmtE(hausgeldPA+instandPA), y, true, [46,125,82]);
+  y = pRow('Mieteinnahmen', '+ '+fmtE(rentPA), y, false, [26,82,118]);
+  y = pRow('z.v.E. nach Immobilie', fmtE(taxableAfter), y, true);
+  y = pRow('Einkommensteuer', '− '+fmtE(taxAfter), y, false, taxAfter<taxBefore?[46,125,82]:[192,57,43]);
+  y = pRow('Solidaritätszuschlag', '− '+fmtE(soliAfter), y, true, [100,100,100]);
+  y = pRow('Netto p.a. mit Immobilie', fmtE(bruttoPA-totalAfter), y, false); y+=4;
+
+  // Summary bar
+  doc.setFillColor(26,39,68); doc.rect(M,y,W-M*2,14,'F');
+  doc.setTextColor(111,207,151); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text(`Steuerersparnis: +€ ${Math.round(totalSaving).toLocaleString('de-DE')} p.a.  ·  Cashflow: ${cfMon>=0?'+':'−'}€ ${Math.abs(Math.round(cfMon)).toLocaleString('de-DE')}/Mo.`, M+4, y+9);
+  y+=20;
+
+  // 10-year table
+  y = pSecHeader('10-JAHRES-PROJEKTION', y);
+  const cx = [M+3, M+30, M+60, M+93, M+124, M+154];
+  doc.setFillColor(240,240,240); doc.rect(M,y-4,W-M*2,7,'F');
+  doc.setTextColor(80,80,80); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+  ['Jahr','AfA-Basis','Ersparnis p.a.','Kumuliert','CF/Mo.','Kum. Cashflow'].forEach((h,i)=>{
+    doc.text(h, i===0?cx[i]:cx[i]+(i<4?22:18), y, i===0?{}:{align:'right'});
+  });
+  y+=5;
+
+  let cumS=0, cumC=0, bv=kpAfA;
+  for (let yr=1;yr<=10;yr++) {
+    let afaYr;
+    if (isDeg){afaYr=bv*afaPct;bv=Math.max(0,bv-afaYr);}else afaYr=kpAfA*afaPct;
+    const txbl=Math.max(0,bruttoPA+rentPA-afaYr-zinsenPA-hausgeldPA-instandPA);
+    const txYr=calcESt2024(txbl), slYr=calcSoli(txYr);
+    const svYr=Math.max(0,totalBefore-(txYr+slYr));
+    const cfYr=rentPA/12-finRateMon-(o.hausgeld||0)-(o.instandhaltung||0)+svYr/12;
+    cumS+=svYr; cumC+=cfYr*12;
+    if (yr%2===0){doc.setFillColor(248,248,248);doc.rect(M,y-3,W-M*2,6.5,'F');}
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(60,60,60);
+    doc.text(`Jahr ${yr}`, cx[0], y);
+    doc.setTextColor(120,120,120); doc.text(`€ ${Math.round(isDeg?bv+afaYr:kpAfA).toLocaleString('de-DE')}`, cx[1]+22, y, {align:'right'});
+    doc.setTextColor(46,125,82); doc.setFont('helvetica','bold');
+    doc.text(`€ ${Math.round(svYr).toLocaleString('de-DE')}`, cx[2]+22, y, {align:'right'});
+    doc.setTextColor(26,39,68);
+    doc.text(`€ ${Math.round(cumS).toLocaleString('de-DE')}`, cx[3]+22, y, {align:'right'});
+    doc.setTextColor(...(cfYr>=0?[46,125,82]:[192,57,43]));
+    doc.text(`${cfYr>=0?'+':'−'}€ ${Math.abs(Math.round(cfYr)).toLocaleString('de-DE')}`, cx[4]+18, y, {align:'right'});
+    doc.setTextColor(...(cumC>=0?[46,125,82]:[192,57,43]));
+    doc.text(`${cumC>=0?'+':'−'}€ ${Math.abs(Math.round(cumC)).toLocaleString('de-DE')}`, cx[5]+18, y, {align:'right'});
+    y+=7;
+  }
+  doc.setFillColor(26,39,68); doc.rect(M,y-3,W-M*2,8,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+  doc.text('Gesamt 10 Jahre', cx[0], y+2);
+  doc.setTextColor(111,207,151);
+  doc.text(`Steuerersparnis gesamt: € ${Math.round(cumS).toLocaleString('de-DE')}`, W/2, y+2, {align:'center'});
+  doc.text(`Kum. Cashflow: ${cumC>=0?'+':'−'}€ ${Math.abs(Math.round(cumC)).toLocaleString('de-DE')}`, W-M-3, y+2, {align:'right'});
+  y+=14;
+
+  // Disclaimer
+  doc.setTextColor(160,160,160); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  doc.text('Grundtabelle 2024 · Finanzierung: 70% FK zu 3,8% Zinsen / 5,8% eff. Annuität · AfA-Basis = Gebäudewert ohne Grundstück · Individuelle Steuerberatung empfohlen.', M, y, {maxWidth:W-M*2});
+
+  // Footer
+  doc.setFillColor(26,39,68); doc.rect(0,284,W,13,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(8);
+  doc.text('BCM – Steuerliche Analyse', M, 292);
+  const today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  doc.text(today, W-M, 292, {align:'right'});
+
+  doc.save(`Steueranalyse_${(o.name||o.address||'Objekt').replace(/\s+/g,'_')}.pdf`);
+}
+
 function drow(label, value) {
   return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--g200)">
     <span style="color:var(--g500)">${label}</span><span style="font-weight:600">${value}</span>
@@ -3851,48 +4201,48 @@ function drow(label, value) {
 function buildLocationPanel(li) {
   if (!li) return '';
   const trendMap = { up: '<span style="color:var(--pos);font-weight:700">↑ Steigend</span>', stable: '<span style="color:var(--gold);font-weight:700">→ Stabil</span>', down: '<span style="color:var(--neg);font-weight:700">↓ Sinkend</span>' };
-  const row = (icon, label, val) => val ? `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--g200);font-size:12px"><span style="width:18px;text-align:center;flex-shrink:0">${icon}</span><span style="color:var(--g500);flex-shrink:0;min-width:120px">${label}</span><span style="font-weight:600;color:var(--text)">${val}</span></div>` : '';
-  const sec = (title, icon) => `<div style="background:var(--navy);color:white;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-top:14px"><span>${icon}</span>${title}</div><div style="background:white;border:1px solid var(--g200);border-top:none;padding:4px 12px">`;
+  const row = (icon, label, val) => val ? `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--g200);font-size:12px"><span style="color:var(--g500);min-width:130px;flex-shrink:0">${label}</span><span style="font-weight:600;color:var(--text)">${val}</span></div>` : '';
+  const sec = (title) => `<div style="background:var(--navy);color:white;padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-top:14px"><span style="display:inline-block;width:3px;height:11px;background:var(--gold);flex-shrink:0"></span>${title}</div><div style="background:white;border:1px solid var(--g200);border-top:none;padding:4px 12px">`;
   let html = '';
 
   // Makrolage
   const hasMacro = li.macro_city || li.macro_pop || li.macro_trend || li.macro_vacancy || li.macro_economy;
   if (hasMacro) {
-    html += sec('Makrolage', '🌍') ;
-    html += row('🏙', 'Stadt / Region', li.macro_city);
-    html += row('👥', 'Einwohner', li.macro_pop);
-    html += row('📈', 'Mietpreistrend', li.macro_trend ? trendMap[li.macro_trend] : null);
-    html += row('🏠', 'Leerstandsquote', li.macro_vacancy);
-    html += row('🏭', 'Wirtschaft', li.macro_economy);
+    html += sec('Makrolage');
+    html += row('', 'Stadt / Region', li.macro_city);
+    html += row('', 'Einwohner', li.macro_pop);
+    html += row('', 'Mietpreistrend', li.macro_trend ? trendMap[li.macro_trend] : null);
+    html += row('', 'Leerstandsquote', li.macro_vacancy);
+    html += row('', 'Wirtschaft', li.macro_economy);
     html += '</div>';
   }
 
   // Mikrolage
   const hasMicro = li.micro_char || li.micro_transport || li.micro_shopping || li.micro_schools || li.micro_notes;
   if (hasMicro) {
-    html += sec('Mikrolage', '📍');
-    html += row('🏘', 'Viertel', li.micro_char);
-    html += row('🚌', 'ÖPNV', li.micro_transport);
-    html += row('🛒', 'Einkaufen', li.micro_shopping);
-    html += row('🎒', 'Schulen / Kitas', li.micro_schools);
-    html += row('💡', 'Besonderheit', li.micro_notes);
+    html += sec('Mikrolage');
+    html += row('', 'Viertel', li.micro_char);
+    html += row('', 'ÖPNV', li.micro_transport);
+    html += row('', 'Einkaufen', li.micro_shopping);
+    html += row('', 'Schulen / Kitas', li.micro_schools);
+    html += row('', 'Besonderheit', li.micro_notes);
     html += '</div>';
   }
 
   // Verwaltung
   const hasMgmt = li.mgmt_company || li.mgmt_concept || li.mgmt_occ || li.mgmt_notes;
   if (hasMgmt) {
-    html += sec('Verwaltung', '🔑');
-    html += row('🏢', 'Verwalter', li.mgmt_company);
-    html += row('📋', 'Konzept', li.mgmt_concept);
-    html += row('✅', 'Belegung', li.mgmt_occ ? `<span style="color:var(--pos)">${li.mgmt_occ}</span>` : null);
-    html += row('ℹ', 'Hinweis', li.mgmt_notes);
+    html += sec('Verwaltung');
+    html += row('', 'Verwalter', li.mgmt_company);
+    html += row('', 'Konzept', li.mgmt_concept);
+    html += row('', 'Belegung', li.mgmt_occ ? `<span style="color:var(--pos)">${li.mgmt_occ}</span>` : null);
+    html += row('', 'Hinweis', li.mgmt_notes);
     html += '</div>';
   }
 
   // Verkaufsargument
   if (li.pitch) {
-    html += `<div style="background:var(--gold);padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);margin-top:14px">💬 Pitch für Investorengespräch</div>
+    html += `<div style="background:var(--gold);padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);margin-top:14px">Pitch für Investorengespräch</div>
     <div style="background:#fffdf0;border:1px solid var(--gold);border-top:none;padding:14px 16px;font-size:13px;line-height:1.7;color:var(--navy);font-style:italic">${li.pitch}</div>`;
   }
 
@@ -3900,8 +4250,15 @@ function buildLocationPanel(li) {
 }
 
 function docIcon(type) {
-  const map = {expose:'📄',grundriss:'📐',baubeschreibung:'📋',energieausweis:'⚡',other:'📎'};
-  return map[type]||'📎';
+  const badge = (lbl, bg) => `<span style="display:inline-block;background:${bg};color:#fff;font-size:9px;font-weight:700;padding:2px 5px;letter-spacing:.04em">${lbl}</span>`;
+  const map = {
+    expose: badge('PDF','#1a2744'),
+    grundriss: badge('GR','#2e7d52'),
+    baubeschreibung: badge('DOC','#555'),
+    energieausweis: badge('ENP','#b8972a'),
+    other: badge('DOK','#888')
+  };
+  return map[type] || map.other;
 }
 
 async function downloadDoc(path, name) {
@@ -3916,7 +4273,7 @@ async function downloadAllFiles() {
 
   const btn = document.getElementById('detailDlBtn');
   const origText = btn.textContent;
-  btn.textContent = '⏳ ZIP wird erstellt…';
+  btn.textContent = 'ZIP wird erstellt…';
   btn.disabled = true;
 
   try {
@@ -4418,7 +4775,7 @@ function runCalc() {
 
   // Invest Tab
   const itEl = document.getElementById('cr-investTable');
-  if(itEl) itEl.innerHTML = (nkkInKP ? '<div style="background:#fff8e8;border-left:3px solid var(--gold);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--g700)">ℹ️ <strong>NKK mitfinanziert:</strong> Kaufnebenkosten sind im Kaufpreis enthalten – keine separate NKK-Berechnung.</div>' : '') + `
+  if(itEl) itEl.innerHTML = (nkkInKP ? '<div style="background:#fff8e8;border-left:3px solid var(--gold);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--g700)"><strong>Hinweis:</strong> NKK mitfinanziert – Kaufnebenkosten sind im Kaufpreis enthalten, keine separate NKK-Berechnung.</div>' : '') + `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
       <div>
         ${irow('Kaufpreis Wohnung', fmt(priceUnit))}
@@ -5104,8 +5461,8 @@ async function loadVPReservations() {
     <td>${statusBadge(r.status)}</td>
     <td style="font-size:11px">${fmtDateTime(r.status==='approved'?r.hard_expires_at:r.expires_at)}</td>
     <td style="white-space:nowrap;display:flex;gap:6px;flex-wrap:wrap">
-      ${r.status==='approved'?`<button class="btn-sm btn-gold" style="font-size:10px;white-space:nowrap" onclick="openKveModal('${r.id}')">📋 KVE beantragen</button>`:''}
-      <button class="btn-sm btn-navy" style="font-size:10px;white-space:nowrap;background:rgba(26,39,68,.08);color:var(--navy);border:1px solid rgba(26,39,68,.2)" onclick="openProtocolModal('${r.id}','${r.object_id||''}','${(r.buyer_name||'').replace(/'/g,"\\'")}','${(r.buyer_email||r.buyer_contact||'').replace(/'/g,"\\'")}')">📝 Protokoll</button>
+      ${r.status==='approved'?`<button class="btn-sm btn-gold" style="font-size:10px;white-space:nowrap" onclick="openKveModal('${r.id}')">KVE beantragen</button>`:''}
+      <button class="btn-sm btn-navy" style="font-size:10px;white-space:nowrap;background:rgba(26,39,68,.08);color:var(--navy);border:1px solid rgba(26,39,68,.2)" onclick="openProtocolModal('${r.id}','${r.object_id||''}','${(r.buyer_name||'').replace(/'/g,"\\'")}','${(r.buyer_email||r.buyer_contact||'').replace(/'/g,"\\'")}')">Protokoll</button>
     </td>
   </tr>`).join('');
 }
