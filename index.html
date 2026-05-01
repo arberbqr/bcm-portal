@@ -912,6 +912,62 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
   </div>
 </div>
 
+<!-- Exposé Modal -->
+<div class="modal-bg" id="exposeModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Exposé erstellen</div>
+      <button class="modal-close" onclick="closeModal('exposeModal')">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <div style="background:var(--g100);border-left:3px solid var(--gold);padding:10px 14px;font-size:12px;color:var(--g500);margin-bottom:20px;line-height:1.6">
+        Das Exposé wird als PDF mit Ihrem Firmenprofil erstellt und ist direkt für Investorengespräche nutzbar.
+      </div>
+      <div class="form-fld" style="margin-bottom:16px">
+        <label>Kundenname (optional – erscheint auf Deckblatt)</label>
+        <input id="exp-cust-name" type="text" placeholder="z.B. Max Mustermann">
+      </div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:10px">Abschnitte</div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">
+        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:default;color:var(--text)">
+          <input type="checkbox" checked disabled style="width:14px;height:14px;accent-color:var(--navy)">
+          <span>Deckblatt &amp; Objektfakten <span style="font-size:11px;color:var(--g500)">(immer enthalten)</span></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;color:var(--text)" id="exp-lage-row">
+          <input type="checkbox" id="exp-sec-lage" checked style="width:14px;height:14px;accent-color:var(--navy)">
+          Lage &amp; Standort
+        </label>
+        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;color:var(--text)">
+          <input type="checkbox" id="exp-sec-warum" checked style="width:14px;height:14px;accent-color:var(--navy)">
+          Warum Kapitalanlage?
+        </label>
+        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;color:var(--text)">
+          <input type="checkbox" id="exp-sec-kalk" checked style="width:14px;height:14px;accent-color:var(--navy)">
+          Kalkulation &amp; Finanzierung
+        </label>
+        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;color:var(--text)">
+          <input type="checkbox" id="exp-sec-steuer" checked style="width:14px;height:14px;accent-color:var(--navy)">
+          Steueranalyse
+        </label>
+      </div>
+      <div id="exp-steuer-section">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:6px">Bruttoeinkommen (für Steueranalyse)</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <input type="range" id="exp-income" min="20000" max="250000" step="1000" value="60000"
+            oninput="document.getElementById('exp-income-disp').textContent='EUR '+parseInt(this.value).toLocaleString('de-DE')"
+            style="flex:1;accent-color:var(--navy);height:4px">
+          <div style="font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;color:var(--navy);min-width:100px;text-align:right" id="exp-income-disp">EUR 60.000</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--g500);margin-top:3px"><span>EUR 20.000</span><span>EUR 250.000</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('exposeModal')">Abbrechen</button>
+      <button class="btn-sm btn-gold" onclick="exportExposePDF()">Als PDF exportieren</button>
+    </div>
+  </div>
+</div>
+
 <!-- KVE Modal -->
 <div class="modal-bg" id="kveModal">
   <div class="modal" style="max-width:860px;width:98%">
@@ -1485,6 +1541,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         ↓ Alle Unterlagen (ZIP)
       </button>
       <button class="btn-sm btn-navy" id="detailCalcBtn" onclick="openCalcFromDetail()">Kalkulator öffnen</button>
+      <button class="btn-sm" id="detailExposeBtn" onclick="openExposeModal()" style="background:white;border:1.5px solid var(--gold);color:var(--gold);font-weight:700;letter-spacing:.04em">Exposé PDF</button>
       <button class="btn-sm btn-gold" id="detailResBtn" onclick="openResFromDetail()">Reservieren</button>
     </div>
   </div>
@@ -4770,6 +4827,505 @@ function openCalcFromDetail() {
 function openResFromDetail() {
   closeModal('objDetailModal');
   openReservationModal(currentObjId);
+}
+
+function openExposeModal() {
+  const o = currentSteuerObj;
+  if (!o) return;
+  // Hide Lage row if no location_info
+  const lageRow = document.getElementById('exp-lage-row');
+  if (lageRow) lageRow.style.display = o.location_info ? '' : 'none';
+  // Toggle steuer section visibility based on checkbox
+  const steuerCb = document.getElementById('exp-sec-steuer');
+  const steuerSec = document.getElementById('exp-steuer-section');
+  if (steuerCb && steuerSec) {
+    steuerSec.style.display = steuerCb.checked ? '' : 'none';
+    steuerCb.onchange = () => { steuerSec.style.display = steuerCb.checked ? '' : 'none'; };
+  }
+  // Reset income display
+  const incEl = document.getElementById('exp-income');
+  const incDisp = document.getElementById('exp-income-disp');
+  if (incEl && incDisp) incDisp.textContent = 'EUR ' + parseInt(incEl.value).toLocaleString('de-DE');
+  openModal('exposeModal');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPOSE PDF EXPORT
+// ═══════════════════════════════════════════════════════════════
+function exportExposePDF() {
+  const o = currentSteuerObj;
+  if (!o || typeof jspdf === 'undefined') { notify('PDF-Export nicht verfuegbar.', 'error'); return; }
+  const { jsPDF } = jspdf;
+
+  // Section flags
+  const secLage   = !!(document.getElementById('exp-sec-lage')?.checked && o.location_info);
+  const secWarum  = !!(document.getElementById('exp-sec-warum')?.checked);
+  const secKalk   = !!(document.getElementById('exp-sec-kalk')?.checked);
+  const secSteuer = !!(document.getElementById('exp-sec-steuer')?.checked);
+  const custName  = (document.getElementById('exp-cust-name')?.value || '').trim();
+  const custIncome = parseInt(document.getElementById('exp-income')?.value) || 60000;
+
+  // VP info
+  const vpName = (currentProfile && currentProfile.company_name) ? currentProfile.company_name
+               : (currentProfile && currentProfile.full_name) ? currentProfile.full_name : 'BCM Vertriebsportal';
+  const vpLogo = currentProfile && currentProfile.company_logo;
+
+  // Object financials
+  const priceUnit = o.price_unit || 0;
+  const priceFurn = o.price_furniture || 0;
+  const parkPrice = o.parking_active ? (o.parking_price || 0) : 0;
+  const totalKP   = priceUnit + priceFurn + parkPrice;
+  const monRent   = (o.cold_rent||0) + (o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0);
+  const annRent   = monRent * 12;
+  const brutto    = totalKP > 0 ? annRent / totalKP * 100 : 0;
+  const grstK     = totalKP * 0.035;
+  const notarK    = totalKP * 0.015;
+  const grundbK   = totalKP * 0.005;
+  const nkTotal   = grstK + notarK + grundbK;
+  const gesamtKost = totalKP + nkTotal;
+  const fkAnteil  = gesamtKost * 0.80;
+  const ekAnteil  = gesamtKost * 0.20;
+  const loanR     = (o.loan_rate || 3.95) / 100;
+  const repayR    = (o.repay_rate || 1.0) / 100;
+  const monRate   = fkAnteil * (loanR + repayR) / 12;
+  const kpAfA     = priceUnit + priceFurn;
+  const afaPA     = o.deg_afa > 0 ? kpAfA * o.deg_afa / 100 : kpAfA * (o.lin_afa||2) / 100;
+  const zinsenPA  = fkAnteil * 0.038;
+  const hausgeldPA = (o.hausgeld||0) * 12;
+  const instandPA  = (o.instandhaltung||0) * 12;
+  const totalDeduct = afaPA + zinsenPA + hausgeldPA + instandPA;
+  const netRental = annRent - totalDeduct;
+  const taxableAft = Math.max(0, custIncome + netRental);
+  const taxBef = calcESt2024(custIncome);
+  const taxAft = calcESt2024(taxableAft);
+  const soliBef = calcSoli(taxBef);
+  const soliAft = calcSoli(taxAft);
+  const totalBef = taxBef + soliBef;
+  const totalAft = taxAft + soliAft;
+  const savingPA  = Math.max(0, totalBef - totalAft);
+  const savingMon = savingPA / 12;
+  const finRateMon = (fkAnteil * 0.058) / 12;
+  const cfMon = monRent - finRateMon - (o.hausgeld||0) - (o.instandhaltung||0) + savingMon;
+
+  // Helpers
+  const fE  = n => Math.round(n).toLocaleString('de-DE') + ' EUR';
+  const fP  = n => n.toFixed(2).replace('.',',') + ' %';
+
+  // Colors
+  const NAVY=[26,39,68], GOLD=[184,151,42], WHITE=[255,255,255],
+        LIGHT=[247,246,244], G200=[220,217,211],
+        POS=[46,125,82], NEG=[192,57,43];
+
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const W=210, H=297, M=14, CW=W-2*M;
+  let pageN=0;
+
+  // ── helpers ──────────────────────────────
+  function newPage(footerTitle) {
+    if (pageN>0) doc.addPage();
+    pageN++;
+    // footer bar
+    doc.setFillColor(...NAVY); doc.rect(0,H-11,W,11,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...WHITE);
+    doc.text(vpName, M, H-3.5);
+    doc.text(footerTitle||'', W/2, H-3.5, {align:'center'});
+    doc.text('Seite '+pageN, W-M, H-3.5, {align:'right'});
+    doc.setTextColor(0,0,0);
+  }
+  function secHdr(y, title) {
+    doc.setFillColor(...NAVY); doc.rect(M,y,CW,7.5,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...WHITE);
+    doc.text(title, M+4, y+5.5);
+    doc.setTextColor(0,0,0);
+    return y+11;
+  }
+  function pairRow(y, label, val, bold, valCol) {
+    doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(9);
+    doc.setTextColor(90,90,90); doc.text(label, M+1, y);
+    doc.setFont('helvetica', bold?'bold':'normal');
+    doc.setTextColor(...(valCol||NAVY)); doc.text(val, W-M, y, {align:'right'});
+    doc.setTextColor(0,0,0);
+    return y+5.5;
+  }
+  function hLine(y, col) {
+    doc.setDrawColor(...(col||G200)); doc.setLineWidth(0.25); doc.line(M,y,W-M,y);
+    return y+3.5;
+  }
+  function drawLogo(x, y, sz) {
+    if (vpLogo) { try { const f=(vpLogo.match(/data:image\/(\w+)/)||[])[1]?.toUpperCase()||'PNG'; doc.addImage(vpLogo,f,x,y,sz,sz); return; } catch(e){} }
+    doc.setFillColor(...GOLD); doc.rect(x,y,sz,sz,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(sz>15?9:7); doc.setTextColor(...NAVY);
+    const ini=vpName.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()||'VP';
+    doc.text(ini, x+sz/2, y+sz/2+(sz>15?2:1.5), {align:'center'});
+    doc.setTextColor(0,0,0);
+  }
+  const today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
+
+  // ════════════════════════════════════════════
+  // PAGE 1 — DECKBLATT
+  // ════════════════════════════════════════════
+  newPage('Objektexpose');
+  // Top header
+  doc.setFillColor(...NAVY); doc.rect(0,0,W,26,'F');
+  drawLogo(M, 4, 17);
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...WHITE);
+  doc.text(vpName, M+21, 12);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...GOLD);
+  doc.text('Objektexpose  |  '+today, M+21, 19);
+  if (custName) {
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(200,200,200);
+    doc.text('Erstellt fuer: '+custName, W-M, 19, {align:'right'});
+  }
+  doc.setTextColor(0,0,0);
+
+  // Gold accent line
+  doc.setFillColor(...GOLD); doc.rect(0,26,W,1.2,'F');
+
+  // Image placeholder
+  const imgY=29, imgH=65;
+  doc.setFillColor(230,228,224); doc.rect(M,imgY,CW,imgH,'F');
+  doc.setFillColor(...NAVY); doc.rect(M,imgY,3,imgH,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(190,190,190);
+  doc.text('[ OBJEKTFOTO ]', W/2, imgY+imgH/2+3, {align:'center'});
+  doc.setTextColor(0,0,0);
+
+  // city + name below image
+  let y=imgY+imgH+7;
+  const cityLbl = (o.location_info&&o.location_info.macro_city) ? o.location_info.macro_city : '';
+  if (cityLbl) {
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...GOLD);
+    doc.text(cityLbl.toUpperCase(), M, y); y+=5;
+  }
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(...NAVY);
+  doc.text(o.name||'—', M, y); y+=6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(110,110,110);
+  doc.text(o.address||'—', M, y); y+=9;
+  doc.setTextColor(0,0,0);
+
+  // 4-stat boxes
+  const bw=CW/4;
+  const boxes=[
+    {l:'Kaufpreis gesamt',  v:fE(totalKP),          s:o.asset_class||'Kapitalanlage'},
+    {l:o.parking_active?'Gesamtmiete':'Kaltmiete', v:fE(monRent)+'/Mo', s:fE(annRent)+'/Jahr'},
+    {l:'Bruttorendite',     v:fP(brutto),            s:'p.a.', pos:true},
+    {l:'Wohnflaeche',       v:(o.area||'?')+' m\xb2', s:(o.rooms||'?')+' Zimmer'}
+  ];
+  boxes.forEach((b,i)=>{
+    const bx=M+i*bw;
+    doc.setFillColor(i%2===0?26:35, i%2===0?39:50, i%2===0?68:85);
+    doc.rect(bx,y,bw,22,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(170,170,170);
+    doc.text(b.l.toUpperCase(), bx+bw/2, y+5.5, {align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.setTextColor(...(b.pos?[110,220,140]:[212,175,74]));
+    doc.text(b.v, bx+bw/2, y+13, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(140,140,140);
+    doc.text(b.s, bx+bw/2, y+19, {align:'center'});
+  });
+  y+=26;
+
+  // 6 secondary facts
+  const c6w=CW/6;
+  const s6=[
+    ['Etage', o.floor?o.floor+'. OG':'—'],
+    ['Baujahr', o.build_year?String(o.build_year):'—'],
+    ['Bauzustand', o.condition||'—'],
+    ['Kreditzins', fP(o.loan_rate||3.95)],
+    ['Tilgung', fP(o.repay_rate||1.0)],
+    ['AfA', o.deg_afa>0?fP(o.deg_afa)+' deg.':fP(o.lin_afa||2)+' lin.']
+  ];
+  s6.forEach((s,i)=>{
+    const bx=M+i*c6w;
+    doc.setFillColor(...LIGHT); doc.rect(bx,y,c6w,14,'F');
+    if(i>0){doc.setDrawColor(...G200);doc.setLineWidth(0.25);doc.line(bx,y,bx,y+14);}
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(130,130,130);
+    doc.text(s[0].toUpperCase(), bx+c6w/2, y+5, {align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...NAVY);
+    doc.text(s[1], bx+c6w/2, y+11, {align:'center'});
+  });
+  y+=18;
+
+  // Description
+  if (o.description && y<H-50) {
+    const dLines=doc.splitTextToSize(o.description, CW-8);
+    const dH=Math.min(dLines.length*4.5+8,32);
+    doc.setFillColor(251,250,248); doc.rect(M,y,CW,dH,'F');
+    doc.setFillColor(...GOLD); doc.rect(M,y,2.5,dH,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(70,70,70);
+    doc.text(dLines.slice(0,Math.floor((dH-8)/4.5)), M+6, y+6);
+    y+=dH+5;
+    doc.setTextColor(0,0,0);
+  }
+
+  // Pitch (if present, on deck page too)
+  const pitch0 = o.location_info&&o.location_info.pitch;
+  if (pitch0 && y<H-45) {
+    const pL=doc.splitTextToSize(pitch0, CW-10);
+    const pH=Math.min(pL.length*4.8+12,32);
+    doc.setFillColor(30,45,80); doc.rect(M,y,CW,pH,'F');
+    doc.setFillColor(...GOLD); doc.rect(M,y,3,pH,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...GOLD);
+    doc.text('INVESTITIONSARGUMENT', M+7, y+5.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(220,220,220);
+    doc.text(pL.slice(0,Math.floor((pH-12)/4.8)), M+7, y+11);
+    y+=pH+5;
+    doc.setTextColor(0,0,0);
+  }
+
+  // ════════════════════════════════════════════
+  // PAGE 2 — LAGE & STANDORT
+  // ════════════════════════════════════════════
+  if (secLage) {
+    const li=o.location_info;
+    newPage('Lage & Standort');
+    y=secHdr(14, 'LAGE & STANDORT  —  '+((o.name||'').toUpperCase()));
+
+    // Makrolage
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GOLD);
+    doc.text('MAKROLAGE', M, y); y+=5; doc.setTextColor(0,0,0);
+    [['Stadt / Region',li.macro_city],['Einwohner',li.macro_pop],
+     ['Mietpreistrend',{up:'Steigend',stable:'Stabil',down:'Sinkend'}[li.macro_trend]||li.macro_trend],
+     ['Leerstandsquote',li.macro_vacancy],['Wirtschaft / Arbeitgeber',li.macro_economy]]
+    .filter(r=>r[1]).forEach(r=>{ y=pairRow(y,r[0],r[1]); y=hLine(y); });
+    y+=3;
+
+    // Mikrolage
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GOLD);
+    doc.text('MIKROLAGE', M, y); y+=5; doc.setTextColor(0,0,0);
+    [['Viertelcharakter',li.micro_char],['OEPNV',li.micro_transport],
+     ['Einkaufen',li.micro_shopping],['Schulen / Kitas',li.micro_schools],['Besonderheiten',li.micro_notes]]
+    .filter(r=>r[1]).forEach(r=>{
+      const lines=doc.splitTextToSize(r[1],CW*0.55);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(90,90,90);
+      doc.text(r[0], M+1, y);
+      doc.setFont('helvetica','bold'); doc.setTextColor(...NAVY);
+      doc.text(lines, W-M, y, {align:'right', maxWidth:CW*0.55});
+      y+=lines.length*5+1; y=hLine(y);
+    });
+    y+=3;
+
+    // Verwaltung
+    const mgmt=[['Verwaltungsgesellschaft',li.mgmt_company],['Vermietungskonzept',li.mgmt_concept],
+                ['Belegungsquote',li.mgmt_occ],['Besonderheit',li.mgmt_notes]].filter(r=>r[1]);
+    if (mgmt.length) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GOLD);
+      doc.text('VERWALTUNG & VERMIETUNG', M, y); y+=5; doc.setTextColor(0,0,0);
+      mgmt.forEach(r=>{ y=pairRow(y,r[0],r[1]); y=hLine(y); }); y+=3;
+    }
+
+    // Pitch box
+    if (li.pitch) {
+      const pL=doc.splitTextToSize(li.pitch, CW-10);
+      const pH=pL.length*5+14;
+      doc.setFillColor(30,45,80); doc.rect(M,y,CW,pH,'F');
+      doc.setFillColor(...GOLD); doc.rect(M,y,3,pH,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...GOLD);
+      doc.text('INVESTITIONSARGUMENT FUER DAS GESPRAECH', M+7, y+6.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(220,220,220);
+      doc.text(pL, M+7, y+13);
+      y+=pH+5; doc.setTextColor(0,0,0);
+    }
+  }
+
+  // ════════════════════════════════════════════
+  // PAGE 3 — WARUM KAPITALANLAGE
+  // ════════════════════════════════════════════
+  if (secWarum) {
+    newPage('Warum Kapitalanlage?');
+    y=secHdr(14, 'WARUM IMMOBILIEN ALS KAPITALANLAGE?');
+    const args=[
+      ['Inflationsschutz','Immobilien gelten als klassischer Schutz gegen Inflation. Mieteinnahmen steigen mit der Zeit, der Sachwert bleibt langfristig erhalten.'],
+      ['Steueroptimierung','Durch AfA, Schuldzinsen und Betriebskosten reduzieren Sie Ihr zu versteuerndes Einkommen erheblich. Der Staat beteiligt sich an Ihrer Investition.'],
+      ['Hebelwirkung (Leverage)','Mit vergleichsweise geringem Eigenkapital steuern Sie ein deutlich groesseres Vermoegen. Die Finanzierung arbeitet fuer Sie.'],
+      ['Passives Einkommen','Durch professionelle Verwaltung generieren Sie monatliche Mieteinnahmen ohne aktiven Zeitaufwand.'],
+      ['Vermoegensaufbau','Waehrend Mieter Ihren Kredit tilgen, waechst Ihr Eigenkapital kontinuierlich – finanziert durch Dritte.'],
+      ['Sachwert-Sicherheit','Die Immobilie bietet einen realen, anfassbaren Gegenwert mit intrinsischem Nutzen – anders als viele Wertpapiere.']
+    ];
+    const aW=(CW-6)/2;
+    let row0y=y;
+    args.forEach((a,i)=>{
+      const col=i%2, bx=M+col*(aW+6);
+      if(col===0&&i>0) row0y+=28;
+      const aLines=doc.splitTextToSize(a[1],aW-10);
+      doc.setFillColor(col===0?247:242,col===0?246:241,col===0?244:239);
+      doc.rect(bx,row0y,aW,26,'F');
+      doc.setFillColor(...GOLD); doc.rect(bx,row0y,2.5,26,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...NAVY);
+      doc.text(a[0], bx+6, row0y+6.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+      doc.text(aLines.slice(0,3), bx+6, row0y+12);
+    });
+    y=row0y+32; doc.setTextColor(0,0,0);
+  }
+
+  // ════════════════════════════════════════════
+  // PAGE 4 — KALKULATION
+  // ════════════════════════════════════════════
+  if (secKalk) {
+    newPage('Kalkulation & Finanzierung');
+    y=secHdr(14,'KALKULATION  —  '+(o.name||'').toUpperCase());
+
+    const cW2=(CW-5)/2, lX=M, rX=M+cW2+5;
+    let lyL=y, lyR=y;
+
+    // ── left: Kaufpreis + NK
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GOLD);
+    doc.text('KAUFPREIS & NEBENKOSTEN', lX, lyL); lyL+=6; doc.setTextColor(0,0,0);
+    [['Kaufpreis Wohnung',fE(priceUnit)],
+     ...(priceFurn?[['Moebelierungsanteil',fE(priceFurn)]]:[]),
+     ...(parkPrice?[['Stellplatz',fE(parkPrice)]]:[]),
+     ['Kaufpreis gesamt',fE(totalKP),true]
+    ].forEach(r=>{
+      doc.setFont('helvetica',r[2]?'bold':'normal'); doc.setFontSize(9);
+      doc.setTextColor(r[2]?NAVY[0]:90,r[2]?NAVY[1]:90,r[2]?NAVY[2]:90);
+      doc.text(r[0],lX+1,lyL); doc.text(r[1],lX+cW2,lyL,{align:'right'});
+      if(r[2]){doc.setFillColor(...NAVY);doc.rect(lX,lyL-4.5,cW2,0.4,'F');}
+      lyL+=5.5;
+    });
+    lyL+=4;
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GOLD);
+    doc.text('ERWERBSNEBENKOSTEN', lX, lyL); lyL+=6; doc.setTextColor(0,0,0);
+    [['Grunderwerbsteuer (3,5 %)',fE(grstK)],['Notar / Beurkundung (1,5 %)',fE(notarK)],
+     ['Grundbuch (0,5 %)',fE(grundbK)],['NK gesamt',fE(nkTotal),true],
+     ['Gesamtaufwand (inkl. NK)',fE(gesamtKost),true,GOLD]
+    ].forEach(r=>{
+      doc.setFont('helvetica',r[2]?'bold':'normal'); doc.setFontSize(9);
+      const vc=r[3]||NAVY;
+      doc.setTextColor(90,90,90); doc.text(r[0],lX+1,lyL);
+      doc.setTextColor(...vc); doc.text(r[1],lX+cW2,lyL,{align:'right'});
+      if(r[2]){doc.setFillColor(...vc);doc.rect(lX,lyL-4.5,cW2,0.4,'F');}
+      lyL+=5.5;
+    });
+
+    // ── right: Finanzierung + Miete
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GOLD);
+    doc.text('FINANZIERUNGSSTRUKTUR', rX, lyR); lyR+=6; doc.setTextColor(0,0,0);
+    [['Gesamtaufwand',fE(gesamtKost)],['Eigenkapital (ca. 20 %)',fE(ekAnteil)],
+     ['Fremdkapital (ca. 80 %)',fE(fkAnteil),true],
+     ['Kreditzins',fP(o.loan_rate||3.95)],['Tilgung',fP(o.repay_rate||1.0)],
+     ['Monatliche Rate',fE(monRate)+'/Mo',true]
+    ].forEach(r=>{
+      doc.setFont('helvetica',r[2]?'bold':'normal'); doc.setFontSize(9);
+      doc.setTextColor(90,90,90); doc.text(r[0],rX+1,lyR);
+      doc.setTextColor(...NAVY); doc.text(r[1],rX+cW2,lyR,{align:'right'});
+      if(r[2]){doc.setFillColor(...NAVY);doc.rect(rX,lyR-4.5,cW2,0.4,'F');}
+      lyR+=5.5;
+    });
+    lyR+=4;
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...GOLD);
+    doc.text('MIETEINNAHMEN & RENDITE', rX, lyR); lyR+=6; doc.setTextColor(0,0,0);
+    [['Kaltmiete p.M.',fE(o.cold_rent||0)+'/Mo'],
+     ...(o.parking_active?[['Stellplatzmiete',fE((o.parking_rent||0)*(o.parking_count||1))+'/Mo']]:[]),
+     ['Gesamtmiete p.M.',fE(monRent)+'/Mo',true],
+     ['Hausgeld p.M.',fE(o.hausgeld||0)+'/Mo'],['Instandhaltung p.M.',fE(o.instandhaltung||0)+'/Mo'],
+     ['Bruttorendite p.a.',fP(brutto),true,POS]
+    ].forEach(r=>{
+      const vc=r[3]||NAVY;
+      doc.setFont('helvetica',r[2]?'bold':'normal'); doc.setFontSize(9);
+      doc.setTextColor(90,90,90); doc.text(r[0],rX+1,lyR);
+      doc.setTextColor(...vc); doc.text(r[1],rX+cW2,lyR,{align:'right'});
+      if(r[2]){doc.setFillColor(...vc);doc.rect(rX,lyR-4.5,cW2,0.4,'F');}
+      lyR+=5.5;
+    });
+
+    // Cashflow bar
+    y=Math.max(lyL,lyR)+6;
+    doc.setFillColor(...NAVY); doc.rect(M,y,CW,22,'F');
+    doc.setFillColor(...GOLD); doc.rect(M,y,3,22,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...GOLD);
+    doc.text('MONATLICHER CASHFLOW (RICHTWERT)', M+7, y+5.5);
+    [['Gesamtmiete p.M.',fE(monRent)+'/Mo',GOLD],
+     ['Monatliche Kreditrate','- '+fE(finRateMon)+'/Mo',[220,100,80]],
+     ['Cashflow (inkl. Steuerersparnis)*',(cfMon>=0?'+ ':'')+fE(cfMon)+'/Mo', cfMon>=0?[110,220,140]:[255,130,110]]
+    ].forEach((it,i)=>{
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(170,170,170);
+      doc.text(it[0], M+7, y+10+i*4);
+      doc.setFont('helvetica','bold'); doc.setTextColor(...it[2]);
+      doc.text(it[1], W-M, y+10+i*4, {align:'right'});
+    });
+    y+=26;
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(130,130,130);
+    doc.text('* 80% FK zu Marktkonditionen angenommen. Steuerersparnis basiert auf Grundtabelle 2024, 70% FK zu 3,8% Zinsen. Keine Anlageberatung.', M, y);
+    doc.setTextColor(0,0,0);
+  }
+
+  // ════════════════════════════════════════════
+  // PAGE 5 — STEUERANALYSE
+  // ════════════════════════════════════════════
+  if (secSteuer) {
+    newPage('Steueranalyse');
+    y=secHdr(14,'STEUERANALYSE  —  EINKOMMENSTEUEROPTIMIERUNG');
+
+    // Income line
+    doc.setFillColor(...LIGHT); doc.rect(M,y,CW,11,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(90,90,90);
+    doc.text('Angenommenes Bruttoeinkommen p.a.:', M+4, y+7);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...NAVY);
+    doc.text(fE(custIncome), W-M-4, y+7, {align:'right'});
+    y+=15; doc.setTextColor(0,0,0);
+
+    // Column headers
+    const cW2s=(CW-4)/2;
+    doc.setFillColor(185,185,185); doc.rect(M,y,cW2s,9,'F');
+    doc.setFillColor(...NAVY);     doc.rect(M+cW2s+4,y,cW2s,9,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    doc.setTextColor(50,50,50); doc.text('OHNE Immobilie', M+cW2s/2, y+6, {align:'center'});
+    doc.setTextColor(...WHITE);    doc.text('MIT Immobilie',  M+cW2s+4+cW2s/2, y+6, {align:'center'});
+    y+=13; doc.setTextColor(0,0,0);
+
+    // Abzüge comparison table
+    const tRows=[
+      ['Bruttoeinkommen',fE(custIncome),fE(custIncome)],
+      ['Mieteinnahmen','—',fE(annRent)],null,
+      ['Abzuege:','',''],
+      ['AfA ('+( o.deg_afa>0?fP(o.deg_afa)+' deg.':fP(o.lin_afa||2)+' lin.')+')','—','- '+fE(afaPA)],
+      ['Schuldzinsen (Schaetzung 3,8 %)','—','- '+fE(zinsenPA)],
+      ...(hausgeldPA?[['Hausgeld p.a.','—','- '+fE(hausgeldPA)]]:[]),
+      ...(instandPA?[['Instandhaltung p.a.','—','- '+fE(instandPA)]]:[]),
+      ['Gesamtabzug p.a.','—','- '+fE(totalDeduct),true],null,
+      ['Zu versteuerndes Einkommen',fE(custIncome),fE(taxableAft),true],null,
+      ['Einkommensteuer','- '+fE(taxBef),'- '+fE(taxAft)],
+      ['Solidaritaetszuschlag','- '+fE(soliBef),'- '+fE(soliAft)],
+      ['Steuerbelastung gesamt','- '+fE(totalBef),'- '+fE(totalAft),true]
+    ];
+    tRows.forEach(r=>{
+      if(!r){y+=3;return;}
+      const isBold=!!r[3];
+      doc.setFont('helvetica',isBold?'bold':'normal'); doc.setFontSize(9);
+      doc.setTextColor(90,90,90); doc.text(r[0],M+1,y);
+      doc.setTextColor(isBold?NEG[0]:90,isBold?NEG[1]:90,isBold?NEG[2]:90);
+      if(r[1]) doc.text(r[1], M+cW2s, y, {align:'right'});
+      doc.setTextColor(isBold?POS[0]:90,isBold?POS[1]:90,isBold?POS[2]:90);
+      if(r[2]) doc.text(r[2], W-M, y, {align:'right'});
+      if(isBold){doc.setDrawColor(...G200);doc.setLineWidth(0.3);doc.line(M,y-4.5,W-M,y-4.5);}
+      y+=5.5;
+    });
+
+    // Summary bar
+    y+=4;
+    doc.setFillColor(...NAVY); doc.rect(M,y,CW,26,'F');
+    doc.setFillColor(...GOLD); doc.rect(M,y,3,26,'F');
+    [['Jaehrliche Steuerersparnis',fE(savingPA),[110,220,140]],
+     ['Monatliche Steuerersparnis',fE(savingMon)+'/Mo',[110,220,140]],
+     ['Monatl. Cashflow (inkl. Steuerersparnis)*',(cfMon>=0?'+ ':'')+fE(cfMon)+'/Mo',cfMon>=0?[110,220,140]:[255,130,110]]
+    ].forEach((s,i)=>{
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(170,170,170);
+      doc.text(s[0], M+7, y+7+i*7.5);
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...s[2]);
+      doc.text(s[1], W-M, y+7+i*7.5, {align:'right'});
+    });
+    y+=30;
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(120,120,120);
+    doc.text('* EStG Grundtabelle 2024. Schuldzinsen geschaetzt: 70% FK zu 3,8% p.a. Cashflow = Miete - Rate (70%FK, 5,8%eff.) - HG - Instand. + Steuerersparnis.', M, y);
+    doc.text('Alle Angaben sind unverbindliche Richtwerte. Keine Steuer- oder Anlageberatung. Individuelle Beratung empfohlen.', M, y+4);
+    doc.setTextColor(0,0,0);
+  }
+
+  // ── Save
+  const fname='Expose_'+(o.name||'Objekt').replace(/[^a-z0-9]/gi,'_')+'.pdf';
+  doc.save(fname);
+  closeModal('exposeModal');
+  notify('Expose wurde erstellt.', 'success');
 }
 
 // ══════════════════════════════════════════════════════
