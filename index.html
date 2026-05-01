@@ -499,39 +499,89 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
   <!-- ── VP VIEWS ── -->
   <div id="view-vp-objects" class="view">
     <div class="view-inner">
-      <div class="page-title" id="vp-greeting">Verfügbare Objekte</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-        <div class="page-sub" style="margin-bottom:0">Klicken Sie auf ein Objekt um den Kalkulator zu öffnen</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <input type="text" id="vp-search" placeholder="Suchen..." oninput="filterVPObjects()"
-            style="padding:7px 10px;border:1px solid var(--g300);font-family:'Source Sans 3',sans-serif;font-size:12px;width:160px;outline:none">
-          <select id="vp-sort" onchange="filterVPObjects()"
-            style="padding:7px 10px;border:1px solid var(--g300);font-family:'Source Sans 3',sans-serif;font-size:12px;background:white;outline:none;cursor:pointer">
-            <option value="name-asc">Name A–Z</option>
-            <option value="price-asc">Preis ↑</option>
-            <option value="price-desc">Preis ↓</option>
-            <option value="area-asc">Fläche ↑</option>
-            <option value="area-desc">Fläche ↓</option>
-            <option value="yield-desc">Rendite ↓</option>
-            <option value="rent-desc">Miete ↓</option>
-          </select>
-          <button id="vp-comm-btn" onclick="toggleVPCommission()" title="Provision ein/ausblenden"
-            style="padding:6px 8px;border:1px solid var(--g300);background:white;color:var(--g500);cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center">
-            <svg id="vp-comm-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-          <div style="display:flex;gap:4px">
-            <button id="vp-view-grid" onclick="setVPView('grid')" title="Kachelansicht"
-              style="padding:6px 10px;border:1px solid var(--g300);background:var(--navy);color:white;cursor:pointer;font-size:13px">⊞</button>
-            <button id="vp-view-list" onclick="setVPView('list')" title="Listenansicht"
-              style="padding:6px 10px;border:1px solid var(--g300);background:white;color:var(--g500);cursor:pointer;font-size:13px">☰</button>
+      <div id="vp-greeting" class="page-title" style="margin-bottom:6px">Verfügbare Objekte</div>
+
+      <!-- Filter Panel -->
+      <div style="background:white;border:1px solid var(--g200);padding:20px 22px;margin-bottom:18px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:5px">Stadt</div>
+            <select id="vp-f-city" style="width:100%;padding:8px 10px;border:1px solid var(--g300);font-size:12px;background:white;font-family:'Source Sans 3',sans-serif;outline:none">
+              <option value="">Alle</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:5px">Zimmer</div>
+            <select id="vp-f-rooms" style="width:100%;padding:8px 10px;border:1px solid var(--g300);font-size:12px;background:white;font-family:'Source Sans 3',sans-serif;outline:none">
+              <option value="">egal</option>
+              <option value="1">1 Zimmer</option>
+              <option value="2">2 Zimmer</option>
+              <option value="3">3 Zimmer</option>
+              <option value="4">4+ Zimmer</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:5px">Fläche von / bis</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="number" id="vp-f-area-min" placeholder="von" style="flex:1;padding:8px 8px;border:1px solid var(--g300);font-size:12px;outline:none;font-family:'Source Sans 3',sans-serif">
+              <span style="font-size:10px;color:var(--g500)">m²</span>
+              <input type="number" id="vp-f-area-max" placeholder="bis" style="flex:1;padding:8px 8px;border:1px solid var(--g300);font-size:12px;outline:none;font-family:'Source Sans 3',sans-serif">
+              <span style="font-size:10px;color:var(--g500)">m²</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:5px">Kaufpreis von / bis</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="number" id="vp-f-price-min" placeholder="von" style="flex:1;padding:8px 8px;border:1px solid var(--g300);font-size:12px;outline:none;font-family:'Source Sans 3',sans-serif">
+              <span style="font-size:10px;color:var(--g500)">€</span>
+              <input type="number" id="vp-f-price-max" placeholder="bis" style="flex:1;padding:8px 8px;border:1px solid var(--g300);font-size:12px;outline:none;font-family:'Source Sans 3',sans-serif">
+              <span style="font-size:10px;color:var(--g500)">€</span>
+            </div>
           </div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+          <div>
+            <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:5px">Suchbegriff</div>
+            <input type="text" id="vp-search" placeholder="Objektname, Adresse..." style="width:100%;padding:8px 10px;border:1px solid var(--g300);font-size:12px;outline:none;font-family:'Source Sans 3',sans-serif;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:16px;align-items:center;padding-bottom:2px">
+            <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer">
+              <input type="checkbox" id="vp-f-erh" style="width:14px;height:14px;accent-color:var(--navy)"> Erhaltungsaufwand
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer">
+              <input type="checkbox" id="vp-f-wg" style="width:14px;height:14px;accent-color:var(--navy)"> WG-Konzept
+            </label>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="vp-comm-btn" onclick="toggleVPCommission()" title="Provision ein/ausblenden"
+              style="padding:8px 10px;border:1px solid var(--g300);background:white;color:var(--g500);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:11px;font-family:'Source Sans 3',sans-serif">
+              <svg id="vp-comm-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Provision
+            </button>
+            <div style="display:flex;gap:0px;border:1px solid var(--g300)">
+              <button id="vp-view-grid" onclick="setVPView('grid')" title="Projektansicht" style="padding:7px 10px;background:var(--navy);color:white;border:none;cursor:pointer;font-size:13px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              </button>
+              <button id="vp-view-list" onclick="setVPView('list')" title="Listenansicht" style="padding:7px 10px;background:white;color:var(--g500);border:none;cursor:pointer;font-size:13px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          <button onclick="filterVPObjects()" style="padding:9px 24px;background:var(--navy);color:white;border:none;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-family:'Source Sans 3',sans-serif;white-space:nowrap">
+            Anzeigen
+          </button>
+        </div>
       </div>
-      <div id="vp-count" style="font-size:12px;color:var(--g500);margin-bottom:12px"></div>
-      <div class="obj-grid" id="vpObjGrid"><div class="spinner"></div></div>
+
+      <!-- Result count + back button -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div id="vp-count" style="font-size:12px;color:var(--g500)"></div>
+        <button id="vp-back-btn" onclick="vpBackToProjects()" style="display:none;padding:6px 14px;background:white;border:1px solid var(--g300);color:var(--navy);cursor:pointer;font-size:12px;font-weight:600;font-family:'Source Sans 3',sans-serif">
+          ← Alle Projekte
+        </button>
+      </div>
+
+      <div id="vpObjGrid"><div class="spinner"></div></div>
     </div>
   </div>
 
@@ -694,6 +744,16 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
             <option value="false">Nein (Entwurf)</option>
             <option value="true">Ja (für VP sichtbar)</option>
           </select>
+        </div>
+
+        <div class="form-fld full"><label>Projektname <span style="font-weight:400;color:var(--g500)">(Gruppenname für Projektansicht)</span></label><input id="of-projname" type="text" placeholder="z.B. Ahornstrasse 2 - Augsburg"></div>
+        <div style="grid-column:1/-1;display:flex;gap:24px;align-items:center;padding:4px 0 8px">
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)">
+            <input type="checkbox" id="of-erh-aufwand" style="width:14px;height:14px;accent-color:var(--navy)"> Erhaltungsaufwand
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)">
+            <input type="checkbox" id="of-wg-konzept" style="width:14px;height:14px;accent-color:var(--navy)"> WG-Konzept
+          </label>
         </div>
 
         <div class="form-section">Preise & Fläche</div>
@@ -1336,7 +1396,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 
 <!-- Object Detail Modal (VP) -->
 <!-- ══ STEUER VOLLANSICHT MODAL ══ -->
-<div class="modal-bg" id="steuerModal" style="display:none">
+<div class="modal-bg" id="steuerModal">
   <div class="modal" style="max-width:880px;width:95%">
     <div class="modal-header">
       <div class="modal-title">Steuerliche Analyse</div>
@@ -2407,6 +2467,9 @@ function clearObjForm() {
   document.getElementById('of-parking').checked = false;
   document.getElementById('of-kfw-section').style.display = 'none';
   document.getElementById('of-parking-section').style.display = 'none';
+  const projnameEl = document.getElementById('of-projname'); if(projnameEl) projnameEl.value = '';
+  const erhEl = document.getElementById('of-erh-aufwand'); if(erhEl) erhEl.checked = false;
+  const wgEl  = document.getElementById('of-wg-konzept');  if(wgEl)  wgEl.checked  = false;
   document.getElementById('of-restrict').checked = false;
   document.getElementById('of-restrict-section').style.display = 'none';
   document.getElementById('objExistingDocs').style.display = 'none';
@@ -2447,6 +2510,9 @@ function fillObjForm(o) {
   document.getElementById('of-branding').value = o.branding || 'bcm';
   document.getElementById('of-published').value = o.published ? 'true' : 'false';
   document.getElementById('of-condition').value = o.condition;
+  const projnameEl2 = document.getElementById('of-projname'); if(projnameEl2 && o.project_name) projnameEl2.value = o.project_name;
+  const erhEl2 = document.getElementById('of-erh-aufwand'); if(erhEl2) erhEl2.checked = !!o.erh_aufwand;
+  const wgEl2  = document.getElementById('of-wg-konzept');  if(wgEl2)  wgEl2.checked  = !!o.wg_konzept;
   if (o.kfw_active) {
     document.getElementById('of-kfw').checked = true;
     document.getElementById('of-kfw-section').style.display = 'grid';
@@ -2481,7 +2547,10 @@ async function saveObject() {
     parking_active: gc('parking'), parking_type: gs('parktype'), parking_count: g('parkcount')||1,
     parking_price: g('parkprice'), parking_rent: g('parkrent'),
     bank_account_holder: gs('bank-holder')||null, bank_name: gs('bank-name')||null,
-    bank_iban: gs('bank-iban')||null, bank_bic: gs('bank-bic')||null
+    bank_iban: gs('bank-iban')||null, bank_bic: gs('bank-bic')||null,
+    project_name: (document.getElementById('of-projname')?.value?.trim()) || null,
+    erh_aufwand: !!(document.getElementById('of-erh-aufwand')?.checked),
+    wg_konzept:  !!(document.getElementById('of-wg-konzept')?.checked)
   };
 
   // Standort & Verwaltung als JSONB
@@ -3526,6 +3595,7 @@ function toggleVPCommission() {
 
 let vpAllObjects = [];
 let vpCurrentView = 'grid';
+let vpCurrentProject = null; // null = project cards view, string = drilled-in project key
 
 async function loadVPObjects() {
   const name = currentProfile.full_name ? currentProfile.full_name.split(' ')[0] : 'Willkommen';
@@ -3542,49 +3612,80 @@ async function loadVPObjects() {
 
   // Nur Objekte zeigen, die nicht eingeschränkt sind ODER für diesen VP freigegeben wurden
   vpAllObjects = (data || []).filter(o => !o.restricted || accessibleIds.has(o.id));
+
+  // Stadt-Dropdown dynamisch befüllen
+  const citySet = new Set();
+  vpAllObjects.forEach(o => {
+    const c = (o.location_info && o.location_info.macro_city) ? o.location_info.macro_city.trim() : '';
+    if (c) citySet.add(c);
+  });
+  const citySelect = document.getElementById('vp-f-city');
+  if (citySelect) {
+    citySelect.innerHTML = '<option value="">Alle Städte</option>'
+      + Array.from(citySet).sort((a,b)=>a.localeCompare(b,'de'))
+          .map(c => '<option value="'+c+'">'+c+'</option>').join('');
+  }
+
   filterVPObjects();
 }
 
 function filterVPObjects() {
-  const search = (document.getElementById('vp-search')?.value || '').toLowerCase();
-  const sort   = document.getElementById('vp-sort')?.value || 'name-asc';
+  // Reset drill-down when filtering
+  vpCurrentProject = null;
+  const backBtn = document.getElementById('vp-back-btn');
+  if (backBtn) backBtn.style.display = 'none';
+
+  const search   = (document.getElementById('vp-search')?.value || '').toLowerCase();
+  const city     = (document.getElementById('vp-f-city')?.value || '').toLowerCase();
+  const rooms    = document.getElementById('vp-f-rooms')?.value || '';
+  const areaMin  = parseFloat(document.getElementById('vp-f-area-min')?.value) || 0;
+  const areaMax  = parseFloat(document.getElementById('vp-f-area-max')?.value) || 0;
+  const priceMin = parseFloat(document.getElementById('vp-f-price-min')?.value) || 0;
+  const priceMax = parseFloat(document.getElementById('vp-f-price-max')?.value) || 0;
+  const onlyErh  = document.getElementById('vp-f-erh')?.checked;
+  const onlyWG   = document.getElementById('vp-f-wg')?.checked;
 
   let filtered = vpAllObjects.filter(o => {
-    if (!search) return true;
-    return (o.name||'').toLowerCase().includes(search) ||
-           (o.address||'').toLowerCase().includes(search) ||
-           (o.description||'').toLowerCase().includes(search);
-  });
-
-  // Sortieren
-  filtered.sort(function(a, b) {
-    var pa = (a.price_unit||0)+(a.price_furniture||0)+(a.parking_active?(a.parking_price||0):0);
-    var pb = (b.price_unit||0)+(b.price_furniture||0)+(b.parking_active?(b.parking_price||0):0);
-    var ra = pa>0 ? ((a.cold_rent||0)*12)/pa*100 : 0;
-    var rb = pb>0 ? ((b.cold_rent||0)*12)/pb*100 : 0;
-    if (sort==='price-asc')  return pa-pb;
-    if (sort==='price-desc') return pb-pa;
-    if (sort==='area-asc')   return (a.area||0)-(b.area||0);
-    if (sort==='area-desc')  return (b.area||0)-(a.area||0);
-    if (sort==='yield-desc') return rb-ra;
-    if (sort==='rent-desc')  return (b.cold_rent||0)-(a.cold_rent||0);
-    // name-asc default
-    return (a.name||'').localeCompare(b.name||'', 'de');
+    if (search && !(
+      (o.name||'').toLowerCase().includes(search) ||
+      (o.address||'').toLowerCase().includes(search) ||
+      (o.project_name||'').toLowerCase().includes(search) ||
+      (o.description||'').toLowerCase().includes(search)
+    )) return false;
+    if (city) {
+      const objCity = ((o.location_info && o.location_info.macro_city) || o.address || '').toLowerCase();
+      if (!objCity.includes(city)) return false;
+    }
+    if (rooms) {
+      const r = parseFloat(rooms);
+      if (r >= 4) { if ((o.rooms||0) < 4) return false; }
+      else { if (Math.round((o.rooms||0)*2)/2 !== r) return false; }
+    }
+    if (areaMin && (o.area||0) < areaMin) return false;
+    if (areaMax && (o.area||0) > areaMax) return false;
+    const tp = (o.price_unit||0) + (o.price_furniture||0) + (o.parking_active?(o.parking_price||0):0);
+    if (priceMin && tp < priceMin) return false;
+    if (priceMax && tp > priceMax) return false;
+    if (onlyErh && !o.erh_aufwand) return false;
+    if (onlyWG  && !o.wg_konzept)  return false;
+    return true;
   });
 
   const countEl = document.getElementById('vp-count');
-  if(countEl) countEl.textContent = filtered.length + ' von ' + vpAllObjects.length + ' Einheiten';
+  if (countEl) countEl.textContent = filtered.length + ' von ' + vpAllObjects.length + ' Einheiten';
 
   const grid = document.getElementById('vpObjGrid');
   if (!filtered.length) {
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon" style="font-size:28px;opacity:.2;font-family:\'Libre Baskerville\',serif;font-weight:700;color:var(--navy)">BCM</div><div class="empty-txt">Keine Einheiten gefunden</div></div>';
+    grid.style.display = 'block';
+    grid.style.gridTemplateColumns = '';
+    grid.innerHTML = '<div style="padding:60px;text-align:center;color:var(--g500);font-size:13px;font-style:italic">Keine Objekte gefunden</div>';
     return;
   }
 
   if (vpCurrentView === 'list') {
     renderVPList(filtered, grid);
   } else {
-    renderVPGrouped(filtered, grid);
+    renderProjectCards(filtered, grid);
   }
 }
 
@@ -3599,6 +3700,152 @@ function setVPView(view) {
 
 function renderVPGrouped(data, grid) {
   renderGrouped(data, grid, false);
+}
+
+// ── PROJECT CARDS VIEW ──────────────────────────────────
+function renderProjectCards(units, grid) {
+  const groups = {};
+  units.forEach(o => {
+    const key = (o.project_name && o.project_name.trim()) ? o.project_name.trim() : (o.address || 'Sonstige');
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(o);
+  });
+  const keys = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'de'));
+
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+  grid.style.gap = '16px';
+
+  grid.innerHTML = keys.map(key => {
+    const objs = groups[key];
+    const frei = objs.filter(o => o.status === 'available').length;
+    const soon = objs.filter(o => o.status === 'coming_soon').length;
+    const res  = objs.filter(o => o.status === 'reserved').length;
+    const sold = objs.filter(o => o.status === 'sold').length;
+    const prices = objs.map(o => (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0)).filter(v=>v>0);
+    const areas  = objs.map(o => o.area||0).filter(v=>v>0);
+    const priceMin = prices.length ? Math.min(...prices) : 0;
+    const priceMax = prices.length ? Math.max(...prices) : 0;
+    const areaMin  = areas.length  ? Math.min(...areas)  : 0;
+    const areaMax  = areas.length  ? Math.max(...areas)  : 0;
+    const pRange = prices.length === 0 ? '—'
+      : priceMin === priceMax
+        ? 'ab € ' + priceMin.toLocaleString('de-DE')
+        : '€ ' + priceMin.toLocaleString('de-DE') + ' – ' + priceMax.toLocaleString('de-DE');
+    const aRange = areas.length === 0 ? '—'
+      : areaMin === areaMax ? areaMin + ' m²'
+        : areaMin + ' – ' + areaMax + ' m²';
+    const hasWG  = objs.some(o => o.wg_konzept);
+    const hasErh = objs.some(o => o.erh_aufwand);
+    const city = objs.map(o => (o.location_info && o.location_info.macro_city) || '').find(c => c) || '';
+    const safeKey = key.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const imgContId = 'proj-img-' + key.replace(/[^a-z0-9]/gi,'_');
+    return '<div onclick="vpProjectDrilldown(\'' + safeKey + '\')" '
+      + 'style="background:white;border:1px solid var(--g200);cursor:pointer;overflow:hidden;transition:box-shadow .15s;display:flex;flex-direction:column" '
+      + 'onmouseover="this.style.boxShadow=\'0 4px 18px rgba(0,0,0,.13)\'" onmouseout="this.style.boxShadow=\'none\'">'
+      // Image
+      + '<div id="' + imgContId + '" style="height:175px;background:var(--g200);position:relative;overflow:hidden;flex-shrink:0">'
+      + '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:\'Libre Baskerville\',serif;font-weight:700;font-size:22px;color:var(--g300);letter-spacing:.05em">BCM</div>'
+      + '</div>'
+      // City label + name
+      + '<div style="padding:14px 16px 0">'
+      + (city ? '<div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:3px">' + city + '</div>' : '')
+      + '<div style="font-family:\'Libre Baskerville\',serif;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:3px;line-height:1.3">' + key + '</div>'
+      + '<div style="font-size:11px;color:var(--g500);margin-bottom:11px">' + objs.length + ' Einheit' + (objs.length !== 1 ? 'en' : '') + '</div>'
+      // Status pills
+      + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px">'
+      + (frei > 0  ? '<span style="padding:3px 8px;background:rgba(46,125,82,.1);color:#2e7d52;font-size:11px;font-weight:700">' + frei + ' frei</span>' : '')
+      + (soon > 0  ? '<span style="padding:3px 8px;background:rgba(44,62,80,.1);color:#2c3e50;font-size:11px;font-weight:700">' + soon + ' demnächst</span>' : '')
+      + (res > 0   ? '<span style="padding:3px 8px;background:rgba(184,151,42,.12);color:var(--gold);font-size:11px;font-weight:700">' + res + ' reserviert</span>' : '')
+      + (sold > 0  ? '<span style="padding:3px 8px;background:var(--g100);color:var(--g500);font-size:11px;font-weight:700">' + sold + ' verkauft</span>' : '')
+      + '</div></div>'
+      // Price + area
+      + '<div style="margin:0 16px;border-top:1px solid var(--g200);padding:10px 0;display:flex;justify-content:space-between;align-items:flex-start">'
+      + '<div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g500);margin-bottom:2px">Kaufpreis</div>'
+      + '<div style="font-size:12px;font-weight:700;color:var(--navy)">' + pRange + '</div></div>'
+      + '<div style="text-align:right"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g500);margin-bottom:2px">Wohnflaeche</div>'
+      + '<div style="font-size:12px;font-weight:700;color:var(--navy)">' + aRange + '</div></div>'
+      + '</div>'
+      // Tags
+      + ((hasWG || hasErh) ? '<div style="padding:8px 16px 14px;display:flex;gap:5px;flex-wrap:wrap">'
+          + (hasErh ? '<span style="font-size:10px;padding:2px 7px;border:1px solid var(--navy);color:var(--navy);font-weight:600">Erhaltungsaufwand</span>' : '')
+          + (hasWG  ? '<span style="font-size:10px;padding:2px 7px;border:1px solid var(--gold);color:var(--gold);font-weight:600">WG-Konzept</span>' : '')
+          + '</div>' : '<div style="height:14px"></div>')
+      + '</div>';
+  }).join('');
+
+  // Load thumbnails
+  keys.forEach(key => {
+    const objs = groups[key];
+    const first = objs[0];
+    if (!first) return;
+    const imgContId = 'proj-img-' + key.replace(/[^a-z0-9]/gi,'_');
+    loadProjectCardImage(first.id, first.image_order, first.thumbnail_url, imgContId);
+  });
+}
+
+async function loadProjectCardImage(objId, imageOrder, thumbnailUrl, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const setImg = (url) => {
+    const img = document.createElement('img');
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+    img.src = url;
+    const placeholder = container.querySelector('div');
+    if (placeholder) placeholder.remove();
+    container.appendChild(img);
+  };
+  if (thumbnailUrl) { setImg(thumbnailUrl); return; }
+  const { data } = await sb.storage.from('object-images').list(objId, { limit: 20 });
+  if (!data || !data.length) return;
+  const order = imageOrder || [];
+  let firstName = order.length ? order.find(n => data.some(f => f.name === n)) : null;
+  if (!firstName) firstName = data[0].name;
+  const { data: urlData } = sb.storage.from('object-images').getPublicUrl(objId + '/' + firstName);
+  setImg(urlData.publicUrl);
+}
+
+function vpProjectDrilldown(projectKey) {
+  vpCurrentProject = projectKey;
+  const backBtn = document.getElementById('vp-back-btn');
+  if (backBtn) backBtn.style.display = 'inline-block';
+
+  const units = vpAllObjects.filter(o => {
+    const key = (o.project_name && o.project_name.trim()) ? o.project_name.trim() : (o.address || 'Sonstige');
+    return key === projectKey;
+  });
+
+  const countEl = document.getElementById('vp-count');
+  if (countEl) countEl.textContent = units.length + ' Einheit' + (units.length !== 1 ? 'en' : '') + ' in diesem Projekt';
+
+  const grid = document.getElementById('vpObjGrid');
+  if (vpCurrentView === 'list') {
+    renderVPList(units, grid);
+  } else {
+    // Show individual unit cards in an obj-grid
+    grid.style.display = 'block';
+    grid.style.gridTemplateColumns = '';
+    grid.innerHTML = '<div class="obj-grid" id="vpDrillGrid">'
+      + units.sort((a,b) => (a.name||'').localeCompare(b.name||'','de')).map(o => objCard(o, false)).join('')
+      + '</div>';
+    units.forEach(o => loadCardImage(o.id, o.image_order, o.thumbnail_url));
+  }
+}
+
+function vpBackToProjects() {
+  vpCurrentProject = null;
+  const backBtn = document.getElementById('vp-back-btn');
+  if (backBtn) backBtn.style.display = 'none';
+
+  // Re-run filter to go back to project card view
+  const countEl = document.getElementById('vp-count');
+  if (countEl) {
+    const current = vpAllObjects.length;
+    countEl.textContent = current + ' von ' + current + ' Einheiten';
+  }
+
+  const grid = document.getElementById('vpObjGrid');
+  renderProjectCards(vpAllObjects, grid);
 }
 
 function getProjectStats(objs) {
@@ -3930,7 +4177,7 @@ function openSteuerModal() {
   const smSlider = document.getElementById('sm-slider');
   if (mainSlider && smSlider) smSlider.value = mainSlider.value;
   updateSteuerModal();
-  document.getElementById('steuerModal').style.display = 'flex';
+  openModal('steuerModal');
 }
 
 function updateSteuerModal() {
