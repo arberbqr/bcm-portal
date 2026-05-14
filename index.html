@@ -6,20 +6,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BCM Portal">
-<meta name="theme-color" content="#1a2744">
+<meta name="theme-color" content="#141c2a">
 <title>Vertriebsportal</title>
 <link rel="icon" id="dynamic-favicon" type="image/png" href="data:,">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --navy:#1a2744;--navy2:#253459;--gold:#b8972a;--gold2:#d4af4a;
-  --red:#c0392b;--g100:#f7f6f4;--g200:#ece9e3;--g300:#d0ccc4;
+  --navy:#141c2a;--navy2:#1e2838;--gold:#b8972a;--gold2:#d4af4a;
+  --red:#c0392b;--g100:#ede8dc;--g200:#e4ddd0;--g300:#ccc6b8;
   --g500:#888075;--white:#fff;--text:#1a1714;--pos:#2e7d52;--neg:#c0392b;
-  --bcm-navy:#1a2744;--dwi-navy:#1a2744;
+  --bcm-navy:#141c2a;--dwi-navy:#141c2a;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--text);font-size:14px;min-height:100vh}
@@ -28,10 +28,10 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--t
 .setup-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:24px}
 .setup-box{background:white;max-width:460px;width:100%;padding:40px}
 .setup-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
-.setup-logo-box{width:44px;height:44px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-weight:700;font-size:18px;color:var(--navy)}
-.setup-logo-txt{font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;color:var(--navy);line-height:1.2}
+.setup-logo-box{width:44px;height:44px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--navy)}
+.setup-logo-txt{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--navy);line-height:1.2}
 .setup-logo-sub{font-size:10px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;display:block}
-.setup-title{font-family:'Libre Baskerville',serif;font-size:20px;color:var(--navy);margin-bottom:8px}
+.setup-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--navy);margin-bottom:8px}
 .setup-sub{font-size:13px;color:var(--g500);margin-bottom:28px;line-height:1.6}
 .setup-fld{margin-bottom:16px}
 .setup-fld label{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:5px}
@@ -48,11 +48,11 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--t
 .login-left{flex:1;display:flex;align-items:center;justify-content:center;padding:48px;background:var(--navy)}
 .login-right{width:440px;background:white;display:flex;flex-direction:column;justify-content:center;padding:48px}
 .login-brand{text-align:center;margin-bottom:48px}
-.login-brand-box{width:60px;height:60px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-weight:700;font-size:24px;color:var(--navy);margin:0 auto 16px}
-.login-brand-name{font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:white}
+.login-brand-box{width:60px;height:60px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--navy);margin:0 auto 16px}
+.login-brand-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:white}
 .login-brand-sub{font-size:11px;color:var(--gold2);letter-spacing:.15em;text-transform:uppercase;margin-top:4px}
 .login-tagline{color:rgba(255,255,255,.5);font-size:13px;margin-top:32px;text-align:center;max-width:300px;line-height:1.7}
-.login-title{font-family:'Libre Baskerville',serif;font-size:22px;color:var(--navy);margin-bottom:8px}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--navy);margin-bottom:8px}
 .login-sub{font-size:13px;color:var(--g500);margin-bottom:32px}
 .login-fld{margin-bottom:16px}
 .login-fld label{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:5px}
@@ -68,8 +68,8 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--t
 .app-shell{min-height:100vh;display:flex;flex-direction:column}
 .app-header{background:var(--navy);color:white;height:60px;display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
 .app-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.app-logo-box{width:32px;height:32px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-weight:700;font-size:13px;color:var(--navy)}
-.app-logo-txt{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:white;line-height:1.2}
+.app-logo-box{width:32px;height:32px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px;color:var(--navy)}
+.app-logo-txt{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;color:white;line-height:1.2}
 .app-logo-sub{font-size:8px;color:var(--gold2);letter-spacing:.12em;text-transform:uppercase;display:block}
 .app-nav{display:flex;gap:2px;flex:1;margin-left:20px}
 .app-nav-btn{padding:8px 14px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:'Source Sans 3',sans-serif}
@@ -80,7 +80,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--t
 .app-user strong{color:white;display:block;font-size:13px}
 .btn-sm{padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;border:none;font-family:'Source Sans 3',sans-serif;transition:all .15s}
 .btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:var(--gold2)}
-.btn-navy{background:var(--navy2);color:white;border:1px solid rgba(255,255,255,.2)}.btn-navy:hover{background:#2e4070}
+.btn-navy{background:var(--navy2);color:white;border:1px solid rgba(255,255,255,.2)}.btn-navy:hover{background:#28374f}
 .btn-outline{background:transparent;color:white;border:1.5px solid rgba(255,255,255,.35)}.btn-outline:hover{border-color:white}
 .btn-danger{background:var(--neg);color:white}.btn-danger:hover{background:#a93226}
 .btn-pos{background:var(--pos);color:white}.btn-pos:hover{background:#256b45}
@@ -93,7 +93,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--t
 /* ── CARDS / SECTIONS ── */
 .card{background:white;border:1px solid var(--g200);margin-bottom:20px}
 .card-header{background:var(--navy);color:white;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.card-header-title{font-family:'Libre Baskerville',serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.card-header-title{font-family:'Cormorant Garamond',serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .card-header-title::before{content:'';display:block;width:3px;height:13px;background:var(--gold);flex-shrink:0}
 .card-body{padding:20px}
 
@@ -101,7 +101,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--t
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--g300);border:1px solid var(--g300);margin-bottom:20px}
 .stat{background:white;padding:16px 18px}
 .stat-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500)}
-.stat-val{font-family:'Libre Baskerville',serif;font-size:26px;font-weight:700;color:var(--navy);margin-top:4px}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--navy);margin-top:4px}
 .stat-sub{font-size:11px;color:var(--g500);margin-top:2px}
 .stat-val.pos{color:var(--pos)}.stat-val.neg{color:var(--neg)}
 
@@ -109,7 +109,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--t
 .obj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
 .obj-card{background:white;border:1px solid var(--g200);cursor:pointer;transition:all .2s;overflow:hidden}
 .obj-card:hover{border-color:var(--navy);box-shadow:0 4px 20px rgba(0,0,0,.1);transform:translateY(-2px)}
-.obj-card-img{height:160px;background:var(--navy);position:relative;overflow:hidden;background:linear-gradient(90deg,#1a2744 0%,#243560 40%,#1a2744 80%);background-size:200% 100%;animation:card-shimmer 1.4s ease-in-out infinite}
+.obj-card-img{height:160px;background:var(--navy);position:relative;overflow:hidden;background:linear-gradient(90deg,#141c2a 0%,#1e2838 40%,#141c2a 80%);background-size:200% 100%;animation:card-shimmer 1.4s ease-in-out infinite}
 @keyframes card-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .obj-card-img img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease}
 .obj-card-img img.img-loaded{opacity:1}
@@ -125,7 +125,7 @@ body{font-family:'Source Sans 3',sans-serif;background:var(--g100);color:var(--t
 .status-draft{background:var(--g500);color:white}
 .status-coming_soon{background:#2c3e50;color:rgba(255,255,255,.7)}
 .obj-card-body{padding:16px}
-.obj-card-name{font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.obj-card-name{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .obj-card-addr{font-size:12px;color:var(--g500);margin-bottom:12px}
 .obj-card-kpis{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding-top:12px;border-top:1px solid var(--g200)}
 .obj-kpi-lbl{font-size:9px;color:var(--g500);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
@@ -151,7 +151,7 @@ table tr:hover td{background:#eef0f5}
 .form-fld input,.form-fld select,.form-fld textarea{width:100%;padding:8px 10px;border:1px solid var(--g300);background:var(--g100);font-family:'Source Sans 3',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
 .form-fld input:focus,.form-fld select:focus,.form-fld textarea:focus{border-color:var(--navy);background:white}
 .form-fld textarea{resize:vertical;min-height:80px}
-.form-section{font-family:'Libre Baskerville',serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:6px;margin:20px 0 14px;grid-column:1/-1}
+.form-section{font-family:'Cormorant Garamond',serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:6px;margin:20px 0 14px;grid-column:1/-1}
 .form-hint{font-size:10px;color:var(--g500);margin-top:3px}
 .tog-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;grid-column:1/-1;padding:8px 0;border-top:1px dashed var(--g300);margin-top:4px}
 input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--navy)}
@@ -161,7 +161,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 .modal-bg.open{display:flex}
 .modal{background:white;max-width:800px;width:100%;max-height:90vh;overflow-y:auto;position:relative}
 .modal-header{background:var(--navy);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0}
-.modal-title{font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700}
 .modal-close{background:none;border:none;color:white;font-size:22px;cursor:pointer;opacity:.7;line-height:1}
 .modal-close:hover{opacity:1}
 .modal-body{padding:24px}
@@ -184,13 +184,13 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--g300);border:1px solid var(--g300)}
 .ck{background:white;padding:10px 12px}
 .ck-l{font-size:8.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--g500)}
-.ck-v{font-family:'Libre Baskerville',serif;font-size:17px;font-weight:700;color:var(--navy);margin-top:2px}
+.ck-v{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--navy);margin-top:2px}
 .ck-s{font-size:9px;color:var(--g500)}
 .ck-v.pos{color:var(--pos)}.ck-v.neg{color:var(--neg)}
 .wealth-mini{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--g200)}
 .wm{background:var(--navy);padding:10px 12px}
 .wm-l{font-size:8px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:600}
-.wm-v{font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700;color:var(--gold2);margin-top:2px}
+.wm-v{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:var(--gold2);margin-top:2px}
 .chart-mini{position:relative;height:180px}
 .calc-tabs{display:flex;border-bottom:2px solid var(--navy);background:white}
 .calc-tab{padding:7px 12px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none;font-family:'Source Sans 3',sans-serif}
@@ -226,7 +226,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 
 /* ── BRANDING SWITCH ── */
 .brand-bcm{--accent:var(--navy)}
-.brand-dwi{--accent:#1a2744}
+.brand-dwi{--accent:#141c2a}
 
 /* ── MISC ── */
 .divider{border:none;border-top:1px solid var(--g200);margin:12px 0}
@@ -236,7 +236,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
 .badge-neg{background:rgba(192,57,43,.12);color:var(--neg)}
 .badge-gray{background:var(--g200);color:var(--g500)}
 .flex{display:flex;align-items:center;gap:8px}
-.page-title{font-family:'Libre Baskerville',serif;font-size:22px;color:var(--navy);margin-bottom:4px}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--navy);margin-bottom:4px}
 .page-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
 .spinner{width:32px;height:32px;border:3px solid var(--g200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -551,6 +551,9 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
             <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer">
               <input type="checkbox" id="vp-f-wg" style="width:14px;height:14px;accent-color:var(--navy)"> WG-Konzept
             </label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer">
+              <input type="checkbox" id="vp-f-kfw" style="width:14px;height:14px;accent-color:var(--navy)"> KfW möglich
+            </label>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <button id="vp-comm-btn" onclick="toggleVPCommission()" title="Provision ein/ausblenden"
@@ -684,7 +687,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="form-fld">
           <label>Logo hochladen</label>
           <div style="display:flex;align-items:center;gap:12px">
-            <div id="prof-logo-preview" style="width:60px;height:60px;background:var(--g200);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--g500);flex-shrink:0;font-family:'Libre Baskerville',serif">Logo</div>
+            <div id="prof-logo-preview" style="width:60px;height:60px;background:var(--g200);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--g500);flex-shrink:0;font-family:'Cormorant Garamond',serif">Logo</div>
             <div>
               <button class="btn-sm btn-navy" style="font-size:11px" onclick="document.getElementById('prof-logo-input').click()">Bild auswählen</button>
               <input type="file" id="prof-logo-input" accept="image/*" style="display:none" onchange="onLogoSelect(event)">
@@ -749,7 +752,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="form-fld full"><label>Projektname <span style="font-weight:400;color:var(--g500)">(Gruppenname für Projektansicht)</span></label><input id="of-projname" type="text" placeholder="z.B. Ahornstrasse 2 - Augsburg"></div>
         <div style="grid-column:1/-1;display:flex;gap:24px;align-items:center;padding:4px 0 8px">
           <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)">
-            <input type="checkbox" id="of-erh-aufwand" style="width:14px;height:14px;accent-color:var(--navy)"> Erhaltungsaufwand
+            <input type="checkbox" id="of-erh-aufwand" style="width:14px;height:14px;accent-color:var(--navy)"> Erhaltungsaufwand möglich
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)">
+            <input type="checkbox" id="of-kfw-moeglich" style="width:14px;height:14px;accent-color:var(--navy)"> KfW möglich
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--text)">
             <input type="checkbox" id="of-wg-konzept" style="width:14px;height:14px;accent-color:var(--navy)"> WG-Konzept
@@ -775,7 +781,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         <div class="form-section">Miete & Kosten</div>
         <div class="form-fld"><label>Kaltmiete p.M. (€)</label><input id="of-rent" type="number" value="0" step="0.01"></div>
         <div class="form-fld"><label>Hausgeld p.M. (€)</label><input id="of-hausgeld" type="number" value="0"></div>
-        <div class="form-fld"><label>Instandhaltung p.M. (€)</label><input id="of-instand" type="number" value="0"></div>
+        <div class="form-fld"><label>Erhaltungsaufwand p.M. (€) <span style="font-weight:400;color:var(--g500);font-size:10px">→ fließt automatisch in Steueranalyse ein</span></label><input id="of-instand" type="number" value="0"></div>
 
         <div class="form-section">Finanzierung (Richtwerte)</div>
         <div class="form-fld"><label>Kreditzins (%)</label><input id="of-loanr" type="number" value="3.95" step="0.01"></div>
@@ -912,61 +918,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
   </div>
 </div>
 
-<!-- Exposé Modal -->
-<div class="modal-bg" id="exposeModal">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <div class="modal-title">Exposé erstellen</div>
-      <button class="modal-close" onclick="closeModal('exposeModal')">×</button>
-    </div>
-    <div class="modal-body" style="padding:20px">
-      <div style="background:var(--g100);border-left:3px solid var(--gold);padding:10px 14px;font-size:12px;color:var(--g500);margin-bottom:20px;line-height:1.6">
-        Das Exposé wird als PDF mit Ihrem Firmenprofil erstellt und ist direkt für Investorengespräche nutzbar.
-      </div>
-      <div class="form-fld" style="margin-bottom:16px">
-        <label>Kundenname (optional – erscheint auf Deckblatt)</label>
-        <input id="exp-cust-name" type="text" placeholder="z.B. Max Mustermann">
-      </div>
-      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:10px">Abschnitte</div>
-      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">
-        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:default;color:var(--text)">
-          <input type="checkbox" checked disabled style="width:14px;height:14px;accent-color:var(--navy)">
-          <span>Deckblatt &amp; Objektfakten <span style="font-size:11px;color:var(--g500)">(immer enthalten)</span></span>
-        </label>
-        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;color:var(--text)" id="exp-lage-row">
-          <input type="checkbox" id="exp-sec-lage" checked style="width:14px;height:14px;accent-color:var(--navy)">
-          Lage &amp; Standort
-        </label>
-        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;color:var(--text)">
-          <input type="checkbox" id="exp-sec-warum" checked style="width:14px;height:14px;accent-color:var(--navy)">
-          Warum Kapitalanlage?
-        </label>
-        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;color:var(--text)">
-          <input type="checkbox" id="exp-sec-kalk" checked style="width:14px;height:14px;accent-color:var(--navy)">
-          Kalkulation &amp; Finanzierung
-        </label>
-        <label style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;color:var(--text)">
-          <input type="checkbox" id="exp-sec-steuer" checked style="width:14px;height:14px;accent-color:var(--navy)">
-          Steueranalyse
-        </label>
-      </div>
-      <div id="exp-steuer-section">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:6px">Bruttoeinkommen (für Steueranalyse)</div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <input type="range" id="exp-income" min="20000" max="250000" step="1000" value="60000"
-            oninput="document.getElementById('exp-income-disp').textContent='EUR '+parseInt(this.value).toLocaleString('de-DE')"
-            style="flex:1;accent-color:var(--navy);height:4px">
-          <div style="font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;color:var(--navy);min-width:100px;text-align:right" id="exp-income-disp">EUR 60.000</div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--g500);margin-top:3px"><span>EUR 20.000</span><span>EUR 250.000</span></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('exposeModal')">Abbrechen</button>
-      <button class="btn-sm btn-gold" onclick="exportExposePDF()">Als PDF exportieren</button>
-    </div>
-  </div>
-</div>
+<!-- Exposé Modal – entfernt (wird zu einem späteren Zeitpunkt neu implementiert) -->
 
 <!-- KVE Modal -->
 <div class="modal-bg" id="kveModal">
@@ -1151,7 +1103,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
                 <div style="font-size:10px;color:var(--g500);margin-top:3px;margin-left:21px">NKK werden nicht extra berechnet – z.B. wenn Nebenkosten bereits im KP enthalten sind</div>
               </div>
               <!-- Erhaltungsaufwand -->
-              <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--g300)">
+              <div id="c-erh-section" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--g300)">
                 <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;font-weight:600;color:var(--navy)">
                   <input type="checkbox" id="c-erh-active" onchange="toggleErhaltung()" style="width:14px;height:14px;accent-color:var(--navy)">
                   Erhaltungsaufwand aktivieren
@@ -1207,11 +1159,11 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
           <!-- Obj Banner -->
           <div style="background:var(--navy);color:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
             <div>
-              <div style="font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700" id="cr-objName">—</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700" id="cr-objName">—</div>
               <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px" id="cr-objAddr">—</div>
             </div>
             <div style="text-align:right">
-              <div style="font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--gold2)" id="cr-totalPrice">—</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--gold2)" id="cr-totalPrice">—</div>
               <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Kaltmiete: <span id="cr-coldrent" style="color:var(--gold2);font-weight:700">—</span>/Mo</div>
             </div>
             <div id="cr-price-break" style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;text-align:right;display:none"></div>
@@ -1274,16 +1226,16 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
             <!-- Diagramme -->
             <div id="ct-charts" class="ctc active" style="padding:12px">
               <div style="margin-bottom:12px">
-                <div style="font-family:'Libre Baskerville',serif;font-size:11px;color:var(--navy);text-align:center;margin-bottom:6px">Vermögensentwicklung (kumuliert)*</div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--navy);text-align:center;margin-bottom:6px">Vermögensentwicklung (kumuliert)*</div>
                 <div style="position:relative;height:180px"><canvas id="cr-chartVerm"></canvas></div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div>
-                  <div style="font-family:'Libre Baskerville',serif;font-size:11px;color:var(--navy);text-align:center;margin-bottom:6px">Eigenkapital-Aufbau*</div>
+                  <div style="font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--navy);text-align:center;margin-bottom:6px">Eigenkapital-Aufbau*</div>
                   <div style="position:relative;height:150px"><canvas id="cr-chartEK"></canvas></div>
                 </div>
                 <div>
-                  <div style="font-family:'Libre Baskerville',serif;font-size:11px;color:var(--navy);text-align:center;margin-bottom:6px">Cashflow-Zusammensetzung*</div>
+                  <div style="font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--navy);text-align:center;margin-bottom:6px">Cashflow-Zusammensetzung*</div>
                   <div style="position:relative;height:150px"><canvas id="cr-chartCF"></canvas></div>
                 </div>
               </div>
@@ -1463,7 +1415,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
       <div style="background:var(--g100);border:1px solid var(--g200);padding:16px 20px;margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500)">Ihr Bruttoeinkommen p.a.</div>
-          <div style="font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;color:var(--navy)" id="sm-income-display">€ 60.000</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--navy)" id="sm-income-display">€ 60.000</div>
         </div>
         <input type="range" id="sm-slider" min="20000" max="250000" step="1000" value="60000"
           oninput="updateSteuerModal()" style="width:100%;accent-color:var(--navy);height:5px">
@@ -1541,7 +1493,6 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--na
         ↓ Alle Unterlagen (ZIP)
       </button>
       <button class="btn-sm btn-navy" id="detailCalcBtn" onclick="openCalcFromDetail()">Kalkulator öffnen</button>
-      <button class="btn-sm" id="detailExposeBtn" onclick="openExposeModal()" style="background:white;border:1.5px solid var(--gold);color:var(--gold);font-weight:700;letter-spacing:.04em">Exposé PDF</button>
       <button class="btn-sm btn-gold" id="detailResBtn" onclick="openResFromDetail()">Reservieren</button>
     </div>
   </div>
@@ -1669,6 +1620,7 @@ let currentUser = null;
 let currentProfile = null;
 let currentObjId = null; // for reservation from calc
 let currentSteuerObj = null; // for Steuerrechner tab
+let calcObjKfwMoeglich = false; // KfW für aktuelles Kalkobjekt möglich?
 let vpDomainBranding = null; // set on load if portal is reached via a VP's custom domain
 
 // Gibt den richtigen Markennamen zurück: VP-Firmenname wenn über VP-Domain, sonst BCM
@@ -1685,6 +1637,7 @@ const SUPABASE_KEY_KEY = 'dwi_sb_key';
 // Supabase Credentials (fest eingetragen)
 const SUPABASE_URL = 'https://lnwikmhtaqkqsjrngrlg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxud2lrbWh0YXFrcXNqcm5ncmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjAxNDMsImV4cCI6MjA4OTMzNjE0M30.BqTG6vtVvjQFKiiT5_quCn9RFw2TdIMwpi5LqFlC8O0';
+const PORTAL_BASE_URL = 'https://portal.beqiribau.de';
 
 function initSupabase(url, key) {
   sb = supabase.createClient(url, key);
@@ -1922,8 +1875,14 @@ async function doSignup() {
     return;
   }
 
-  // Token vorhanden = VP-Signup, kein Token = Admin-Signup
-  const role = token ? 'vp' : 'admin';
+  // Ohne Token ist Registrierung gesperrt – Admins werden über Supabase angelegt
+  if (!token) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Registrierung nur mit Einladungslink möglich.';
+    return;
+  }
+
+  const role = 'vp';
 
   // VP: Token validieren
   if (token) {
@@ -2297,7 +2256,7 @@ async function loadAdminObjects() {
 
   const grid = document.getElementById('adminObjGrid');
   if (!data.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon" style="font-size:32px;opacity:.2;font-family:'Libre Baskerville',serif;font-weight:700;color:var(--navy)">BCM</div><div class="empty-txt">Noch keine Objekte</div><div class="empty-sub">Klicke auf "+ Objekt hinzufügen" um zu starten</div></div>`;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon" style="font-size:32px;opacity:.2;font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--navy)">BCM</div><div class="empty-txt">Noch keine Objekte</div><div class="empty-sub">Klicke auf "+ Objekt hinzufügen" um zu starten</div></div>`;
     return;
   }
 
@@ -2314,11 +2273,11 @@ function objCard(o, isAdmin) {
   const isComingSoon = o.status === 'coming_soon';
   const statusColor = {available:'#2e7d52',reserved:'#d4af4a',sold:'#c0392b',draft:'#aaa',coming_soon:'#2c3e50'}[o.status]||'#aaa';
   const statusLabel = {available:'Verfügbar',reserved:'Reserviert',sold:'Verkauft',draft:'Entwurf',coming_soon:'Coming Soon'}[o.status]||o.status;
-  const statusTextColor = {available:'white',reserved:'#1a2744',sold:'white',draft:'white',coming_soon:'rgba(255,255,255,.8)'}[o.status]||'white';
+  const statusTextColor = {available:'white',reserved:'#141c2a',sold:'white',draft:'white',coming_soon:'rgba(255,255,255,.8)'}[o.status]||'white';
   return `<div class="obj-card" onclick="${isAdmin ? `editObject('${o.id}')` : (isComingSoon ? '' : `vpObjDetail('${o.id}')`)}"
     style="border-left:4px solid ${statusColor};${isComingSoon && !isAdmin ? 'cursor:default;' : ''}">
     <div class="obj-card-img" id="img-${o.id}" style="${isComingSoon ? 'filter:grayscale(80%);opacity:.7' : ''}">
-      <div class="obj-card-img-placeholder" style="font-family:'Libre Baskerville',serif;font-weight:700;font-size:22px;color:var(--navy);opacity:.18;letter-spacing:.05em">BCM</div>
+      <div class="obj-card-img-placeholder" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:22px;color:var(--navy);opacity:.18;letter-spacing:.05em">BCM</div>
       ${!o.published && isAdmin ? '<div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.6);color:white;padding:3px 8px;font-size:10px;font-weight:700">NICHT VERÖFFENTLICHT</div>' : ''}
     </div>
     <!-- Statusbalken -->
@@ -2346,7 +2305,7 @@ function objCard(o, isAdmin) {
         <div><div class="obj-kpi-lbl">Bruttorendite</div><div class="obj-kpi-val" style="color:var(--pos)">${isComingSoon ? '—' : fmtP(brutto)}</div></div>
         <div><div class="obj-kpi-lbl">AfA p.a.</div><div class="obj-kpi-val">${isComingSoon ? '—' : (o.deg_afa > 0 ? fmtP(o.deg_afa) + '<span style="font-size:9px;color:var(--g500);font-weight:400"> deg.</span>' : fmtP(o.lin_afa||2) + '<span style="font-size:9px;color:var(--g500);font-weight:400"> lin.</span>')}</div></div>
       </div>
-      ${!isAdmin && vpShowCommission && currentProfile && currentProfile.commission_pct && !isComingSoon ? `
+      ${!isAdmin && vpShowCommission && currentProfile && currentProfile.commission_pct && !currentProfile.hide_commission && !isComingSoon ? `
       <div style="background:rgba(46,125,82,.08);border-top:2px solid rgba(46,125,82,.2);padding:7px 14px;display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pos)">Provision ${currentProfile.commission_pct}%</span>
         <span style="font-size:14px;font-weight:700;color:var(--pos)">${fmt((priceUnit+parkPrice)*currentProfile.commission_pct/100)}</span>
@@ -2569,6 +2528,7 @@ function fillObjForm(o) {
   document.getElementById('of-condition').value = o.condition;
   const projnameEl2 = document.getElementById('of-projname'); if(projnameEl2 && o.project_name) projnameEl2.value = o.project_name;
   const erhEl2 = document.getElementById('of-erh-aufwand'); if(erhEl2) erhEl2.checked = !!o.erh_aufwand;
+  const kfwMoelEl = document.getElementById('of-kfw-moeglich'); if(kfwMoelEl) kfwMoelEl.checked = !!o.kfw_moeglich;
   const wgEl2  = document.getElementById('of-wg-konzept');  if(wgEl2)  wgEl2.checked  = !!o.wg_konzept;
   if (o.kfw_active) {
     document.getElementById('of-kfw').checked = true;
@@ -2606,8 +2566,9 @@ async function saveObject() {
     bank_account_holder: gs('bank-holder')||null, bank_name: gs('bank-name')||null,
     bank_iban: gs('bank-iban')||null, bank_bic: gs('bank-bic')||null,
     project_name: (document.getElementById('of-projname')?.value?.trim()) || null,
-    erh_aufwand: !!(document.getElementById('of-erh-aufwand')?.checked),
-    wg_konzept:  !!(document.getElementById('of-wg-konzept')?.checked)
+    erh_aufwand:   !!(document.getElementById('of-erh-aufwand')?.checked),
+    kfw_moeglich:  !!(document.getElementById('of-kfw-moeglich')?.checked),
+    wg_konzept:    !!(document.getElementById('of-wg-konzept')?.checked)
   };
 
   // Standort & Verwaltung als JSONB
@@ -2944,7 +2905,7 @@ async function loadExistingDocs(objId) {
   const { data: docs } = await sb.from('documents').select('*').eq('object_id', objId).order('created_at');
   if (!docs || !docs.length) { wrap.style.display = 'none'; return; }
 
-  const extBadge = (ext) => { const c={PDF:'#1a2744',XLSX:'#2e7d52',XLS:'#2e7d52',DOCX:'#555',DOC:'#555',ZIP:'#888'}; return `<span style="font-size:9px;font-weight:700;color:${c[ext]||'#888'};letter-spacing:.04em">${ext||'DOK'}</span>`; };
+  const extBadge = (ext) => { const c={PDF:'#141c2a',XLSX:'#2e7d52',XLS:'#2e7d52',DOCX:'#555',DOC:'#555',ZIP:'#888'}; return `<span style="font-size:9px;font-weight:700;color:${c[ext]||'#888'};letter-spacing:.04em">${ext||'DOK'}</span>`; };
   list.innerHTML = docs.map(d => {
     const ext = (d.file_type || '').toUpperCase();
     const icon = extBadge(ext);
@@ -3035,7 +2996,7 @@ async function openResDetail(id) {
     <div style="display:grid;gap:0">
       <!-- Objekt Banner -->
       <div style="background:var(--navy);color:white;padding:12px 16px;margin-bottom:14px">
-        <div style="font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700">${r.objects?.name||'—'}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700">${r.objects?.name||'—'}</div>
         <div style="font-size:11px;opacity:.6;margin-top:2px">${r.objects?.address||''}</div>
       </div>
 
@@ -3113,7 +3074,7 @@ async function openResDetail(id) {
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
       <button class="btn-sm" style="background:#fee2e2;color:#c0392b;border:1px solid #f5c6c6;font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>
       ${!r.signed_at ? `<button class="btn-sm btn-gold" onclick="sendAgreement('${id}')">📄 Vereinbarung senden</button>` : `<span style="color:var(--pos);font-size:12px;font-weight:700">✓ Unterzeichnet am ${fmtDate(r.signed_at)}</span>`}
-      <button class="btn-sm btn-navy" onclick="updateRes('${id}','notarized')" style="background:#1a2744">🏛 Notarisiert</button>`;
+      <button class="btn-sm btn-navy" onclick="updateRes('${id}','notarized')" style="background:#141c2a">🏛 Notarisiert</button>`;
   } else {
     footer.innerHTML = `<button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('resDetailModal')">Schließen</button>
       <button class="btn-sm" style="background:#fee2e2;color:#c0392b;border:1px solid #f5c6c6;font-size:10px" onclick="deleteReservation('${id}')">🗑 Löschen</button>`;
@@ -3447,6 +3408,12 @@ async function loadPartners() {
           <button class="btn-sm btn-gold" style="font-size:10px;padding:3px 8px" onclick="saveCommission('${p.id}')">✓</button>
         </div>
         <div style="font-size:10px;color:var(--g500);text-align:right;margin-top:2px" id="comm-hint-${p.id}"></div>
+        <div style="margin-top:4px;text-align:right">
+          <label style="display:inline-flex;align-items:center;gap:5px;font-size:10px;cursor:pointer;color:${p.hide_commission?'var(--neg)':'var(--g500)'}">
+            <input type="checkbox" ${p.hide_commission?'checked':''} onchange="toggleHideCommission('${p.id}',this.checked)" style="width:12px;height:12px;accent-color:var(--neg)">
+            Provision ausblenden
+          </label>
+        </div>
       </td>
       <td style="min-width:220px">
         <div style="display:flex;align-items:center;gap:4px">
@@ -3512,6 +3479,12 @@ async function saveCommission(id) {
   if (currentProfile && currentProfile.id === id) currentProfile.commission_pct = pct;
 }
 
+async function toggleHideCommission(id, hide) {
+  const { error } = await sb.from('profiles').update({ hide_commission: hide }).eq('id', id);
+  if (error) { notify('Fehler: ' + error.message, 'error'); return; }
+  notify(hide ? 'Provision wird ausgeblendet.' : 'Provision wird angezeigt.', 'success');
+}
+
 async function savePartnerDomain(id) {
   const el = document.getElementById('domain-' + id);
   if (!el) return;
@@ -3569,7 +3542,7 @@ async function sendInvitation() {
 
   if (error) { notify('Fehler: ' + error.message, 'error'); return; }
 
-  const link = `${window.location.href.split('?')[0]}?invite=${data.token}`;
+  const link = `${PORTAL_BASE_URL}?invite=${data.token}`;
   const resEl = document.getElementById('inviteResult');
   resEl.style.display = 'block';
   resEl.innerHTML = `
@@ -3583,7 +3556,7 @@ async function sendInvitation() {
 }
 
 async function copyInviteLink(token) {
-  const link = `${window.location.href.split('?')[0]}?invite=${token}`;
+  const link = `${PORTAL_BASE_URL}?invite=${token}`;
   await navigator.clipboard.writeText(link);
   notify('Link kopiert!', 'success');
 }
@@ -3600,7 +3573,7 @@ function openProfilModal() {
   if(vpLogoBase64) {
     prev.innerHTML = '<img src="'+vpLogoBase64+'" style="width:60px;height:60px;object-fit:contain">';
   } else {
-    prev.innerHTML = '<span style="font-family:\'Libre Baskerville\',serif;font-weight:700;font-size:11px;color:var(--g500)">Logo</span>';
+    prev.innerHTML = '<span style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:11px;color:var(--g500)">Logo</span>';
   }
   openModal('profilModal');
 }
@@ -3658,6 +3631,15 @@ async function loadVPObjects() {
   const name = currentProfile.full_name ? currentProfile.full_name.split(' ')[0] : 'Willkommen';
   document.getElementById('vp-greeting').textContent = 'Guten Tag, ' + name + ' \u2013 verfügbare Objekte';
 
+  // Provision-Button komplett ausblenden wenn hide_commission gesetzt
+  const commBtn = document.getElementById('vp-comm-btn');
+  if (currentProfile && currentProfile.hide_commission) {
+    vpShowCommission = false;
+    if (commBtn) commBtn.style.display = 'none';
+  } else {
+    if (commBtn) commBtn.style.display = '';
+  }
+
   const { data, error } = await sb.from('objects')
     .select('*').eq('published', true).order('name', { ascending: true });
   if (error) return;
@@ -3701,6 +3683,7 @@ function filterVPObjects() {
   const priceMax = parseFloat(document.getElementById('vp-f-price-max')?.value) || 0;
   const onlyErh  = document.getElementById('vp-f-erh')?.checked;
   const onlyWG   = document.getElementById('vp-f-wg')?.checked;
+  const onlyKfw  = document.getElementById('vp-f-kfw')?.checked;
 
   let filtered = vpAllObjects.filter(o => {
     if (search && !(
@@ -3725,6 +3708,7 @@ function filterVPObjects() {
     if (priceMax && tp > priceMax) return false;
     if (onlyErh && !o.erh_aufwand) return false;
     if (onlyWG  && !o.wg_konzept)  return false;
+    if (onlyKfw && !o.kfw_moeglich) return false;
     return true;
   });
 
@@ -3802,12 +3786,12 @@ function renderProjectCards(units, grid) {
       + 'onmouseover="this.style.boxShadow=\'0 4px 18px rgba(0,0,0,.13)\'" onmouseout="this.style.boxShadow=\'none\'">'
       // Image
       + '<div id="' + imgContId + '" style="height:175px;background:var(--g200);position:relative;overflow:hidden;flex-shrink:0">'
-      + '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:\'Libre Baskerville\',serif;font-weight:700;font-size:22px;color:var(--g300);letter-spacing:.05em">BCM</div>'
+      + '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:22px;color:var(--g300);letter-spacing:.05em">BCM</div>'
       + '</div>'
       // City label + name
       + '<div style="padding:14px 16px 0">'
       + (city ? '<div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:3px">' + city + '</div>' : '')
-      + '<div style="font-family:\'Libre Baskerville\',serif;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:3px;line-height:1.3">' + key + '</div>'
+      + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:3px;line-height:1.3">' + key + '</div>'
       + '<div style="font-size:11px;color:var(--g500);margin-bottom:11px">' + objs.length + ' Einheit' + (objs.length !== 1 ? 'en' : '') + '</div>'
       // Status pills
       + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px">'
@@ -3937,18 +3921,18 @@ function renderGrouped(data, grid, isAdmin) {
       + '<div style="background:var(--navy);color:white;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'
       + '<div>'
       + '<div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold2);font-weight:700;margin-bottom:3px">Projekt</div>'
-      + '<div style="font-family:\'Libre Baskerville\',serif;font-size:15px;font-weight:700">' + key + '</div>'
+      + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:15px;font-weight:700">' + key + '</div>'
       + '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + objs.length + ' Einheit' + (objs.length !== 1 ? 'en' : '')
       + (isAdmin && unpubCount > 0 ? ' · <span style="color:rgba(255,200,0,.7)">' + unpubCount + ' unveröffentlicht</span>' : '')
       + '</div>'
       + '</div>'
       + '<div style="display:flex;gap:20px">'
       + '<div style="text-align:right"><div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:2px">Verfügbar</div>'
-      + '<div style="font-family:\'Libre Baskerville\',serif;font-size:16px;font-weight:700;color:var(--gold2)">' + stats.available + ' / ' + objs.length + '</div></div>'
+      + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:16px;font-weight:700;color:var(--gold2)">' + stats.available + ' / ' + objs.length + '</div></div>'
       + '<div style="text-align:right"><div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:2px">Ø Rendite</div>'
-      + '<div style="font-family:\'Libre Baskerville\',serif;font-size:16px;font-weight:700;color:var(--gold2)">' + stats.avgYield + '</div></div>'
+      + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:16px;font-weight:700;color:var(--gold2)">' + stats.avgYield + '</div></div>'
       + (isAdmin && draftCount > 0 ? '<div style="text-align:right"><div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:2px">Entwurf</div>'
-        + '<div style="font-family:\'Libre Baskerville\',serif;font-size:16px;font-weight:700;color:rgba(255,255,255,.5)">' + draftCount + '</div></div>' : '')
+        + '<div style="font-family:\'Cormorant Garamond\',serif;font-size:16px;font-weight:700;color:rgba(255,255,255,.5)">' + draftCount + '</div></div>' : '')
       + '</div></div>'
       + '<div class="obj-grid">' + objs.map(o => objCard(o, isAdmin)).join('') + '</div>'
       + '</div>';
@@ -3960,7 +3944,7 @@ function renderGrouped(data, grid, isAdmin) {
 
 function renderVPList(data, grid) {
   grid.style.display = 'block';
-  const showComm = vpShowCommission && currentProfile && currentProfile.commission_pct;
+  const showComm = vpShowCommission && currentProfile && currentProfile.commission_pct && !currentProfile.hide_commission;
   grid.innerHTML = '<div style="background:white;border:1px solid var(--g200)">'
     + '<table style="width:100%;border-collapse:collapse"><thead><tr>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px">Einheit</th>'
@@ -3979,7 +3963,7 @@ function renderVPList(data, grid) {
         var annRent = ((o.cold_rent||0) + (o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0))*12;
         var rend = (!isCS && tp>0) ? (annRent/tp*100).toFixed(2)+'%' : '—';
         var prov = showComm && !isCS ? fmt(priceBase * currentProfile.commission_pct / 100) : '—';
-        var bg = i%2 ? 'background:#f7f6f4' : '';
+        var bg = i%2 ? 'background:#f2ede4' : '';
         var opacity = isCS ? 'opacity:.5;' : '';
         return '<tr style="'+bg+';cursor:'+(isCS?'default':'pointer')+';'+opacity+'" '
           + (isCS ? '' : 'onclick="vpObjDetail(\''+o.id+'\')"') + '>'
@@ -4046,17 +4030,17 @@ async function vpObjDetail(id) {
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--g300);margin-bottom:16px">
         <div style="background:var(--navy);padding:12px 14px">
           <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Kaufpreis</div>
-          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-top:4px">${fmt(totalKP)}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-top:4px">${fmt(totalKP)}</div>
           ${(o.price_furniture>0||o.parking_active)?`<div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px">${[o.price_furniture>0?'Möbel '+fmt(o.price_furniture):'',o.parking_active?'Stellplatz '+fmt(o.parking_price||0):''].filter(Boolean).join(' · ')}</div>`:''}
         </div>
         <div style="background:var(--navy);padding:12px 14px">
           <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">${o.parking_active ? 'Gesamtmiete' : 'Kaltmiete'}</div>
-          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-top:4px">${fmt(annRent/12)}/Mo</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-top:4px">${fmt(annRent/12)}/Mo</div>
           ${o.parking_active ? '<div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px">inkl. Stellplatz</div>' : ''}
         </div>
         <div style="background:var(--navy);padding:12px 14px">
           <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Bruttorendite</div>
-          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--pos);margin-top:4px">${fmtP(brutto)}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--pos);margin-top:4px">${fmtP(brutto)}</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:16px">
@@ -4103,7 +4087,7 @@ async function vpObjDetail(id) {
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
           <input type="range" id="steuer-slider" min="20000" max="250000" step="1000" value="60000"
             oninput="updateSteuerTab()" style="flex:1;accent-color:var(--navy);height:4px">
-          <div style="font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--navy);min-width:90px;text-align:right" id="steuer-income-display">€&nbsp;60.000</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--navy);min-width:90px;text-align:right" id="steuer-income-display">€&nbsp;60.000</div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--g500)">
           <span>€ 20.000</span><span>€ 250.000</span>
@@ -4213,8 +4197,10 @@ function updateSteuerTab() {
     srow('Bruttoeinkommen', fmtE(bruttoPA)) +
     srow('AfA (' + (o.deg_afa>0?o.deg_afa:o.lin_afa||2) + '%)', '&minus; ' + fmtE(afaPA), '#2e7d52') +
     srow('Finanzierungszinsen', '&minus; ' + fmtE(zinsenPA), '#2e7d52') +
-    srow('Hausgeld + Instandh.', '&minus; ' + fmtE(hausgeldPA+instandPA), '#2e7d52') +
-    srow('+ Mieteinnahmen', '+ ' + fmtE(rentPA), '#1a5276') +
+    srow('Hausgeld', '&minus; ' + fmtE(hausgeldPA), '#2e7d52') +
+    (instandPA > 0 ? srow('Erhaltungsaufwand', '&minus; ' + fmtE(instandPA), '#2e7d52') : '') +
+    srow('Mieteinnahmen', '+ ' + fmtE(rentPA), '#1a5276') +
+    srow('___REMOVEME___', ' + srow('+ Mieteinnahmen', '+ ' + fmtE(rentPA), '#1a5276') +
     srow('z.v.E. neu', fmtE(taxableAfter)) +
     srow('Einkommensteuer', '&minus; ' + fmtE(taxAfter), taxAfter<taxBefore?'#2e7d52':'#c0392b') +
     srow('Solidaritätszuschlag', '&minus; ' + fmtE(soliAfter), '#666') +
@@ -4230,11 +4216,13 @@ function updateSteuerTab() {
 }
 
 function openSteuerModal() {
+  if (!currentSteuerObj) return; // kein Objekt geladen
   const mainSlider = document.getElementById('steuer-slider');
   const smSlider = document.getElementById('sm-slider');
   if (mainSlider && smSlider) smSlider.value = mainSlider.value;
-  updateSteuerModal();
   openModal('steuerModal');
+  // kurz warten bis Modal im DOM sichtbar ist, dann befüllen
+  setTimeout(() => updateSteuerModal(), 80);
 }
 
 function updateSteuerModal() {
@@ -4302,7 +4290,8 @@ function updateSteuerModal() {
     srow('Bruttoeinkommen', fmtE(bruttoPA)) +
     srow(afaLabel, '&minus; ' + fmtE(afaPA), '#2e7d52') +
     srow('Finanzierungszinsen', '&minus; ' + fmtE(zinsenPA), '#2e7d52') +
-    srow('Hausgeld & Instandhaltung', '&minus; ' + fmtE(hausgeldPA+instandPA), '#2e7d52') +
+    srow('Hausgeld (nicht umlagefähig)', '&minus; ' + fmtE(hausgeldPA), '#2e7d52') +
+    (instandPA > 0 ? srow('Erhaltungsaufwand', '&minus; ' + fmtE(instandPA), '#2e7d52') : '') +
     srow('Mieteinnahmen', '+ ' + fmtE(rentPA), '#1a5276') +
     srow('z.v.E. nach Immobilie', fmtE(taxableAfter)) +
     srow('Einkommensteuer', '&minus; ' + fmtE(taxAfter), taxAfter<taxBefore?'#2e7d52':'#c0392b') +
@@ -4324,7 +4313,8 @@ function updateSteuerModal() {
     <p style="margin:0 0 10px"><strong>Absetzbare Positionen in dieser Berechnung:</strong><br>
     <strong>AfA (Abschreibung):</strong> € ${Math.round(afaPA).toLocaleString('de-DE')} p.a. — Bemessungsgrundlage € ${Math.round(kpAfA).toLocaleString('de-DE')} mit ${isDeg?`degressiver AfA von ${o.deg_afa}% p.a. (jährlich sinkend auf den Restwert)`:`linearer AfA von ${o.lin_afa||2}% p.a. (konstant über die Nutzungsdauer)`}.<br>
     <strong>Finanzierungszinsen:</strong> € ${Math.round(zinsenPA).toLocaleString('de-DE')} p.a. — kalkuliert auf 70% Fremdkapital zu 3,8% Zinssatz.<br>
-    <strong>Hausgeld & Instandhaltung:</strong> € ${Math.round(hausgeldPA+instandPA).toLocaleString('de-DE')} p.a. — vollständig absetzbar.<br>
+    <strong>Hausgeld (nicht umlagefähig):</strong> € ${Math.round(hausgeldPA).toLocaleString('de-DE')} p.a. — als Werbungskosten absetzbar.<br>
+    ${instandPA > 0 ? `<strong>Erhaltungsaufwand:</strong> € ${Math.round(instandPA).toLocaleString('de-DE')} p.a. — steuerlich voll absetzbar (§ 9 Abs. 1 EStG).<br>` : ''}
     <strong>Mieteinnahmen:</strong> € ${Math.round(rentPA).toLocaleString('de-DE')} p.a. werden dem Einkommen hinzugerechnet.</p>
     <p style="margin:0 0 8px"><strong>Ergebnis Jahr 1:</strong><br>
     Ihr z.v.E. reduziert sich von € ${Math.round(bruttoPA).toLocaleString('de-DE')} auf € ${Math.round(taxableAfter).toLocaleString('de-DE')} — Steuerersparnis: <strong style="color:#2e7d52">€ ${Math.round(totalSaving).toLocaleString('de-DE')} p.a.</strong></p>
@@ -4731,7 +4721,7 @@ function buildLocationPanel(li) {
 function docIcon(type) {
   const badge = (lbl, bg) => `<span style="display:inline-block;background:${bg};color:#fff;font-size:9px;font-weight:700;padding:2px 5px;letter-spacing:.04em">${lbl}</span>`;
   const map = {
-    expose: badge('PDF','#1a2744'),
+    expose: badge('PDF','#141c2a'),
     grundriss: badge('GR','#2e7d52'),
     baubeschreibung: badge('DOC','#555'),
     energieausweis: badge('ENP','#b8972a'),
@@ -5338,6 +5328,7 @@ async function openCalcForObject(id) {
   if (!o) return;
   calcObj = o;
   currentObjId = id;
+  currentSteuerObj = o; // Steuerrechner Vollansicht braucht dieses Objekt
 
   document.getElementById('calcModalTitle').textContent = o.name;
   document.getElementById('calcModalAddr').textContent = o.address || '';
@@ -5369,6 +5360,8 @@ async function openCalcForObject(id) {
   set('c-vg', o.value_growth); set('c-rg', o.rent_growth);
   set('c-vac', o.vacancy || 0);
 
+  // KfW: nur anzeigen wenn beim Objekt hinterlegt
+  calcObjKfwMoeglich = !!o.kfw_moeglich;
   if (o.kfw_active) {
     document.getElementById('c-kfw-card').style.display = 'block';
     document.getElementById('c-kfw-add').style.display = 'none';
@@ -5376,7 +5369,24 @@ async function openCalcForObject(id) {
     set('c-kfwrep', o.kfw_repay); set('c-kfwbonus', o.kfw_bonus);
   } else {
     document.getElementById('c-kfw-card').style.display = 'none';
-    document.getElementById('c-kfw-add').style.display = 'block';
+    // Hinzufügen-Button nur zeigen wenn KfW beim Objekt als möglich markiert
+    document.getElementById('c-kfw-add').style.display = o.kfw_moeglich ? 'block' : 'none';
+  }
+
+  // Erhaltungsaufwand: nur anzeigen wenn beim Objekt hinterlegt
+  const cErhSection = document.getElementById('c-erh-section');
+  const cErhActive = document.getElementById('c-erh-active');
+  if (cErhSection) {
+    if (o.erh_aufwand) {
+      cErhSection.style.display = 'block';
+      // Checkbox zurücksetzen – Nutzer aktiviert manuell pro Berechnung
+      if (cErhActive) { cErhActive.checked = false; }
+      document.getElementById('c-erh-panel').style.display = 'none';
+    } else {
+      cErhSection.style.display = 'none';
+      if (cErhActive) { cErhActive.checked = false; }
+      document.getElementById('c-erh-panel').style.display = 'none';
+    }
   }
 
   runCalc();
@@ -5454,8 +5464,8 @@ function toggleCalcKfw() {
   const isVisible = card.style.display !== 'none';
   if (isVisible) {
     card.style.display = 'none';
-    addBtn.style.display = 'block';
-    // Werte nullen
+    // Hinzufügen-Button nur zeigen wenn KfW für dieses Objekt möglich
+    addBtn.style.display = calcObjKfwMoeglich ? 'block' : 'none';
     ['c-kfwamt','c-kfwr','c-kfwrep','c-kfwbonus'].forEach(id => {
       const el = document.getElementById(id); if(el) el.value = 0;
     });
@@ -5470,12 +5480,12 @@ function toggleErhaltung() {
   const active = document.getElementById('c-erh-active').checked;
   document.getElementById('c-erh-panel').style.display = active ? 'block' : 'none';
   if (active && calcObj) {
-    // Erhaltungsaufwand = 15% des Gebäudewerts
+    // Erhaltungsaufwand = 15% netto = 17,85% brutto (inkl. 19% MwSt, nicht vorsteuerabzugsberechtigt)
     // Gebäudewert = KP × (1 - Grundanteil)
     const kp = (calcObj.price_unit||0) + (calcObj.parking_active?(calcObj.parking_price||0):0);
     const grundanteil = (calcObj.land_share||15)/100;
     const gebaeudeWert = kp * (1 - grundanteil);
-    const erh = Math.round(gebaeudeWert * 0.15);
+    const erh = Math.round(gebaeudeWert * 0.1785);
     const el = document.getElementById('c-erh-amount');
     if (el && !el.value) el.value = erh;
   }
@@ -5735,7 +5745,7 @@ function runCalc() {
       erhCashbackEl.style.display = 'block';
       erhCashbackEl.innerHTML = `
         <div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px">Steuercashback Erh.-aufwand</div>
-        <div style="font-family:'Libre Baskerville',serif;font-size:15px;font-weight:700;color:#6fcf97">+${fmt(cashbackY1)}/J.</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:#6fcf97">+${fmt(cashbackY1)}/J.</div>
         <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:1px">${fmt(erhAmount)} über ${erhYears} Jahr${erhYears>1?'e':''} · je ${fmt(erhPerYear)}/J.</div>`;
     } else {
       erhCashbackEl.style.display = 'none';
@@ -5796,9 +5806,9 @@ function runCalc() {
   let sR=0,sI=0,sT=0,sCB=0,sSt=0,sCA=0;
   years.slice(0,10).forEach((y,i)=>{
     sR+=y.rentEff;sI+=y.totalInt;sT+=y.totalTl;sCB+=y.netCfB;sSt+=y.taxEff;sCA+=y.netCfA;
-    const bg=i%2?'background:#f7f6f4':'';
-    const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #ece9e3;text-align:right${c?';color:'+c:''}">${v}</td>`;
-    cfH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #ece9e3;font-weight:600">${(o.afa_start||2026)+i}</td>
+    const bg=i%2?'background:#f2ede4':'';
+    const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #e4ddd0;text-align:right${c?';color:'+c:''}">${v}</td>`;
+    cfH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #e4ddd0;font-weight:600">${(o.afa_start||2026)+i}</td>
       ${td(fmt(y.rentEff))}${td(fmt(y.totalInt),'var(--neg)')}${td(fmt(y.totalTl))}
       ${td(fmt(y.netCfB),'var(--navy)')}
       ${td(fmt(y.taxEff),y.taxEff>=0?'var(--pos)':'var(--neg)')}
@@ -5825,11 +5835,11 @@ function runCalc() {
     <th style="${thS};text-align:right">CF n.St. p.M.</th>
   </tr></thead><tbody>`;
   years.slice(0,10).forEach((y,i)=>{
-    const bg=i%2?'background:#f7f6f4':'';
-    const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #ece9e3;text-align:right${c?';color:'+c:''}">${v}</td>`;
-    afaH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #ece9e3;font-weight:600">${(o.afa_start||2026)+i}</td>
+    const bg=i%2?'background:#f2ede4':'';
+    const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #e4ddd0;text-align:right${c?';color:'+c:''}">${v}</td>`;
+    afaH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #e4ddd0;font-weight:600">${(o.afa_start||2026)+i}</td>
       ${td(fmt(afaArr[i]))}${td(fmt(furAfA))}
-      ${showErh ? `<td style="padding:4px 7px;border-bottom:1px solid #ece9e3;text-align:right;font-weight:700;color:${y.erh>0?'#2e7d52':'var(--g400)'}">${y.erh>0?fmt(y.erh):'—'}</td>` : ''}
+      ${showErh ? `<td style="padding:4px 7px;border-bottom:1px solid #e4ddd0;text-align:right;font-weight:700;color:${y.erh>0?'#2e7d52':'var(--g400)'}">${y.erh>0?fmt(y.erh):'—'}</td>` : ''}
       ${td(fmt(y.einkuenfte),y.einkuenfte>=0?'var(--neg)':'var(--pos)')}
       ${td(fmt(y.taxEff),y.taxEff>=0?'var(--pos)':'var(--neg)')}
       ${td(fmt(y.netCfA/12,2),'var(--navy)')}</tr>`;
@@ -5839,7 +5849,7 @@ function runCalc() {
 
   // Charts
   const yrs = years.slice(0,10).map((_,i)=>(o.afa_start||2026)+i+'');
-  const NAVY='#1a2744',GOLD='rgba(184,151,42,.75)',RED='rgba(192,57,43,.75)',GRN='rgba(46,125,82,.75)',G200='#ece9e3';
+  const NAVY='#141c2a',GOLD='rgba(184,151,42,.75)',RED='rgba(192,57,43,.75)',GRN='rgba(46,125,82,.75)',G200='#e4ddd0';
   const tcb = v=>Math.abs(v)>=1000?Math.round(v/1000)+'T':v;
 
   // 1) Vermögensentwicklung
@@ -6473,33 +6483,33 @@ async function printCalc() {
 
   const S = {
     page:   'page-break-after:always;padding:14mm 16mm 12mm;font-family:Arial,sans-serif;font-size:9pt;line-height:1.4;max-width:210mm;box-sizing:border-box',
-    navy:   'background:#1a2744;color:white',
+    navy:   'background:#141c2a;color:white',
     gold:   'color:#d4af4a',
-    row:    'display:flex;justify-content:space-between;padding:3.5px 0;border-bottom:1px solid #ece9e3;font-size:8pt',
-    thCell: 'background:#1a2744;color:white;padding:5px 6px;text-align:right;font-size:7pt;white-space:nowrap',
-    tdCell: 'padding:4px 6px;text-align:right;border-bottom:1px solid #ece9e3;font-size:7.5pt',
+    row:    'display:flex;justify-content:space-between;padding:3.5px 0;border-bottom:1px solid #e4ddd0;font-size:8pt',
+    thCell: 'background:#141c2a;color:white;padding:5px 6px;text-align:right;font-size:7pt;white-space:nowrap',
+    tdCell: 'padding:4px 6px;text-align:right;border-bottom:1px solid #e4ddd0;font-size:7.5pt',
   };
 
   function ph() {
     var logoHtml = vpLogo
       ? '<img src="'+vpLogo+'" style="height:26px;max-width:80px;object-fit:contain">'
-      : '<div style="width:26px;height:26px;background:#b8972a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#1a2744">' + logoTxt + '</div>';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:2pt solid #1a2744">'
+      : '<div style="width:26px;height:26px;background:#b8972a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#141c2a">' + logoTxt + '</div>';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:2pt solid #141c2a">'
       + '<div style="display:flex;align-items:center;gap:9px">'
       + logoHtml
-      + '<div><div style="font-size:11pt;font-weight:700;color:#1a2744">' + branding + '</div>'
+      + '<div><div style="font-size:11pt;font-weight:700;color:#141c2a">' + branding + '</div>'
       + '<div style="font-size:7pt;color:#b8972a;letter-spacing:.1em;text-transform:uppercase">Investmentkalkulation</div></div></div>'
       + '<div style="text-align:right;font-size:7.5pt;color:#888075">'
-      + (recipient ? '<div style="font-weight:700;color:#1a2744;font-size:8.5pt">' + recipient + '</div><div style="margin-top:1px">Investmentkalkulation</div>' : '<div>Investmentkalkulation</div>')
+      + (recipient ? '<div style="font-weight:700;color:#141c2a;font-size:8.5pt">' + recipient + '</div><div style="margin-top:1px">Investmentkalkulation</div>' : '<div>Investmentkalkulation</div>')
       + '</div></div>';
   }
 
   function footer() {
-    return '<div style="margin-top:10px;padding-top:5px;border-top:1px solid #d0ccc4;font-size:6pt;color:#888075;line-height:1.4">' + disc + '</div>';
+    return '<div style="margin-top:10px;padding-top:5px;border-top:1px solid #ccc6b8;font-size:6pt;color:#888075;line-height:1.4">' + disc + '</div>';
   }
 
   function r2(l, v, indent) {
-    return '<div style="' + S.row + (indent?';padding-left:10px':'') + '"><span style="color:#888075">' + l + '</span><span style="font-weight:700;color:#1a2744">' + v + '</span></div>';
+    return '<div style="' + S.row + (indent?';padding-left:10px':'') + '"><span style="color:#888075">' + l + '</span><span style="font-weight:700;color:#141c2a">' + v + '</span></div>';
   }
 
   function th(t, right) {
@@ -6520,17 +6530,17 @@ async function printCalc() {
       + [d.priceFurni>0 ? 'Möbel ' + fmt(d.priceFurni) : '', o.parking_active ? 'Stellplatz ' + fmt(d.parkingPrice) : ''].filter(Boolean).join(' · ')
       + '</div>' : '')
     + '</div></div>'
-    + (d.priceFurni>0||o.parking_active ? '<div style="background:#f7f6f4;border:1px solid #ece9e3;padding:6px 12px;margin-bottom:10px;font-size:8pt;display:flex;gap:16px;color:#4a4540">'
+    + (d.priceFurni>0||o.parking_active ? '<div style="background:#f2ede4;border:1px solid #e4ddd0;padding:6px 12px;margin-bottom:10px;font-size:8pt;display:flex;gap:16px;color:#4a4540">'
       + (d.priceFurni>0 ? '<span><strong>Möbel:</strong> ' + fmt(d.priceFurni) + ' inkl.</span>' : '')
       + (o.parking_active ? '<span><strong>' + (o.parking_count||1) + '\u00d7 ' + o.parking_type + ':</strong> ' + fmt(d.parkingPrice) + ' KP \u00b7 ' + fmt(d.parkingRentMon) + '/Monat</span>' : '')
       + '</div>' : '')
     // KPIs
     + '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:10px">'
-    + [['Bruttorendite',fmtP(d.brutto),'#2e7d52'],['Nettorendite',fmtP(d.netto),'#1a2744'],['Kaltmiete p.M.',fmt(d.coldRent),'#1a2744'],['CF p.M. v.St.',fmt(d.cf1M,2),'#1a2744'],['CF p.M. n.St.',fmt(d.cf1MSt,2),'#1a2744'],['EK-Verzinsung 10J.',fmtP(d.irr),'#2e7d52']]
-      .map(function(x){return '<div style="background:#f0f2f7;border:1px solid #d0ccc4;padding:7px 9px"><div style="font-size:6pt;color:#888075;text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+x[0]+'</div><div style="font-size:13pt;font-weight:700;color:'+x[2]+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
+    + [['Bruttorendite',fmtP(d.brutto),'#2e7d52'],['Nettorendite',fmtP(d.netto),'#141c2a'],['Kaltmiete p.M.',fmt(d.coldRent),'#141c2a'],['CF p.M. v.St.',fmt(d.cf1M,2),'#141c2a'],['CF p.M. n.St.',fmt(d.cf1MSt,2),'#141c2a'],['EK-Verzinsung 10J.',fmtP(d.irr),'#2e7d52']]
+      .map(function(x){return '<div style="background:#f0f2f7;border:1px solid #ccc6b8;padding:7px 9px"><div style="font-size:6pt;color:#888075;text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+x[0]+'</div><div style="font-size:13pt;font-weight:700;color:'+x[2]+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
     + '</div>'
     // Monatliche Rate Box
-    + '<div style="background:#1a2744;color:white;padding:8px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
+    + '<div style="background:#141c2a;color:white;padding:8px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
     + '<div style="font-size:7pt;letter-spacing:.08em;text-transform:uppercase;opacity:.6">Monatliche Kreditrate gesamt</div>'
     + '<div style="font-family:Arial,sans-serif;font-size:14pt;font-weight:700;color:#d4af4a">'
     + fmt(d.monRateTotal,2)
@@ -6543,7 +6553,7 @@ async function printCalc() {
     + '</div>'
     // Details
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
-    + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:7px">Kaufpreisdetails</div>'
+    + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:7px">Kaufpreisdetails</div>'
     + r2('Kaufpreis Wohnung', fmt(d.priceUnit))
     + (d.priceFurni>0?r2('Kaufpreis M\u00f6bel',fmt(d.priceFurni)):'')
     + (o.parking_active?r2((o.parking_count||1)+'\u00d7 '+o.parking_type,fmt(d.parkingPrice)):'')
@@ -6551,14 +6561,14 @@ async function printCalc() {
     + r2('GrESt '+(o.gst_pct||3.5)+'%', fmt(d.gstV), true)
     + r2('Grundbuch '+(o.gb_kauf_pct||0.5)+'%', fmt(d.gbKV), true)
     + r2('Notar '+(o.notar_pct||1.0)+'%', fmt(d.notV), true)
-    + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #1a2744;margin-top:4px;font-weight:700;font-size:9pt;color:#1a2744"><span>Gesamtkosten</span><span>'+fmt(d.gesamtkosten)+'</span></div></div>'
-    + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:7px">Finanzierung &amp; Annahmen</div>'
+    + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #141c2a;margin-top:4px;font-weight:700;font-size:9pt;color:#141c2a"><span>Gesamtkosten</span><span>'+fmt(d.gesamtkosten)+'</span></div></div>'
+    + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:7px">Finanzierung &amp; Annahmen</div>'
     + r2('Kredit 1', fmt(d.loanBase))
     + r2('Kreditzins', fmtP(d.loanR*100))
     + r2('Tilgung p.a.', fmtP(d.repayR*100))
     + (d.kfwUsed > 0 ?r2('KfW brutto',fmt(d.kfwUsed)):'')
     + (d.kfwBonus > 0 ? r2('Tilgungszuschuss',fmt(d.kfwBonus)) : '')
-    + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #1a2744;margin-top:4px;font-weight:700;font-size:9pt;color:#1a2744"><span>Eingesetztes EK</span><span style="color:#2e7d52">'+fmt(d.ekIn)+'</span></div>'
+    + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #141c2a;margin-top:4px;font-weight:700;font-size:9pt;color:#141c2a"><span>Eingesetztes EK</span><span style="color:#2e7d52">'+fmt(d.ekIn)+'</span></div>'
     + '<div style="font-size:7pt;color:#888075;margin-top:1px">'+(d.gesamtkosten>0?(d.ekIn/d.gesamtkosten*100).toFixed(1):'0')+'% der Gesamtkosten</div>'
     + r2('Kaltmiete p.M.', fmt(d.coldRent))
     + r2('Jahresmiete', fmt(d.coldRent*12))
@@ -6569,45 +6579,45 @@ async function printCalc() {
 
   // ── Seite 2: Diagramme
   var pg2 = '<div style="' + S.page + '">' + ph()
-    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:10px">Diagramme</div>'
-    + (imgVerm?'<div style="border:1px solid #d0ccc4;padding:8px;margin-bottom:10px"><div style="font-size:8pt;font-weight:700;color:#1a2744;text-align:center;margin-bottom:6px">Verm\u00f6gensentwicklung (kumuliert)*</div><img src="'+imgVerm+'" style="width:100%;max-height:190px;object-fit:contain;display:block"></div>':'')
+    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:10px">Diagramme</div>'
+    + (imgVerm?'<div style="border:1px solid #ccc6b8;padding:8px;margin-bottom:10px"><div style="font-size:8pt;font-weight:700;color:#141c2a;text-align:center;margin-bottom:6px">Verm\u00f6gensentwicklung (kumuliert)*</div><img src="'+imgVerm+'" style="width:100%;max-height:190px;object-fit:contain;display:block"></div>':'')
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
-    + (imgEK?'<div style="border:1px solid #d0ccc4;padding:8px"><div style="font-size:8pt;font-weight:700;color:#1a2744;text-align:center;margin-bottom:6px">Eigenkapital-Aufbau*</div><img src="'+imgEK+'" style="width:100%;max-height:165px;object-fit:contain;display:block"></div>':'')
-    + (imgCF?'<div style="border:1px solid #d0ccc4;padding:8px"><div style="font-size:8pt;font-weight:700;color:#1a2744;text-align:center;margin-bottom:6px">Cashflow-Zusammensetzung*</div><img src="'+imgCF+'" style="width:100%;max-height:165px;object-fit:contain;display:block"></div>':'')
+    + (imgEK?'<div style="border:1px solid #ccc6b8;padding:8px"><div style="font-size:8pt;font-weight:700;color:#141c2a;text-align:center;margin-bottom:6px">Eigenkapital-Aufbau*</div><img src="'+imgEK+'" style="width:100%;max-height:165px;object-fit:contain;display:block"></div>':'')
+    + (imgCF?'<div style="border:1px solid #ccc6b8;padding:8px"><div style="font-size:8pt;font-weight:700;color:#141c2a;text-align:center;margin-bottom:6px">Cashflow-Zusammensetzung*</div><img src="'+imgCF+'" style="width:100%;max-height:165px;object-fit:contain;display:block"></div>':'')
     + '</div>'
     + '<div style="font-size:7pt;color:#888075;margin-top:8px">* Erwartete Werte basierend auf Ihren Annahmen | Alle Werte in \u20ac</div>'
     + footer() + '</div>';
 
   // ── Seite 3: Cashflow + AfA
   var cfRows = d.years.slice(0,10).map(function(y,i) {
-    var bg = i%2 ? 'background:#f7f6f4' : '';
+    var bg = i%2 ? 'background:#f2ede4' : '';
     return '<tr style="'+bg+'">'
-      + '<td style="padding:3.5px 6px;border-bottom:1px solid #ece9e3;font-weight:600;font-size:7.5pt">'+(( o.afa_start||2026)+i)+'</td>'
+      + '<td style="padding:3.5px 6px;border-bottom:1px solid #e4ddd0;font-weight:600;font-size:7.5pt">'+(( o.afa_start||2026)+i)+'</td>'
       + td(fmt(y.rentEff)) + td(fmt(y.totalInt),'#c0392b') + td(fmt(y.totalTl))
-      + td(fmt(y.netCfB), '#1a2744')
+      + td(fmt(y.netCfB), '#141c2a')
       + td(fmt(y.taxEff), y.taxEff>=0?'#2e7d52':'#c0392b')
-      + td(fmt(y.netCfA), '#1a2744')
+      + td(fmt(y.netCfA), '#141c2a')
       + td(fmt(y.equity), y.equity>=0?'#2e7d52':'#c0392b')
       + '</tr>';
   }).join('');
 
   var afaRows = d.years.slice(0,10).map(function(y,i) {
-    var bg = i%2 ? 'background:#f7f6f4' : '';
+    var bg = i%2 ? 'background:#f2ede4' : '';
     return '<tr style="'+bg+'">'
-      + '<td style="padding:3.5px 6px;border-bottom:1px solid #ece9e3;font-weight:600;font-size:7.5pt">'+((o.afa_start||2026)+i)+'</td>'
+      + '<td style="padding:3.5px 6px;border-bottom:1px solid #e4ddd0;font-weight:600;font-size:7.5pt">'+((o.afa_start||2026)+i)+'</td>'
       + td(fmt(d.afaArr[i])) + td(fmt(d.furAfA))
       + td(fmt(y.einkuenfte), y.einkuenfte>=0?'#c0392b':'#2e7d52')
       + td(fmt(y.taxEff), y.taxEff>=0?'#2e7d52':'#c0392b')
-      + td(fmt(y.netCfA/12,2), '#1a2744')
+      + td(fmt(y.netCfA/12,2), '#141c2a')
       + '</tr>';
   }).join('');
 
   var pg3 = '<div style="' + S.page + '">' + ph()
-    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:8px">Kalkulation \u2013 Cashflow (10 Jahre)</div>'
+    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:8px">Kalkulation \u2013 Cashflow (10 Jahre)</div>'
     + '<table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr>'
     + th('Jahr') + th('Miete',true) + th('Zinsen',true) + th('Tilgung',true) + th('CF v.St.',true) + th('Steuereff.',true) + th('CF n.St.',true) + th('Eigenkapital',true)
     + '</tr></thead><tbody>' + cfRows + '</tbody></table>'
-    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:8px">AfA &amp; Steuerliche Auswirkung</div>'
+    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:8px">AfA &amp; Steuerliche Auswirkung</div>'
     + '<table style="width:100%;border-collapse:collapse"><thead><tr>'
     + th('Jahr') + th('AfA Geb\u00e4ude',true) + th('AfA M\u00f6bel',true) + th('Steuerl. Ergebnis',true) + th('Steuerersparnis(+)',true) + th('CF n.St. p.M.',true)
     + '</tr></thead><tbody>' + afaRows + '</tbody></table>'
@@ -6618,7 +6628,7 @@ async function printCalc() {
   for (var pi = 0; pi < photoImgs.length; pi += 4) {
     var chunk = photoImgs.slice(pi, pi+4);
     photoPages += '<div style="' + S.page + '">' + ph()
-      + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #d0ccc4;padding-bottom:3px;margin-bottom:12px">Objektfotos</div>'
+      + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:12px">Objektfotos</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
       + chunk.map(function(src){return '<img src="'+src+'" style="width:100%;height:185px;object-fit:cover;display:block">';}).join('')
       + '</div>' + footer() + '</div>';
