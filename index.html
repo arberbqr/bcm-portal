@@ -11,10 +11,10 @@
 <link rel="icon" id="dynamic-favicon" type="image/png" href="data:,">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- jsPDF, JSZip, XLSX werden lazy on-demand geladen via loadScript() -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<!-- DSGVO-konform: Fonts via fonts.bunny.net (kein Google-Tracking) -->
+<link href="https://fonts.bunny.net/css?family=instrument-serif:400,400i|geist:300,400,500,600|geist-mono:400,500&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#0E1110;--paper:#F1ECE2;--paper-2:#E7E0D2;--stone:#C9C2B5;
@@ -551,11 +551,25 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <button class="btn-sm btn-gold" onclick="openAddObject()">+ Objekt hinzufügen</button>
         </div>
       </div>
-      <div class="stats-row" id="adminObjStats">
+      <div class="stats-row" id="adminObjStats" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat"><div class="stat-lbl">Verfügbar</div><div class="stat-val pos" id="stat-available">—</div></div>
         <div class="stat"><div class="stat-lbl">Reserviert</div><div class="stat-val" style="color:var(--gold)" id="stat-reserved">—</div></div>
         <div class="stat"><div class="stat-lbl">Verkauft</div><div class="stat-val" id="stat-sold">—</div></div>
         <div class="stat"><div class="stat-lbl">Entwurf</div><div class="stat-val" style="color:var(--g500)" id="stat-draft">—</div></div>
+        <div class="stat"><div class="stat-lbl">Bald verfügbar</div><div class="stat-val" style="color:var(--brand-2)" id="stat-coming-soon">—</div></div>
+      </div>
+      <div id="bulkToolbar" style="display:none;background:var(--brand);color:white;padding:12px 18px;margin-bottom:14px;align-items:center;gap:14px">
+        <span id="bulkCount" style="font-size:12px;color:rgba(255,255,255,.7)">0 ausgewählt</span>
+        <span style="font-size:12px">Status ändern auf:</span>
+        <select id="bulkStatus" style="padding:6px 10px;font-size:12px;border:none;background:var(--field);color:var(--ink);font-family:var(--font-body)">
+          <option value="available">Verfügbar</option>
+          <option value="reserved">Reserviert</option>
+          <option value="sold">Verkauft</option>
+          <option value="draft">Entwurf</option>
+          <option value="coming_soon">Coming Soon</option>
+        </select>
+        <button class="btn-sm btn-gold" onclick="applyBulkStatus()">Anwenden</button>
+        <button class="btn-sm btn-outline" onclick="clearBulkSelection()">Abbrechen</button>
       </div>
       <div class="obj-grid" id="adminObjGrid"><div class="spinner"></div></div>
     </div>
@@ -733,7 +747,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <div class="page-title">Meine Leads</div>
           <div class="page-sub">Interessenten und Kontakte verwalten</div>
         </div>
-        <button class="btn-sm btn-gold" onclick="openAddLeadModal()">+ Lead anlegen</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="document.getElementById('csvImportModal').style.display='flex'">↑ CSV Import</button>
+          <button class="btn-sm btn-gold" onclick="openAddLeadModal()">+ Lead anlegen</button>
+        </div>
       </div>
       <!-- Tagesreport Box -->
       <div id="tagesreport-box" style="display:none;background:var(--brand);color:white;padding:16px 20px;margin-bottom:14px;position:relative">
@@ -790,6 +807,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
             </table>
           </div>
         </div>
+        <div id="vpLeadPagination"></div>
       </div>
     </div>
   </div>
@@ -839,6 +857,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
             </table>
           </div>
         </div>
+        <div id="adminLeadPagination"></div>
       </div>
     </div>
   </div>
@@ -891,7 +910,13 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
     <div class="view-inner">
       <div class="page-title">📚 Vertriebshandbuch</div>
       <div class="page-sub">Alles was Sie für erfolgreiche Kundengespräche wissen müssen – Kennzahlen, Einwandbehandlung, Prozesse</div>
-      <div id="faq-container" style="margin-top:20px"></div>
+      <div style="margin-bottom:14px;margin-top:20px">
+        <input type="text" id="faqSearch" placeholder="Im Handbuch suchen..."
+          style="width:100%;padding:10px 14px;border:1px solid var(--stone);font-size:13px;font-family:var(--font-body);outline:none;background:var(--field)"
+          oninput="filterFAQ(this.value)">
+      </div>
+      <div id="faq-container"></div>
+      <div id="faqNoResults" style="display:none;text-align:center;padding:20px;color:var(--muted)">Keine Ergebnisse gefunden.</div>
     </div>
   </div>
 
@@ -902,6 +927,40 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
       <div class="card">
         <div class="card-header"><div class="card-header-title">Berechnungen</div></div>
         <div class="tbl-wrap" id="adminCalcsWrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN DASHBOARD VIEW ── -->
+  <div id="view-dashboard" class="view">
+    <div class="view-inner">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Übersicht aller wichtigen Kennzahlen</div>
+      <div class="stats-row" id="dashboardKPIs" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="stat"><div class="stat-lbl">Objekte verfügbar</div><div class="stat-val pos" id="dash-available">—</div></div>
+        <div class="stat"><div class="stat-lbl">Reservierungen aktiv</div><div class="stat-val" style="color:var(--accent)" id="dash-reservations">—</div></div>
+        <div class="stat"><div class="stat-lbl">Leads diese Woche</div><div class="stat-val" id="dash-leads-week">—</div></div>
+        <div class="stat"><div class="stat-lbl">Abschlüsse diesen Monat</div><div class="stat-val pos" id="dash-closings">—</div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-header-title">Ablaufende Reservierungen (48h)</div></div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>VP</th><th>Objekt</th><th>Käufer</th><th>Läuft ab</th></tr></thead>
+          <tbody id="dashExpiringRes"><tr><td colspan="4" style="text-align:center;padding:16px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-header-title">Letzte Aktivitäten (7 Tage)</div></div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>Datum</th><th>Typ</th><th>Details</th><th>VP</th></tr></thead>
+          <tbody id="dashActivities"><tr><td colspan="4" style="text-align:center;padding:16px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title">VP-Aktivität (letzte 7 Tage)</div></div>
+        <div id="dashVPActivity" style="padding:16px"><div class="spinner"></div></div>
       </div>
     </div>
   </div>
@@ -925,9 +984,9 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
         <div class="tbl-wrap">
           <table id="vpPerfTable">
             <thead><tr>
-              <th>VP Name</th><th>Firma</th><th class="r">Leads gesamt</th><th class="r">Aktiv</th><th class="r">Kalkulationen</th><th class="r">Reservierungen</th><th class="r">Abschlüsse</th>
+              <th>VP Name</th><th>Firma</th><th class="r">Leads gesamt</th><th class="r">Aktiv</th><th class="r">Kalkulationen</th><th class="r">Reservierungen</th><th class="r">Abschlüsse</th><th class="r">Lead→Kalk</th><th class="r">Kalk→Res</th><th class="r">Res→Abs.</th>
             </tr></thead>
-            <tbody id="vpPerfTableBody"><tr><td colspan="7" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
+            <tbody id="vpPerfTableBody"><tr><td colspan="10" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -995,10 +1054,6 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <label>Adresse</label>
           <div style="display:flex;gap:6px">
             <input id="of-addr" type="text" placeholder="Straße, PLZ Ort" style="flex:1">
-            <button type="button" id="ki-loc-btn" onclick="generateLocationDesc()"
-              style="display:none;padding:7px 12px;background:var(--navy);color:var(--gold2);border:none;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;font-family:var(--font-body)">
-              ✨ KI-Beschreibung
-            </button>
           </div>
         </div>
         <div class="form-fld full"><label>Beschreibung</label><textarea id="of-desc" placeholder="Kurze Objektbeschreibung..."></textarea></div>
@@ -1967,6 +2022,59 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   </div>
 </div>
 
+<!-- ══ CSV IMPORT MODAL ══ -->
+<div id="csvImportModal" class="modal-bg" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <div class="modal-title">Leads importieren (CSV)</div>
+      <button class="modal-close" onclick="document.getElementById('csvImportModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">CSV-Datei auswählen. Erwartete Spalten: Name, E-Mail, Telefon, Quelle (oder ähnliche Bezeichnungen)</p>
+      <div class="upload-area" onclick="document.getElementById('csvFileInput').click()">
+        <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVUpload(this)">
+        <div style="font-size:13px;color:var(--muted)">📄 CSV-Datei auswählen</div>
+      </div>
+      <div id="csvPreview" style="margin-top:16px;display:none">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Vorschau</div>
+        <div class="tbl-wrap" id="csvPreviewTable"></div>
+        <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
+          <span id="csvPreviewInfo" style="font-size:12px;color:var(--muted)"></span>
+          <button class="btn-sm btn-gold" onclick="importCSVLeads()">Importieren</button>
+        </div>
+      </div>
+      <div id="csvImportResult" style="margin-top:14px;font-size:12px;display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DIRTY-CHECK MODAL ══ -->
+<div id="dirtyModal" class="modal-bg" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><div class="modal-title">Ungespeicherte Änderungen</div></div>
+    <div class="modal-body"><p style="font-size:14px;color:var(--muted)">Möchten Sie die Änderungen verwerfen?</p></div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="closeDirtyModal()">Zurück</button>
+      <button class="btn-sm btn-danger" onclick="confirmDiscard()">Verwerfen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE CONFIRM MODAL ══ -->
+<div id="deleteModal" class="modal-bg" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title">Löschen bestätigen</div></div>
+    <div class="modal-body">
+      <p id="deleteModalMsg" style="font-size:14px;color:var(--ink);margin-bottom:12px">Wirklich löschen?</p>
+      <p id="deleteModalWarn" style="font-size:12px;color:var(--gone);display:none">⚠️ Alle Fotos und Dokumente werden unwiderruflich gelöscht.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="closeDeleteModal()">Abbrechen</button>
+      <button class="btn-sm btn-danger" id="deleteModalConfirmBtn" onclick="">Löschen</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ OBJEKT-VERGLEICH TOOLBAR ══ -->
 <div id="compare-toolbar" style="display:none">
   <span style="font-size:12px;font-weight:600" id="compare-count-label">0 ausgewählt</span>
@@ -2029,10 +2137,28 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   </div>
 </div>
 
+<script src="faq-content.js"></script>
 <script>
 // ══════════════════════════════════════════════════════
 // CONFIG & SUPABASE INIT
 // ══════════════════════════════════════════════════════
+// SQL: CREATE TABLE IF NOT EXISTS lead_activities (id UUID DEFAULT gen_random_uuid() PRIMARY KEY, lead_id UUID REFERENCES leads(id) ON DELETE CASCADE, user_id UUID, entry TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT now())
+
+// ── Lazy Script Loader ──
+const _loadedScripts = {};
+function loadScript(url) {
+  if (_loadedScripts[url]) return _loadedScripts[url];
+  _loadedScripts[url] = new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${url}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return _loadedScripts[url];
+}
+
 let sb = null;
 let currentUser = null;
 let currentProfile = null;
@@ -2488,6 +2614,7 @@ function setupAppShell() {
   const nav = document.getElementById('appNav');
   if (isAdmin) {
     nav.innerHTML = `
+      <button class="app-nav-btn" data-view="dashboard" onclick="loadView('dashboard');closeMobileNav()">Dashboard</button>
       <button class="app-nav-btn" data-view="objects" onclick="loadView('objects');closeMobileNav()">Objekte</button>
       <button class="app-nav-btn" data-view="reservations" onclick="loadView('reservations');closeMobileNav()">Reservierungen <span id="res-expiry-badge" style="display:none;background:#dc3545;color:white;border-radius:50%!important;padding:1px 6px;font-size:9px;margin-left:4px"></span></button>
       <button class="app-nav-btn" data-view="admin-leads" onclick="loadView('admin-leads');closeMobileNav()">Leads</button>
@@ -2519,15 +2646,10 @@ function setupAppShell() {
 // ══════════════════════════════════════════════════════
 // FAQ / VERTRIEBSHANDBUCH
 // ══════════════════════════════════════════════════════
-const FAQ_SECTIONS = [
-  {
-    title: "Grundlagen der Kapitalanlage", icon: "🏠",
-    items: [
-      { q: "Was ist eine Kapitalanlage-Wohnung?", a: `Eine Kapitalanlage-Wohnung ist eine Immobilie, die nicht selbst bewohnt, sondern vermietet wird – mit dem Ziel, Mieteinnahmen zu erzielen und langfristig Vermögen aufzubauen. Der Käufer ist Investor, nicht Selbstnutzer.<br><br>Im Gegensatz zur selbstgenutzten Wohnung entscheidet hier nicht der Geschmack, sondern die <strong>Rendite, Lage und Vermietbarkeit</strong>. Der Investor fragt: „Was bringt mir das?" – nicht „Gefällt mir die Küche?"` },
-      { q: "Warum kaufen Menschen Wohnungen als Kapitalanlage?", a: `Es gibt vier Hauptmotive – gute Vertriebspartner kennen alle vier und sprechen den passenden Motivtyp gezielt an:<br><br><strong>① Inflationsschutz</strong> – Sachwerte (Immobilien) behalten ihren Wert, wenn das Geld auf dem Konto real weniger wert wird.<br><strong>② Altersvorsorge</strong> – Mieteinnahmen als zweite Rente. „Statt 1.200€ gesetzliche Rente zusätzlich 600€ Mieteinnahmen netto."<br><strong>③ Steueroptimierung</strong> – Besonders für gut verdienende Angestellte (42% Steuersatz) ist die steuerliche Ersparnis ein starkes Argument.<br><strong>④ Vermögensaufbau mit Fremdkapital</strong> – Die Bank finanziert 80–90%, der Mieter zahlt die Rate. Hebelwirkung durch Fremdkapital (Leverage-Effekt).` },
-      { q: "Wer ist der typische Käufer einer Kapitalanlage-Wohnung?", a: `Der ideale Käufer hat folgendes Profil:<br><br>• <strong>Einkommen:</strong> Brutto über 50.000€/Jahr (besser 70.000€+) – damit die Steuerersparnis spürbar ist<br>• <strong>Eigenkapital:</strong> Mindestens 20.000–40.000€ für Kaufnebenkosten (Notar, Grunderwerbsteuer, Makler)<br>• <strong>Anlagehorizont:</strong> Mindestens 10 Jahre – Immobilien sind keine kurzfristige Anlage<br>• <strong>Risikoprofil:</strong> Sicherheitsorientiert – Immobilien gelten als „solide" Anlage<br><br><strong>Häufige Zielgruppen:</strong> Ingenieure, Ärzte, IT-Fachkräfte, Beamte, gut verdienende Angestellte zwischen 35–55 Jahren.` }
-    ]
-  },
+// FAQ_SECTIONS wird von faq-content.js geladen (vor diesem Script-Tag)
+// Inline-Definition entfernt – kein Duplikat mehr
+
+/* INLINE_FAQ_REMOVED – see faq-content.js
   {
     title: "Die wichtigsten Kennzahlen", icon: "📊",
     items: [
@@ -2583,10 +2705,10 @@ const FAQ_SECTIONS = [
   {
     title: "Wichtige Begriffe – Glossar", icon: "📖",
     items: [
-      { q: "Die wichtigsten Fachbegriffe kurz erklärt", a: `<div style="display:grid;gap:8px"><div><strong>AfA</strong> – Absetzung für Abnutzung. Jährliche steuerliche Abschreibung des Gebäudewertes.</div><div><strong>Beurkundung</strong> – Notariell beglaubigter Vertragsabschluss. Ab hier ist der Kauf rechtlich bindend.</div><div><strong>Bruttorendite</strong> – Jahresmiete ÷ Kaufpreis × 100. Ohne Kostenabzug.</div><div><strong>Cashflow</strong> – Monatlicher Überschuss oder Fehlbetrag nach allen Kosten und Einnahmen.</div><div><strong>Eigenkapital</strong> – Eigene Mittel des Käufers (nicht finanzierter Teil).</div><div><strong>Hausgeld</strong> – Monatliche Zahlung an die Eigentümergemeinschaft (Verwaltung, Rücklagen, Betriebskosten).</div><div><strong>Hard-Reservierung</strong> – 21-tägige feste Reservierung nach Finanzierungsbestätigung.</div><div><strong>Instandhaltungsrücklage</strong> – Rücklage für Reparaturen und Modernisierungen.</div><div><strong>KfW</strong> – Kreditanstalt für Wiederaufbau. Staatliche Bank mit Förderprogrammen für Energieeffizienz.</div><div><strong>Kaufpreisfaktor</strong> – Kaufpreis ÷ Jahresnettomiete. Gibt an, nach wie vielen Jahren sich die Investition amortisiert.</div><div><strong>KVE</strong> – Kaufvertragsentwurf. Notariell ausgearbeiteter Vertragsentwurf vor Beurkundung.</div><div><strong>Leverage-Effekt</strong> – Hebel: Mit wenig Eigenkapital eine große Investition steuern. Mietrendite auf das eingesetzte Eigenkapital kann sehr hoch sein.</div><div><strong>Lohnsteuerermäßigung</strong> – Antrag beim Finanzamt: Steuervorteil wird monatlich auf dem Gehaltszettel gutgeschrieben statt erst im Jahresausgleich.</div><div><strong>Nettorendite</strong> – Rendite nach Abzug aller Kosten. Realistischere Kennzahl als Bruttorendite.</div><div><strong>Soft-Reservierung</strong> – 72-stündige Reservierung nach Zahlung der 1.000€ Reservierungsgebühr.</div><div><strong>Vervielfältiger</strong> – Anderer Begriff für Kaufpreisfaktor.</div><div><strong>Werbungskosten</strong> – Alle Kosten im Zusammenhang mit Vermietung, steuerlich absetzbar.</div><div><strong>Zinsboutique</strong> – Unser Finanzierungspartner. Kümmert sich um Finanzierungsberatung und KfW-Anträge.</div></div>` }
+      { q: "Die wichtigsten Fachbegriffe kurz erklärt", a: `(siehe faq-content.js)` }
     ]
   }
-];
+// END INLINE_FAQ_REMOVED */
 
 function renderFAQ() {
   const container = document.getElementById('faq-container');
@@ -2601,13 +2723,13 @@ function renderFAQ() {
       </div>
       <div id="faq-sec-${si}" style="border:1px solid var(--g200);border-top:none">
         ${section.items.map((item, ii) => `
-          <div style="border-bottom:1px solid var(--g200)">
-            <div style="padding:12px 18px;font-weight:600;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;background:white;user-select:none"
+          <div class="faq-section" style="border-bottom:1px solid var(--g200)">
+            <div class="faq-question" style="padding:12px 18px;font-weight:600;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;background:white;user-select:none"
               onclick="toggleFaqItem(${si},${ii})">
               <span>${item.q}</span>
               <span id="faq-item-arrow-${si}-${ii}" style="flex-shrink:0;color:var(--g500);font-size:11px;transition:transform .2s">▶</span>
             </div>
-            <div id="faq-item-body-${si}-${ii}" style="display:none;padding:14px 18px 16px;font-size:13px;line-height:1.7;background:var(--g100);border-top:1px solid var(--g200)">
+            <div class="faq-answer" id="faq-item-body-${si}-${ii}" style="display:none;padding:14px 18px 16px;font-size:13px;line-height:1.7;background:var(--g100);border-top:1px solid var(--g200)">
               ${item.a}
             </div>
           </div>
@@ -2635,6 +2757,41 @@ function toggleFaqItem(si, ii) {
   if (arrow) arrow.style.transform = hidden ? 'rotate(90deg)' : '';
 }
 
+function filterFAQ(q) {
+  const term = q.trim().toLowerCase();
+  const sections = document.querySelectorAll('.faq-section');
+  if (!term) {
+    sections.forEach(s => {
+      s.style.display = '';
+      s.querySelectorAll('mark').forEach(m => {
+        const parent = m.parentNode;
+        parent.replaceChild(document.createTextNode(m.textContent), m);
+        parent.normalize();
+      });
+      s.querySelectorAll('.faq-answer').forEach(a => a.style.display = 'none');
+    });
+    const noRes = document.getElementById('faqNoResults');
+    if (noRes) noRes.style.display = 'none';
+    return;
+  }
+  let anyMatch = false;
+  sections.forEach(s => {
+    const title = s.querySelector('.faq-question');
+    const answer = s.querySelector('.faq-answer');
+    const titleText = title ? title.textContent.toLowerCase() : '';
+    const answerText = answer ? answer.textContent.toLowerCase() : '';
+    const matches = titleText.includes(term) || answerText.includes(term);
+    s.style.display = matches ? '' : 'none';
+    if (matches) {
+      anyMatch = true;
+      if (answer) answer.style.display = 'block';
+      if (title) title.innerHTML = title.textContent.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), m => `<mark style="background:#fff176;padding:0">${m}</mark>`);
+    }
+  });
+  const noRes = document.getElementById('faqNoResults');
+  if (noRes) noRes.style.display = anyMatch ? 'none' : 'block';
+}
+
 function loadView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.app-nav-btn').forEach(b => b.classList.remove('active'));
@@ -2644,7 +2801,8 @@ function loadView(name) {
   });
 
   // Load data
-  if (name === 'objects') loadAdminObjects();
+  if (name === 'dashboard') loadDashboard();
+  else if (name === 'objects') loadAdminObjects();
   else if (name === 'reservations') loadReservations();
   else if (name === 'partners') loadPartners();
   else if (name === 'vp-objects') { vpAllObjects = []; loadVPObjects(); }
@@ -2669,8 +2827,32 @@ const clr = (v) => v >= 0 ? 'pos' : 'neg';
 
 function show(id) { document.getElementById(id).style.display = ''; }
 function hide(id) { document.getElementById(id).style.display = 'none'; }
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); resetDirty(); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); resetDirty(); }
+
+// ── DIRTY-CHECK & DELETE CONFIRM ──
+let formIsDirty = false;
+let dirtyDiscardCallback = null;
+function markDirty() { formIsDirty = true; }
+function resetDirty() { formIsDirty = false; }
+function closeDirtyModal() { document.getElementById('dirtyModal').style.display='none'; }
+function confirmDiscard() { closeDirtyModal(); resetDirty(); if(dirtyDiscardCallback) dirtyDiscardCallback(); }
+function checkDirtyAndClose(closeCallback) {
+  if (formIsDirty) {
+    dirtyDiscardCallback = closeCallback;
+    document.getElementById('dirtyModal').style.display='flex';
+  } else {
+    closeCallback();
+  }
+}
+function closeDeleteModal() { document.getElementById('deleteModal').style.display='none'; }
+function showDeleteModal(msg, onConfirm, showObjWarn) {
+  document.getElementById('deleteModalMsg').textContent = msg;
+  const warn = document.getElementById('deleteModalWarn');
+  if (warn) warn.style.display = showObjWarn ? 'block' : 'none';
+  document.getElementById('deleteModalConfirmBtn').onclick = () => { closeDeleteModal(); onConfirm(); };
+  document.getElementById('deleteModal').style.display = 'flex';
+}
 
 function notify(msg, type='', duration=4000) {
   const el = document.getElementById('notif');
@@ -2694,12 +2876,13 @@ async function loadAdminObjects() {
   const { data, error } = await sb.from('objects').select('*').order('address', { ascending: true }).order('name', { ascending: true });
   if (error) { notify('Fehler beim Laden der Objekte', 'error'); return; }
 
-  const stats = { available:0, reserved:0, sold:0, draft:0 };
+  const stats = { available:0, reserved:0, sold:0, draft:0, coming_soon:0 };
   data.forEach(o => stats[o.status] = (stats[o.status]||0)+1);
   document.getElementById('stat-available').textContent = stats.available;
   document.getElementById('stat-reserved').textContent = stats.reserved;
   document.getElementById('stat-sold').textContent = stats.sold;
   document.getElementById('stat-draft').textContent = stats.draft;
+  const csEl = document.getElementById('stat-coming-soon'); if (csEl) csEl.textContent = stats.coming_soon || 0;
 
   const grid = document.getElementById('adminObjGrid');
   if (!data.length) {
@@ -2774,13 +2957,22 @@ function objCard(o, isAdmin) {
             🗑 Löschen
           </button>
         </div>
+      </div>
+      <div style="border-top:1px dashed var(--stone);padding:6px 14px;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" class="bulk-obj-cb" value="${o.id}" style="width:14px;height:14px;accent-color:var(--brand)" onclick="event.stopPropagation();updateBulkToolbar()">
+        <label style="font-size:10px;color:var(--muted);cursor:pointer">Auswählen</label>
       </div>` : ''}
     </div>
   </div>`;
 }
 
 async function deleteObject(id, name) {
-  if (!confirm(`Objekt "${name}" wirklich löschen?\n\nAlle Bilder, Dokumente und Reservierungen werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+  showDeleteModal(`Objekt "${name}" wirklich löschen?`, async () => {
+    await _deleteObjectConfirmed(id, name);
+  }, true);
+  return;
+}
+async function _deleteObjectConfirmed(id, name) {
   // Bilder aus Storage löschen
   const { data: imgs } = await sb.storage.from('object-images').list(id);
   if (imgs && imgs.length) {
@@ -2796,6 +2988,33 @@ async function deleteObject(id, name) {
   const { error } = await sb.from('objects').delete().eq('id', id);
   if (error) { notify('Fehler beim Löschen: ' + error.message, 'error'); return; }
   notify(`✓ "${name}" wurde gelöscht.`, 'success', 4000);
+  loadAdminObjects();
+}
+
+function updateBulkToolbar() {
+  const checked = document.querySelectorAll('.bulk-obj-cb:checked');
+  const toolbar = document.getElementById('bulkToolbar');
+  if (!toolbar) return;
+  if (checked.length > 0) {
+    toolbar.style.display = 'flex';
+    document.getElementById('bulkCount').textContent = checked.length + ' ausgewählt';
+  } else {
+    toolbar.style.display = 'none';
+  }
+}
+function clearBulkSelection() {
+  document.querySelectorAll('.bulk-obj-cb:checked').forEach(cb => cb.checked = false);
+  const toolbar = document.getElementById('bulkToolbar');
+  if (toolbar) toolbar.style.display = 'none';
+}
+async function applyBulkStatus() {
+  const checked = Array.from(document.querySelectorAll('.bulk-obj-cb:checked')).map(cb => cb.value);
+  if (!checked.length) return;
+  const status = document.getElementById('bulkStatus').value;
+  const { error } = await sb.from('objects').update({ status }).in('id', checked);
+  if (error) { notify('Fehler: ' + error.message, 'error'); return; }
+  notify(`✓ ${checked.length} Objekte auf "${status}" gesetzt`, 'success');
+  clearBulkSelection();
   loadAdminObjects();
 }
 
@@ -3245,6 +3464,7 @@ async function handleObjFiles(files) {
     var f = files[fi];
     var ext = f.name.split('.').pop().toLowerCase();
     if (ext === 'zip') {
+      await loadScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
       var zip = await JSZip.loadAsync(f);
       var entries = Object.entries(zip.files);
       for (var ei = 0; ei < entries.length; ei++) {
@@ -3386,6 +3606,88 @@ async function deleteAdminDoc(docId, storagePath, objId) {
   await sb.from('documents').delete().eq('id', docId);
   notify('Dokument gelöscht', 'success');
   loadExistingDocs(objId);
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE: OBJEKTUNTERLAGEN NACH KATEGORIEN
+// ══════════════════════════════════════════════════════
+const DOC_CATEGORIES = [
+  'Grundriss', 'Energieausweis', 'Wohngebäudeversicherung', 'Teilungserklärung',
+  'Protokoll der Eigentümerversammlung', 'Wirtschaftsplan', 'Exposé',
+  'Kaufvertrag (Entwurf)', 'Sonstiges'
+];
+
+async function loadCategorizedDocs(objectId) {
+  const el = document.getElementById('objDocsContent');
+  if (!el) return;
+  const { data: obj } = await sb.from('objects').select('documents_v2, documents').eq('id', objectId).single();
+  if (!obj) return;
+  let docs = [];
+  try { docs = obj.documents_v2 ? (Array.isArray(obj.documents_v2) ? obj.documents_v2 : JSON.parse(obj.documents_v2)) : []; } catch(e) { docs = []; }
+  let legacyDocs = [];
+  if (obj.documents) {
+    try {
+      const old = typeof obj.documents === 'string' ? JSON.parse(obj.documents) : obj.documents;
+      if (Array.isArray(old)) legacyDocs = old.map(d => ({...d, category:'Sonstiges', legacy:true}));
+    } catch(e) {}
+  }
+  el.innerHTML = DOC_CATEGORIES.map(cat => {
+    const catDocs = docs.filter(d => d.category === cat);
+    const legacyCatDocs = legacyDocs.filter(d => d.category === cat);
+    const allDocs = [...catDocs, ...legacyCatDocs];
+    const catId = cat.replace(/[^a-z0-9]/gi,'_');
+    return `<div style="border:1px solid var(--stone);margin-bottom:12px">
+      <div style="background:var(--brand);color:white;padding:8px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.1em;display:flex;justify-content:space-between;align-items:center">
+        <span>${cat.toUpperCase()}</span>
+        <label style="cursor:pointer;background:var(--accent);padding:3px 10px;font-size:10px">
+          + Hochladen
+          <input type="file" style="display:none" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            onchange="uploadCategoryDoc('${objectId}','${cat}',this)">
+        </label>
+      </div>
+      <div id="cat-docs-${catId}" style="padding:8px 14px;min-height:36px">
+        ${allDocs.length === 0 ? '<div style="font-size:11px;color:var(--muted);padding:4px 0">Keine Dokumente</div>' :
+          allDocs.map(d => `<div class="doc-item" style="padding:6px 0">
+            <div class="doc-icon" style="width:28px;height:28px;font-size:9px">${(d.name||'').split('.').pop().toUpperCase()}</div>
+            <div style="flex:1;min-width:0">
+              <div class="doc-name" style="font-size:12px">${d.name||'—'}</div>
+              <div class="doc-meta" style="font-size:10px">${d.uploaded_at ? new Date(d.uploaded_at).toLocaleDateString('de-DE') : ''}${d.legacy ? ' (alt)' : ''}</div>
+            </div>
+            <a href="${d.url}" target="_blank" style="padding:3px 10px;border:1px solid var(--stone);font-size:10px;color:var(--brand);text-decoration:none">↓</a>
+            ${!d.legacy ? `<button onclick="deleteCategoryDoc('${objectId}','${d.id}')" style="background:none;border:none;color:var(--gone);cursor:pointer;padding:3px 8px;font-size:14px">×</button>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function uploadCategoryDoc(objectId, category, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop();
+  const docId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString();
+  const filePath = `${objectId}/${category.replace(/[^a-z0-9]/gi,'_')}/${docId}.${ext}`;
+  const { error: upErr } = await sb.storage.from('object-documents').upload(filePath, file, { upsert: true });
+  if (upErr) { notify('Upload fehlgeschlagen: ' + upErr.message, 'error'); return; }
+  const { data: urlData } = sb.storage.from('object-documents').getPublicUrl(filePath);
+  const { data: obj } = await sb.from('objects').select('documents_v2').eq('id', objectId).single();
+  let docs = [];
+  try { docs = obj && obj.documents_v2 ? (Array.isArray(obj.documents_v2) ? obj.documents_v2 : JSON.parse(obj.documents_v2)) : []; } catch(e) { docs = []; }
+  docs.push({ id: docId, category, name: file.name, url: urlData.publicUrl, uploaded_at: new Date().toISOString(), uploaded_by: currentUser?.id });
+  await sb.from('objects').update({ documents_v2: docs }).eq('id', objectId);
+  notify('✓ Dokument hochgeladen', 'success');
+  loadCategorizedDocs(objectId);
+  input.value = '';
+}
+
+async function deleteCategoryDoc(objectId, docId) {
+  const { data: obj } = await sb.from('objects').select('documents_v2').eq('id', objectId).single();
+  let docs = [];
+  try { docs = obj && obj.documents_v2 ? (Array.isArray(obj.documents_v2) ? obj.documents_v2 : JSON.parse(obj.documents_v2)) : []; } catch(e) { docs = []; }
+  docs = docs.filter(d => d.id !== docId);
+  await sb.from('objects').update({ documents_v2: docs }).eq('id', objectId);
+  notify('✓ Dokument gelöscht', 'success');
+  loadCategorizedDocs(objectId);
 }
 
 // ══════════════════════════════════════════════════════
@@ -4069,13 +4371,40 @@ function onLogoSelect(e) {
 
 async function saveProfil() {
   const company = document.getElementById('prof-company').value.trim();
+  let logoUrl = vpLogoBase64 || null;
+
+  // Falls es ein neues File-Upload ist (data:image/...), in Storage hochladen
+  if (vpLogoBase64 && vpLogoBase64.startsWith('data:')) {
+    try {
+      const uid = currentUser.id;
+      const mimeMatch = vpLogoBase64.match(/data:([^;]+);base64,/);
+      const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+      const ext = mime.split('/')[1] || 'png';
+      const base64Data = vpLogoBase64.split(',')[1];
+      const byteArr = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+      const blob = new Blob([byteArr], { type: mime });
+      const filePath = `${uid}/logo.${ext}`;
+      const { error: upErr } = await sb.storage.from('company-logos').upload(filePath, blob, { contentType: mime, upsert: true });
+      if (!upErr) {
+        const { data: urlData } = sb.storage.from('company-logos').getPublicUrl(filePath);
+        logoUrl = urlData.publicUrl;
+      } else {
+        console.warn('Logo-Upload fehlgeschlagen, verwende Base64 als Fallback:', upErr.message);
+        logoUrl = vpLogoBase64; // Fallback
+      }
+    } catch(e) {
+      console.warn('Logo-Upload Fehler, Fallback auf Base64:', e);
+      logoUrl = vpLogoBase64;
+    }
+  }
+
   const { error } = await sb.from('profiles').update({
     company_name: company,
-    company_logo: vpLogoBase64 || null
+    company_logo: logoUrl
   }).eq('id', currentUser.id);
   if(error) { notify('Fehler: ' + error.message, 'error'); return; }
   currentProfile.company_name = company;
-  currentProfile.company_logo = vpLogoBase64;
+  currentProfile.company_logo = logoUrl;
   // Kalkulator-Voreinstellungen speichern
   const p = {
     ekPct: document.getElementById('preset-ek-pct')?.value || '',
@@ -4083,7 +4412,11 @@ async function saveProfil() {
     tilgung: document.getElementById('preset-tilgung')?.value || '',
     steuer: document.getElementById('preset-steuer')?.value || ''
   };
-  if (currentUser) localStorage.setItem('calcPresets_' + currentUser.id, JSON.stringify(p));
+  if (currentUser) {
+    localStorage.setItem('calcPresets_' + currentUser.id, JSON.stringify(p));
+    // Auch in Supabase speichern
+    await sb.from('profiles').update({ calc_presets: p }).eq('id', currentUser.id);
+  }
   updateHeaderBranding(); // Portal-Header sofort aktualisieren
   closeModal('profilModal');
   notify('Profil gespeichert!', 'success');
@@ -4836,7 +5169,8 @@ function updateSteuerModal() {
   tbody.innerHTML = rows;
 }
 
-function exportSteuerPDF() {
+async function exportSteuerPDF() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const o = currentSteuerObj;
   if (!o || typeof jspdf === 'undefined') { alert('PDF-Export nicht verfügbar.'); return; }
   const { jsPDF } = jspdf;
@@ -4978,7 +5312,8 @@ function exportSteuerPDF() {
 }
 
 // exportSteuerPDF v2 — fixes column layout, adds VP-logo, clean ASCII-safe strings
-function exportSteuerPDF() {
+async function exportSteuerPDF() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const o = currentSteuerObj;
   if (!o || typeof jspdf === 'undefined') { alert('PDF-Export nicht verfuegbar.'); return; }
   const { jsPDF } = jspdf;
@@ -5229,6 +5564,7 @@ async function downloadAllFiles() {
   btn.textContent = 'ZIP wird erstellt…';
   btn.disabled = true;
 
+  await loadScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
   try {
     const zip = new JSZip();
 
@@ -5326,7 +5662,8 @@ function openExposeModal() {
 // ═══════════════════════════════════════════════════════════════
 // EXPOSE PDF EXPORT
 // ═══════════════════════════════════════════════════════════════
-function exportExposePDF() {
+async function exportExposePDF() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const o = currentSteuerObj;
   if (!o || typeof jspdf === 'undefined') { notify('PDF-Export nicht verfuegbar.', 'error'); return; }
   const { jsPDF } = jspdf;
@@ -6770,7 +7107,8 @@ async function submitKve() {
   loadVPReservations();
 }
 
-function generateKvePdf(d, r, o) {
+async function generateKvePdf(d, r, o) {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210, M = 20;
@@ -7204,6 +7542,95 @@ async function updateLeadStatusInline(leadId, newStatus, isAdmin, sel) {
   showNotif('Status aktualisiert.');
 }
 
+// ── LEAD PAGINATION ──
+let leadPage = 1;
+const LEADS_PER_PAGE = 50;
+
+function renderLeadPagination(totalCount, isAdmin) {
+  const totalPages = Math.ceil(totalCount / LEADS_PER_PAGE);
+  const containerId = isAdmin ? 'adminLeadPagination' : 'vpLeadPagination';
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:14px">
+    <button onclick="changeLeadPage(${leadPage-1},${isAdmin})" ${leadPage===1?'disabled':''}
+      style="padding:6px 14px;border:1px solid var(--stone);background:${leadPage===1?'var(--paper-2)':'var(--field)'};cursor:${leadPage===1?'default':'pointer'}">← Zurück</button>
+    <span style="font-size:12px;color:var(--muted)">Seite ${leadPage} von ${totalPages}</span>
+    <button onclick="changeLeadPage(${leadPage+1},${isAdmin})" ${leadPage===totalPages?'disabled':''}
+      style="padding:6px 14px;border:1px solid var(--stone);background:${leadPage===totalPages?'var(--paper-2)':'var(--field)'};cursor:${leadPage===totalPages?'default':'pointer'}">Weiter →</button>
+  </div>`;
+}
+function changeLeadPage(page, isAdmin) { leadPage = page; loadLeads(isAdmin); }
+
+// ── CSV IMPORT ──
+let csvParsedData = [];
+function handleCSVUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      csvParsedData = results.data;
+      showCSVPreview(results.data, results.meta.fields);
+    }
+  });
+}
+function findCSVField(fields, candidates) {
+  for (const c of candidates) {
+    const f = fields.find(f => f.toLowerCase().includes(c.toLowerCase()));
+    if (f) return f;
+  }
+  return null;
+}
+function showCSVPreview(data, fields) {
+  const nameField = findCSVField(fields, ['name','vorname','nachname']) || fields[0];
+  const emailField = findCSVField(fields, ['mail','email','e-mail']);
+  const phoneField = findCSVField(fields, ['tel','phone','mobil','handy']);
+  const sourceField = findCSVField(fields, ['quelle','source','herkunft']);
+  const preview = data.slice(0,5);
+  const table = `<table><thead><tr><th>Name</th><th>E-Mail</th><th>Telefon</th><th>Quelle</th></tr></thead><tbody>
+    ${preview.map(r => `<tr><td>${r[nameField]||'—'}</td><td>${r[emailField]||'—'}</td><td>${r[phoneField]||'—'}</td><td>${r[sourceField]||'—'}</td></tr>`).join('')}
+  </tbody></table>`;
+  document.getElementById('csvPreviewTable').innerHTML = table;
+  document.getElementById('csvPreviewInfo').textContent = `${data.length} Zeilen gefunden (Vorschau: 5)`;
+  document.getElementById('csvPreview').style.display = 'block';
+  document.getElementById('csvImportResult').style.display = 'none';
+}
+async function importCSVLeads() {
+  if (!csvParsedData.length) return;
+  const fields = Object.keys(csvParsedData[0]);
+  const nameField = findCSVField(fields, ['name','vorname','nachname']) || fields[0];
+  const emailField = findCSVField(fields, ['mail','email','e-mail']);
+  const phoneField = findCSVField(fields, ['tel','phone','mobil','handy']);
+  const sourceField = findCSVField(fields, ['quelle','source','herkunft']);
+  const { data: existingLeads } = await sb.from('leads').select('email').eq('vp_id', currentUser.id);
+  const existingEmails = new Set((existingLeads||[]).map(l => (l.email||'').toLowerCase()));
+  let imported = 0, skipped = 0;
+  const toInsert = [];
+  for (const row of csvParsedData) {
+    const email = (row[emailField]||'').trim().toLowerCase();
+    if (email && existingEmails.has(email)) { skipped++; continue; }
+    toInsert.push({
+      name: row[nameField] || 'Unbekannt',
+      email: row[emailField] || null,
+      phone: row[phoneField] || null,
+      source: row[sourceField] || 'CSV-Import',
+      status: 'contact',
+      vp_id: currentUser.id,
+    });
+  }
+  if (toInsert.length) {
+    const { error } = await sb.from('leads').insert(toInsert);
+    if (!error) imported = toInsert.length;
+  }
+  document.getElementById('csvImportResult').innerHTML = `<div style="background:#f0f7f0;border:1px solid var(--ok);padding:12px;color:var(--ok)">
+    ✓ ${imported} Leads importiert${skipped ? ', ' + skipped + ' übersprungen (Duplikate)' : ''}.
+  </div>`;
+  document.getElementById('csvImportResult').style.display = 'block';
+  if (imported > 0) { setTimeout(() => { loadLeads(false); document.getElementById('csvImportModal').style.display='none'; }, 1500); }
+}
+
 // ── Load Leads ──
 async function loadLeads(isAdmin) {
   const tbody = document.getElementById(isAdmin ? 'adminLeadsTableBody' : 'vpLeadsTableBody');
@@ -7255,12 +7682,17 @@ function renderLeadsTable(isAdmin) {
   const tbody = document.getElementById(isAdmin ? 'adminLeadsTableBody' : 'vpLeadsTableBody');
   if (!tbody) return;
   const cols = isAdmin ? 9 : 8;
-  const leads = getFilteredLeads(isAdmin);
+  const allLeads = getFilteredLeads(isAdmin);
 
   const badge = document.getElementById(isAdmin ? 'admin-lead-count-badge' : 'lead-count-badge');
-  if (badge) badge.textContent = leads.length;
+  if (badge) badge.textContent = allLeads.length;
 
-  if (!leads.length) {
+  // Pagination
+  renderLeadPagination(allLeads.length, isAdmin);
+  const start = (leadPage - 1) * LEADS_PER_PAGE;
+  const leads = allLeads.slice(start, start + LEADS_PER_PAGE);
+
+  if (!allLeads.length) {
     tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;padding:40px;color:var(--muted)">Keine Leads gefunden.</td></tr>`;
     return;
   }
@@ -7311,6 +7743,7 @@ function renderLeadsTable(isAdmin) {
 }
 
 function filterLeadsTable(isAdmin) {
+  leadPage = 1; // Reset pagination on filter/search
   renderLeadsTable(isAdmin);
   const kbEl = document.getElementById(isAdmin ? 'admin-kanban-board' : 'vp-kanban-board');
   if (kbEl && kbEl.style.display !== 'none') renderKanbanBoard(isAdmin);
@@ -7399,6 +7832,7 @@ function filterOverdueLeads(isAdmin) {
 
 function setLeadFilter(status, isAdmin) {
   leadFilterStatus = status;
+  leadPage = 1; // Reset pagination on filter change
   const filterId = isAdmin ? 'admin-lead-status-filter' : 'lead-status-filter';
   document.querySelectorAll('#' + filterId + ' .lead-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.status === status));
   renderLeadStats(isAdmin);
@@ -7668,18 +8102,46 @@ async function addLeadLogEntry() {
   const lead = currentLeads.find(l => l.id === editingLeadId);
   if (!lead) return;
 
-  let logs = [];
-  try { logs = JSON.parse(lead.activity_log || '[]'); } catch(e) { logs = []; }
-  if (!Array.isArray(logs)) logs = [];
-  logs.push({ date: new Date().toISOString(), text });
+  // Versuche zuerst neue lead_activities Tabelle
+  const { error: actErr } = await sb.from('lead_activities').insert({
+    lead_id: editingLeadId,
+    user_id: currentUser.id,
+    entry: text
+  });
 
-  const { error } = await sb.from('leads').update({ activity_log: JSON.stringify(logs) }).eq('id', editingLeadId);
-  if (error) { showNotif('Fehler: ' + error.message, 'error'); return; }
+  if (actErr) {
+    // Fallback: altes JSON-Feld in leads
+    let logs = [];
+    try { logs = JSON.parse(lead.activity_log || '[]'); } catch(e) { logs = []; }
+    if (!Array.isArray(logs)) logs = [];
+    logs.push({ date: new Date().toISOString(), text });
+    const { error } = await sb.from('leads').update({ activity_log: JSON.stringify(logs) }).eq('id', editingLeadId);
+    if (error) { showNotif('Fehler: ' + error.message, 'error'); return; }
+    lead.activity_log = JSON.stringify(logs);
+  }
 
-  lead.activity_log = JSON.stringify(logs);
   document.getElementById('lead-log-input').value = '';
-  renderLeadLog(lead);
+  await renderLeadLogFromDB(editingLeadId, lead);
   showNotif('Eintrag gespeichert.');
+}
+
+async function renderLeadLogFromDB(leadId, lead) {
+  const listEl = document.getElementById('lead-log-list');
+  if (!listEl) return;
+  // Versuche lead_activities Tabelle
+  const { data: acts, error } = await sb.from('lead_activities')
+    .select('*').eq('lead_id', leadId).order('created_at', {ascending: false});
+  if (!error && acts && acts.length) {
+    listEl.innerHTML = acts.map(e =>
+      `<div class="act-log-item">
+        <span class="act-log-date">${new Date(e.created_at).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'})}</span>
+        <span class="act-log-text">${e.entry.replace(/</g,'&lt;')}</span>
+      </div>`
+    ).join('');
+    return;
+  }
+  // Fallback auf altes Format
+  renderLeadLog(lead);
 }
 
 async function saveLead() {
@@ -7879,6 +8341,10 @@ function openCompareModal() {
 // ══════════════════════════════════════════════════════
 function loadCalcPresets() {
   if (!currentUser) return {};
+  // Supabase-Presets bevorzugen, localStorage als Fallback
+  if (currentProfile && currentProfile.calc_presets && typeof currentProfile.calc_presets === 'object') {
+    return currentProfile.calc_presets;
+  }
   try { return JSON.parse(localStorage.getItem('calcPresets_' + currentUser.id) || '{}'); } catch(e) { return {}; }
 }
 
@@ -7912,7 +8378,7 @@ function setVPPerfPeriod(p) {
 async function loadVPPerformance() {
   var tbody = document.getElementById('vpPerfTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>';
   var now = new Date();
   var since = null;
   if (vpPerfPeriod === 'week') {
@@ -7935,13 +8401,17 @@ async function loadVPPerformance() {
     if (since) resQ = resQ.gte('created_at', since);
     var resResp2 = await resQ;
     var ress2 = resResp2.data || [];
-    if (!vps.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Keine Vertriebspartner gefunden.</td></tr>'; return; }
+    if (!vps.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--muted)">Keine Vertriebspartner gefunden.</td></tr>'; return; }
     tbody.innerHTML = vps.map(function(vp) {
       var vpLeads = leads2.filter(function(l) { return l.vp_id === vp.id; });
       var activeLeads = vpLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
       var vpCalcs2 = calcs2.filter(function(c) { return c.vp_id === vp.id; }).length;
       var vpRes2 = ress2.filter(function(r) { return r.vp_id === vp.id && ['soft','hard'].includes(r.status); }).length;
       var vpNotary = vpLeads.filter(function(l) { return l.status === 'notary'; }).length;
+      var leads = vpLeads.length, calcs = vpCalcs2, reservations = vpRes2, closings = vpNotary;
+      var conv1 = leads > 0 ? Math.round(calcs/leads*100) + '%' : '—';
+      var conv2 = calcs > 0 ? Math.round(reservations/calcs*100) + '%' : '—';
+      var conv3 = reservations > 0 ? Math.round(closings/reservations*100) + '%' : '—';
       return '<tr>' +
         '<td style="font-weight:600">' + (vp.full_name||'—') + '</td>' +
         '<td style="font-size:12px;color:var(--muted)">' + (vp.company_name||'—') + '</td>' +
@@ -7950,11 +8420,107 @@ async function loadVPPerformance() {
         '<td class="r">' + vpCalcs2 + '</td>' +
         '<td class="r" style="color:var(--warn)">' + vpRes2 + '</td>' +
         '<td class="r" style="color:var(--ok);font-weight:700">' + vpNotary + '</td>' +
+        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv1 + '</td>' +
+        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv2 + '</td>' +
+        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv3 + '</td>' +
         '</tr>';
     }).join('');
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--gone);padding:16px">' + e.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="color:var(--gone);padding:16px">' + e.message + '</td></tr>';
   }
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE: PROVISION (COMMISSION)
+// ══════════════════════════════════════════════════════
+async function updateCommission(resId, paid, amount) {
+  const { error } = await sb.from('reservations').update({ commission_paid: paid, commission_amount: amount }).eq('id', resId);
+  if (error) notify('Fehler: ' + error.message, 'error');
+  else notify(paid ? '✓ Provision als ausgezahlt markiert' : 'Provision als offen markiert', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE: ADMIN DASHBOARD
+// ══════════════════════════════════════════════════════
+async function loadDashboard() {
+  const now = new Date();
+  const weekAgo = new Date(now - 7*24*60*60*1000).toISOString();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const in48h = new Date(now.getTime() + 48*60*60*1000).toISOString();
+
+  try {
+    const [{ count: avail }, { count: activeRes }, { count: leadsWeek }, { count: closingsMonth }] = await Promise.all([
+      sb.from('objects').select('*', {count:'exact',head:true}).eq('status','available'),
+      sb.from('reservations').select('*', {count:'exact',head:true}).eq('status','active'),
+      sb.from('leads').select('*', {count:'exact',head:true}).gte('created_at', weekAgo),
+      sb.from('leads').select('*', {count:'exact',head:true}).eq('status','notary').gte('updated_at', monthStart),
+    ]);
+    document.getElementById('dash-available').textContent = avail || 0;
+    document.getElementById('dash-reservations').textContent = activeRes || 0;
+    document.getElementById('dash-leads-week').textContent = leadsWeek || 0;
+    document.getElementById('dash-closings').textContent = closingsMonth || 0;
+  } catch(e) {}
+
+  // Ablaufende Reservierungen
+  try {
+    const { data: expiringRes } = await sb.from('reservations')
+      .select('buyer_name, expires_at, hard_expires_at, objects(name), profiles(full_name)')
+      .lt('expires_at', in48h).gt('expires_at', now.toISOString()).eq('status','active');
+    const expiringEl = document.getElementById('dashExpiringRes');
+    if (expiringEl) {
+      if (expiringRes && expiringRes.length) {
+        expiringEl.innerHTML = expiringRes.map(r => `<tr>
+          <td>${r.profiles?.full_name || '—'}</td>
+          <td>${r.objects?.name || '—'}</td>
+          <td>${r.buyer_name || '—'}</td>
+          <td style="color:var(--gone);font-weight:700">${new Date(r.expires_at).toLocaleString('de-DE')}</td>
+        </tr>`).join('');
+      } else {
+        expiringEl.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine ablaufenden Reservierungen</td></tr>';
+      }
+    }
+  } catch(e) {}
+
+  // Letzte Aktivitäten
+  try {
+    const { data: recentLeads } = await sb.from('leads').select('name, status, created_at, profiles(full_name)').gte('created_at', weekAgo).order('created_at', {ascending:false}).limit(10);
+    const { data: recentRes } = await sb.from('reservations').select('buyer_name, created_at, profiles(full_name)').gte('created_at', weekAgo).order('created_at', {ascending:false}).limit(5);
+    const activities = [
+      ...(recentLeads||[]).map(l => ({date: l.created_at, type:'Lead', detail: l.name + ' ('+l.status+')', vp: l.profiles?.full_name})),
+      ...(recentRes||[]).map(r => ({date: r.created_at, type:'Reservierung', detail: r.buyer_name, vp: r.profiles?.full_name})),
+    ].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
+    const actEl = document.getElementById('dashActivities');
+    if (actEl) {
+      actEl.innerHTML = activities.length ? activities.map(a => `<tr>
+        <td style="font-size:11px;color:var(--muted)">${new Date(a.date).toLocaleDateString('de-DE')}</td>
+        <td><span class="badge badge-gold">${a.type}</span></td>
+        <td>${a.detail}</td>
+        <td style="font-size:11px">${a.vp||'—'}</td>
+      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine Aktivitäten</td></tr>';
+    }
+  } catch(e) {}
+
+  // VP Aktivität
+  try {
+    const { data: vpActivity } = await sb.from('leads').select('vp_id, profiles!leads_vp_id_fkey(full_name)').gte('created_at', weekAgo);
+    const vpMap = {};
+    (vpActivity||[]).forEach(l => {
+      const n = l.profiles?.full_name || l.vp_id;
+      vpMap[n] = (vpMap[n]||0) + 1;
+    });
+    const vpEl = document.getElementById('dashVPActivity');
+    if (vpEl) {
+      const sorted = Object.entries(vpMap).sort((a,b) => b[1]-a[1]);
+      vpEl.innerHTML = sorted.length ? sorted.map(([name, cnt]) => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-size:12px;width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+          <div style="flex:1;background:var(--paper-2);height:18px;position:relative">
+            <div style="position:absolute;left:0;top:0;height:100%;background:var(--brand);width:${Math.round(cnt/Math.max(...Object.values(vpMap))*100)}%"></div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);width:30px;text-align:right">${cnt}</div>
+        </div>`).join('') : '<p style="color:var(--muted);font-size:13px">Keine Aktivitäten in den letzten 7 Tagen.</p>';
+    }
+  } catch(e) {}
 }
 
 // ══════════════════════════════════════════════════════
@@ -7995,6 +8561,7 @@ function checkReservationExpiryAlerts(reservations) {
 // FEATURE 8: EXCEL-EXPORT OBJEKTE
 // ══════════════════════════════════════════════════════
 async function exportObjectsXlsx() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
   if (typeof XLSX === 'undefined') { notify('SheetJS nicht geladen – bitte Seite neu laden', 'error'); return; }
   notify('Excel wird erstellt…', '', 2000);
   var resp = await sb.from('objects').select('*').order('name');
