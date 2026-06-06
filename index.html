@@ -13,6 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -20,10 +21,12 @@
   --rule:#1F2A24;--brand:#1F2A24;--brand-2:#141A17;--accent:#A07A47;
   --accent-soft:#C8A472;--muted:#6B6A60;--ok:#5E7E63;--warn:#A07A47;
   --gone:#8C5A4A;--field:#FBF8F2;
+  /* Legacy aliases for compatibility */
   --navy:#1F2A24;--navy2:#141A17;--gold:#A07A47;--gold2:#C8A472;
   --g100:#F1ECE2;--g200:#E7E0D2;--g300:#C9C2B5;--g500:#6B6A60;
   --white:#FBF8F2;--text:#0E1110;--pos:#5E7E63;--neg:#8C5A4A;
   --bcm-navy:#1F2A24;--dwi-navy:#1F2A24;
+  /* Font vars */
   --font-display:"Instrument Serif",serif;
   --font-body:"Geist",system-ui,sans-serif;
   --font-mono:"Geist Mono",monospace;
@@ -328,6 +331,58 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   .view-inner{padding:16px}
   .app-nav{display:none}
 }
+
+/* ── MOBILE RESPONSIVE (768px) ── */
+@media(max-width:768px){
+  #hamburger-btn{display:flex!important}
+  .app-nav{display:none;position:fixed;top:60px;left:0;right:0;background:var(--brand-2);z-index:98;flex-direction:column;padding:4px 0;border-bottom:2px solid var(--accent);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+  .app-nav.mobile-open{display:flex}
+  .app-nav-btn{padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;min-height:44px;text-align:left;width:100%;border-left:none;border-right:none;border-top:none}
+  .app-header{padding:0 12px;gap:8px}
+  .app-logo-txt{font-size:15px}
+  .app-header-right .app-user{display:none}
+  .btn-sm{min-height:44px;padding:8px 12px}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .lead-stats-row{flex-wrap:wrap}
+  .lead-stat{min-width:45%}
+  .modal-bg{padding:0;align-items:flex-end}
+  .modal{max-width:100%!important;width:100%!important;max-height:92vh}
+  .modal-body{padding:14px}
+  .modal-footer{flex-wrap:wrap}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:560px}
+  .form-grid{grid-template-columns:1fr!important}
+  .form-grid.three{grid-template-columns:1fr!important}
+  .obj-grid{grid-template-columns:1fr}
+  .kanban-board{grid-template-columns:repeat(7,minmax(155px,1fr))}
+  .view-inner{padding:12px 10px}
+  .page-title{font-size:18px}
+  #tr-stats{grid-template-columns:1fr!important}
+  #compare-toolbar{width:calc(100% - 32px);left:16px;transform:none;bottom:16px}
+  .calc-modal .modal-body > div{grid-template-columns:1fr!important;gap:12px}
+}
+
+/* ── WIEDERVORLAGE BANNER ── */
+.wv-banner{background:#fff8e1;border:1px solid var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin-bottom:14px}
+.wv-entry{display:flex;align-items:center;gap:10px;padding:6px 10px;background:white;border:1px solid var(--stone);cursor:pointer;transition:background .15s}
+.wv-entry:hover{background:var(--paper-2)}
+
+/* ── TAGESREPORT ── */
+.tagesreport-stat{background:rgba(255,255,255,.08);padding:10px 14px}
+.tagesreport-stat-lbl{font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px;font-family:var(--font-mono)}
+.tagesreport-stat-val{font-family:var(--font-display);font-style:italic;font-size:26px;color:var(--accent-soft)}
+
+/* ── ONBOARDING ── */
+.ob-dot{width:8px;height:8px;display:inline-block;transition:background .2s}
+
+/* ── COMPARE ── */
+.compare-check-wrap{padding:5px 14px;border-top:1px dashed var(--stone);display:flex;align-items:center;gap:6px;background:var(--paper)}
+.compare-check-wrap label{font-size:11px;color:var(--muted);cursor:pointer;user-select:none}
+#compare-toolbar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--brand);color:white;padding:11px 20px;z-index:150;display:flex;align-items:center;gap:14px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+
+/* ── RES EXPIRY ALERT ── */
+.res-expiry-row{display:flex;align-items:center;gap:10px;padding:5px 10px;background:white;border:1px solid #f5c6cb;margin-bottom:4px}
+
 </style>
 </head>
 <body>
@@ -467,6 +522,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
         <span class="app-logo-sub" id="headerBrandSub">Vertriebsportal</span>
       </div>
     </a>
+    <button id="hamburger-btn" onclick="toggleMobileNav()" style="display:none;background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;padding:8px;min-height:44px;margin-left:8px" aria-label="Navigation">☰</button>
     <nav class="app-nav" id="appNav">
       <!-- filled by JS based on role -->
     </nav>
@@ -476,6 +532,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
         <span id="headerUserRole">—</span>
       </div>
       <button class="btn-sm btn-outline" id="btnProfil" onclick="openProfilModal()" style="display:none">⚙ Profil</button>
+      <button class="btn-sm btn-outline" id="btnOnboarding" onclick="showOnboarding()" title="Onboarding-Tour starten" style="display:none">?</button>
       <button class="btn-sm btn-outline" id="btnPresent" onclick="togglePresentMode()" title="Präsentationsmodus – versteckt die Browser-Leiste">⛶ Präsentation</button>
       <button class="btn-sm btn-outline" onclick="doLogout()">Abmelden</button>
     </div>
@@ -490,6 +547,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <div class="page-sub">Alle Projekte und Einheiten verwalten</div>
         </div>
         <div style="display:flex;gap:8px">
+          <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="exportObjectsXlsx()">↓ Excel</button>
           <button class="btn-sm btn-gold" onclick="openAddObject()">+ Objekt hinzufügen</button>
         </div>
       </div>
@@ -507,6 +565,11 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
     <div class="view-inner">
       <div class="page-title">Reservierungen</div>
       <div class="page-sub">Alle eingegangenen Reservierungsanfragen</div>
+      <!-- Ablauf-Alert -->
+      <div id="res-expiry-alert" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-left:4px solid #dc3545;padding:12px 18px;margin-bottom:14px">
+        <div style="font-weight:700;color:#721c24;margin-bottom:8px;font-size:13px">🔴 Reservierungen laufen in &lt;12h ab</div>
+        <div id="res-expiry-list"></div>
+      </div>
       <div class="card">
         <div class="card-header">
           <div class="card-header-title">Offene Anfragen</div>
@@ -672,6 +735,24 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
         </div>
         <button class="btn-sm btn-gold" onclick="openAddLeadModal()">+ Lead anlegen</button>
       </div>
+      <!-- Tagesreport Box -->
+      <div id="tagesreport-box" style="display:none;background:var(--brand);color:white;padding:16px 20px;margin-bottom:14px;position:relative">
+        <button onclick="sessionStorage.setItem('tagesreportClosed','1');document.getElementById('tagesreport-box').style.display='none'" style="position:absolute;top:10px;right:14px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;line-height:1">×</button>
+        <div id="tr-greeting" style="font-family:var(--font-display);font-style:italic;font-size:16px;color:var(--accent-soft);margin-bottom:10px">Guten Morgen</div>
+        <div id="tr-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="tagesreport-stat"><div class="tagesreport-stat-lbl">Offene Leads</div><div class="tagesreport-stat-val" id="tr-open">—</div></div>
+          <div class="tagesreport-stat"><div class="tagesreport-stat-lbl">Follow-ups heute</div><div class="tagesreport-stat-val" id="tr-followups">—</div></div>
+          <div class="tagesreport-stat"><div class="tagesreport-stat-lbl">Reservierungen &lt;48h</div><div class="tagesreport-stat-val" id="tr-res-alert" style="color:var(--accent-soft)">0</div></div>
+        </div>
+      </div>
+      <!-- Wiedervorlage Banner -->
+      <div id="wiedervorlage-banner" style="display:none" class="wv-banner">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:700;font-size:13px;color:var(--brand)">📋 <span id="wv-title">0 Kontakte stehen heute an</span></div>
+          <button onclick="document.getElementById('wiedervorlage-banner').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);line-height:1">×</button>
+        </div>
+        <div id="wv-list" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
       <!-- Stats Row -->
       <div class="lead-stats-row" id="vp-lead-stats"></div>
       <!-- Filter + Search + View Toggle -->
@@ -824,6 +905,34 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
       </div>
     </div>
   </div>
+
+  <!-- ── VP PERFORMANCE VIEW ── -->
+  <div id="view-admin-performance" class="view">
+    <div class="view-inner">
+      <div class="flex" style="justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="page-title">VP Performance</div>
+          <div class="page-sub">Übersicht aller Vertriebspartner</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="setVPPerfPeriod('week')" id="vpp-btn-week" style="padding:6px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;background:var(--paper-2);color:var(--muted);border:1px solid var(--stone)">Diese Woche</button>
+          <button onclick="setVPPerfPeriod('month')" id="vpp-btn-month" style="padding:6px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;background:var(--paper-2);color:var(--muted);border:1px solid var(--stone)">Dieser Monat</button>
+          <button onclick="setVPPerfPeriod('all')" id="vpp-btn-all" style="padding:6px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;background:var(--brand);color:var(--accent-soft);border:none">Gesamt</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title">VP-Übersicht</div></div>
+        <div class="tbl-wrap">
+          <table id="vpPerfTable">
+            <thead><tr>
+              <th>VP Name</th><th>Firma</th><th class="r">Leads gesamt</th><th class="r">Aktiv</th><th class="r">Kalkulationen</th><th class="r">Reservierungen</th><th class="r">Abschlüsse</th>
+            </tr></thead>
+            <tbody id="vpPerfTableBody"><tr><td colspan="7" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- VP Profil Modal -->
@@ -853,6 +962,14 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
             </div>
           </div>
         </div>
+      </div>
+    </div>
+      <div class="form-section" style="margin-top:16px">Kalkulator-Voreinstellungen</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-fld"><label>Eigenkapital (%)</label><input id="preset-ek-pct" type="number" placeholder="z.B. 20" step="1" min="0" max="100"></div>
+        <div class="form-fld"><label>Zinssatz (%)</label><input id="preset-zinssatz" type="number" placeholder="z.B. 3.95" step="0.01" min="0"></div>
+        <div class="form-fld"><label>Tilgung (%)</label><input id="preset-tilgung" type="number" placeholder="z.B. 1.0" step="0.01" min="0"></div>
+        <div class="form-fld"><label>Steuersatz (%)</label><input id="preset-steuer" type="number" placeholder="z.B. 42" step="1" min="0" max="100"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1425,6 +1542,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
     </div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('calcModal')">Schließen</button>
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="applyCalcPresets()" title="Gespeicherte Voreinstellungen anwenden">↩ Voreinstellungen</button>
       <button class="btn-sm btn-navy" onclick="openSaveCalcModal()" style="background:#2e7d52">💾 Berechnung speichern</button>
       <button class="btn-sm btn-navy" onclick="openReservationFromCalc()">Einheit reservieren</button>
       <button class="btn-sm btn-gold" onclick="printCalc()">📄 PDF drucken</button>
@@ -1443,7 +1561,6 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
       <div style="background:var(--g100);border-left:3px solid var(--pos);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--g700)">
         Alle aktuellen Eingabewerte und Ergebnisse werden gespeichert und sind für Sie und den Admin einsehbar.
       </div>
-      <div id="sc-lead-hint" style="display:none;padding:8px 12px;margin-bottom:12px;font-size:11px;border:1px solid var(--ok);color:var(--ok);background:rgba(94,126,99,.08)"></div>
       <div class="form-grid" style="grid-template-columns:1fr">
         <div class="form-fld">
           <label>Kundenname *</label>
@@ -1771,31 +1888,6 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   </div>
 </div>
 
-<!-- Lead-Auswahl vor Kalkulator öffnen -->
-<div class="modal-bg" id="calcLeadSelectModal">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <div class="modal-title">Für welchen Lead ist diese Kalkulation?</div>
-      <button class="modal-close" onclick="closeModal('calcLeadSelectModal')">×</button>
-    </div>
-    <div class="modal-body">
-      <div style="background:var(--g100);border-left:3px solid var(--gold);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--g500);line-height:1.6">
-        Bitte wählen Sie den Lead aus, für den diese Kalkulation erstellt wird. So bleibt die Verbindung zwischen Interessent und Berechnung erhalten.
-      </div>
-      <div class="form-fld">
-        <label>Lead auswählen</label>
-        <select id="calc-lead-select" style="width:100%;padding:9px 10px;border:1px solid var(--stone);background:var(--field);font-family:var(--font-body);font-size:13px;outline:none">
-          <option value="">— Lead auswählen —</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" onclick="addNewLeadBeforeCalc()">+ Neuen Lead anlegen</button>
-      <button class="btn-sm btn-gold" onclick="confirmCalcLead()">Weiter zum Kalkulator →</button>
-    </div>
-  </div>
-</div>
-
 <!-- Lead Modal -->
 <div class="modal-bg" id="leadModal">
   <div class="modal" style="max-width:600px">
@@ -1846,8 +1938,12 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <select id="lead-object"><option value="">— kein Objekt —</option></select>
         </div>
         <div class="form-fld full"><label>Notiz</label><textarea id="lead-notes" placeholder="Gesprächsnotizen, Einwände, nächste Schritte..."></textarea></div>
-        <!-- Reservierung – nur im Edit-Modus wenn reservation_id gesetzt -->
-        <div class="form-fld full" id="lead-reservation-section" style="display:none"></div>
+        <!-- Admin-Kommentar -->
+        <div class="form-fld full" id="admin-note-fld" style="display:none">
+          <label id="admin-note-label">Admin-Kommentar</label>
+          <div id="admin-note-vp-view" style="display:none;background:#fffde7;border:1px solid var(--accent);padding:10px 14px;font-size:12px;color:var(--brand);line-height:1.6"></div>
+          <textarea id="admin-note-input" style="display:none" placeholder="Interner Admin-Kommentar zu diesem Lead (nur für Admin sichtbar)..."></textarea>
+        </div>
         <!-- Kalkulationen – nur im Edit-Modus -->
         <div class="form-fld full" id="lead-calc-section" style="display:none"></div>
         <!-- Activity Log – nur im Edit-Modus -->
@@ -1867,6 +1963,68 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
     <div class="modal-footer">
       <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" onclick="closeModal('leadModal')">Abbrechen</button>
       <button class="btn-sm btn-gold" onclick="saveLead()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OBJEKT-VERGLEICH TOOLBAR ══ -->
+<div id="compare-toolbar" style="display:none">
+  <span style="font-size:12px;font-weight:600" id="compare-count-label">0 ausgewählt</span>
+  <button onclick="openCompareModal()" class="btn-sm btn-gold" id="compare-open-btn" style="padding:6px 14px">Vergleichen</button>
+  <button onclick="clearCompare()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:20px;line-height:1;padding:2px 4px">×</button>
+</div>
+
+<!-- ══ VERGLEICHS-MODAL ══ -->
+<div class="modal-bg" id="compareModal">
+  <div class="modal" style="max-width:920px;width:98%">
+    <div class="modal-header">
+      <div class="modal-title">Objekt-Vergleich</div>
+      <button class="modal-close" onclick="closeModal('compareModal')">×</button>
+    </div>
+    <div class="modal-body" id="compareBody" style="padding:20px"></div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" onclick="closeModal('compareModal')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ONBOARDING MODAL ══ -->
+<div class="modal-bg" id="onboardingModal" style="z-index:9000">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <div class="modal-title">Willkommen bei Vestora Capital 🏠</div>
+    </div>
+    <div class="modal-body" style="padding:28px 24px">
+      <div id="ob-step-0">
+        <div style="font-size:36px;margin-bottom:12px;text-align:center">🏠</div>
+        <div style="font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--brand);margin-bottom:10px;text-align:center">Schritt 1 von 4 – Objektliste</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">In der <strong>Objektliste</strong> findest du alle verfügbaren Einheiten. Du kannst nach Stadt, Zimmeranzahl, Fläche und Preis filtern. Klicke auf eine Karte um Details, Grundrisse und Dokumente zu sehen.</p>
+      </div>
+      <div id="ob-step-1" style="display:none">
+        <div style="font-size:36px;margin-bottom:12px;text-align:center">📊</div>
+        <div style="font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--brand);margin-bottom:10px;text-align:center">Schritt 2 von 4 – Kalkulator</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">Erstelle für jeden Interessenten eine individuelle <strong>Berechnung</strong>. Der Kalkulator zeigt Cashflow, Rendite und Steuerersparnis. Speichere Berechnungen und verknüpfe sie mit Leads.</p>
+      </div>
+      <div id="ob-step-2" style="display:none">
+        <div style="font-size:36px;margin-bottom:12px;text-align:center">👥</div>
+        <div style="font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--brand);margin-bottom:10px;text-align:center">Schritt 3 von 4 – CRM / Leads</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">Im <strong>Leads-Bereich</strong> verwaltest du deine Interessenten. Setze Follow-up-Termine, tracke den Status (Erstkontakt → Qualifiziert → Kalkulator → Reservierung → Notar) und führe eine Gesprächshistorie.</p>
+      </div>
+      <div id="ob-step-3" style="display:none">
+        <div style="font-size:36px;margin-bottom:12px;text-align:center">📝</div>
+        <div style="font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--brand);margin-bottom:10px;text-align:center">Schritt 4 von 4 – Reservierung</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">So läuft der Reservierungsprozess ab:<br>① <strong>Soft-Reservierung (72h)</strong> – sofort nach Kaufentscheidung<br>② <strong>Hard-Reservierung (21 Tage)</strong> – nach Finanzierungsbestätigung<br>③ <strong>KVE &amp; Notar</strong> – finaler Abschluss<br><br>Starte die Reservierung über „Reservieren" im Objekt-Detail.</p>
+      </div>
+      <div style="display:flex;justify-content:center;gap:7px;margin-top:20px">
+        <span id="ob-dot-0" class="ob-dot" style="background:var(--brand)"></span>
+        <span id="ob-dot-1" class="ob-dot" style="background:var(--stone)"></span>
+        <span id="ob-dot-2" class="ob-dot" style="background:var(--stone)"></span>
+        <span id="ob-dot-3" class="ob-dot" style="background:var(--stone)"></span>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="btn-sm btn-outline" id="ob-prev-btn" style="color:var(--ink);border-color:var(--stone);visibility:hidden" onclick="prevOnboardingStep()">← Zurück</button>
+      <button class="btn-sm btn-gold" id="ob-next-btn" onclick="nextOnboardingStep()">Weiter →</button>
     </div>
   </div>
 </div>
@@ -2241,6 +2399,10 @@ async function onLogin(user) {
   show('appShell');
   setupAppShell();
   loadView(currentProfile.role === 'admin' ? 'objects' : 'vp-objects');
+  // VP-Onboarding prüfen
+  if (currentProfile.role !== 'admin') {
+    setTimeout(checkOnboarding, 800);
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -2326,23 +2488,32 @@ function setupAppShell() {
   const nav = document.getElementById('appNav');
   if (isAdmin) {
     nav.innerHTML = `
-      <button class="app-nav-btn" data-view="objects" onclick="loadView('objects')">Objekte</button>
-      <button class="app-nav-btn" data-view="reservations" onclick="loadView('reservations')">Reservierungen</button>
-      <button class="app-nav-btn" data-view="admin-leads" onclick="loadView('admin-leads')">Leads</button>
-      <button class="app-nav-btn" data-view="partners" onclick="loadView('partners')">Partner</button>
-      <button class="app-nav-btn" data-view="admin-calcs" onclick="loadView('admin-calcs')">Berechnungen</button>
-      <button class="app-nav-btn" onclick="openAdminKve()">KVE Anfragen</button>
+      <button class="app-nav-btn" data-view="objects" onclick="loadView('objects');closeMobileNav()">Objekte</button>
+      <button class="app-nav-btn" data-view="reservations" onclick="loadView('reservations');closeMobileNav()">Reservierungen <span id="res-expiry-badge" style="display:none;background:#dc3545;color:white;border-radius:50%!important;padding:1px 6px;font-size:9px;margin-left:4px"></span></button>
+      <button class="app-nav-btn" data-view="admin-leads" onclick="loadView('admin-leads');closeMobileNav()">Leads</button>
+      <button class="app-nav-btn" data-view="partners" onclick="loadView('partners');closeMobileNav()">Partner</button>
+      <button class="app-nav-btn" data-view="admin-calcs" onclick="loadView('admin-calcs');closeMobileNav()">Berechnungen</button>
+      <button class="app-nav-btn" data-view="admin-performance" onclick="loadView('admin-performance');closeMobileNav()">VP Performance</button>
+      <button class="app-nav-btn" onclick="openAdminKve();closeMobileNav()">KVE Anfragen</button>
     `;
   } else {
     nav.innerHTML = `
-      <button class="app-nav-btn" data-view="vp-objects" onclick="loadView('vp-objects')">Objektliste</button>
-      <button class="app-nav-btn" data-view="vp-reservations" onclick="loadView('vp-reservations')">Meine Reservierungen</button>
-      <button class="app-nav-btn" data-view="vp-leads" onclick="loadView('vp-leads')">Leads</button>
-      <button class="app-nav-btn" data-view="vp-calcs" onclick="loadView('vp-calcs')">Meine Berechnungen</button>
-      <button class="app-nav-btn" data-view="vp-selbstauskunft" onclick="loadView('vp-selbstauskunft')" style="color:var(--accent-soft)">Selbstauskunft</button>
-      ${currentProfile.faq_enabled ? '<button class="app-nav-btn" data-view="vp-faq" onclick="loadView(\'vp-faq\')">Handbuch</button>' : ''}
+      <button class="app-nav-btn" data-view="vp-objects" onclick="loadView('vp-objects');closeMobileNav()">Objektliste</button>
+      <button class="app-nav-btn" data-view="vp-reservations" onclick="loadView('vp-reservations');closeMobileNav()">Meine Reservierungen</button>
+      <button class="app-nav-btn" data-view="vp-leads" onclick="loadView('vp-leads');closeMobileNav()">Leads</button>
+      <button class="app-nav-btn" data-view="vp-calcs" onclick="loadView('vp-calcs');closeMobileNav()">Meine Berechnungen</button>
+      <button class="app-nav-btn" data-view="vp-selbstauskunft" onclick="loadView('vp-selbstauskunft');closeMobileNav()" style="color:var(--accent-soft)">Selbstauskunft</button>
+      ${currentProfile.faq_enabled ? '<button class="app-nav-btn" data-view="vp-faq" onclick="loadView(\'vp-faq\');closeMobileNav()">Handbuch</button>' : ''}
     `;
   }
+
+  // Hamburger-Button sichtbar machen
+  const hamburger = document.getElementById('hamburger-btn');
+  if (hamburger) hamburger.style.display = 'flex';
+
+  // Onboarding-Button für VP
+  const onboardingBtn = document.getElementById('btnOnboarding');
+  if (onboardingBtn) onboardingBtn.style.display = isAdmin ? 'none' : '';
 }
 
 // ══════════════════════════════════════════════════════
@@ -2484,6 +2655,7 @@ function loadView(name) {
   else if (name === 'vp-selbstauskunft') {} // iFrame lädt automatisch
   else if (name === 'vp-faq') renderFAQ();
   else if (name === 'admin-calcs') loadAdminCalcs();
+  else if (name === 'admin-performance') loadVPPerformance();
 }
 
 // ══════════════════════════════════════════════════════
@@ -2586,6 +2758,7 @@ function objCard(o, isAdmin) {
         <span style="font-size:14px;font-weight:700;color:var(--pos)">${fmt((priceUnit+parkPrice)*currentProfile.commission_pct/100)}</span>
       </div>` : ''}
       ${isComingSoon && !isAdmin ? '<div style="text-align:center;padding:8px 0 2px;font-size:11px;color:var(--g500);font-weight:600;letter-spacing:.05em;text-transform:uppercase">Demnächst verfügbar</div>' : ''}
+      ${!isAdmin && !isComingSoon ? `<div class="compare-check-wrap"><input type="checkbox" class="compare-cb" id="compare-${o.id}" style="width:13px;height:13px;accent-color:var(--brand)" onclick="event.stopPropagation();toggleObjCompare('${o.id}',this)"><label for="compare-${o.id}" style="font-size:11px;color:var(--muted);cursor:pointer;user-select:none" onclick="event.stopPropagation()">Zum Vergleich hinzufügen</label></div>` : ''}
       ${isAdmin ? `<div style="border-top:1px solid var(--g200);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;background:var(--g100)">
         <span style="font-size:10px;color:var(--g500);display:flex;align-items:center;gap:6px">
           ${statusBadge(o.status)}
@@ -3233,16 +3406,25 @@ async function loadReservations() {
     return;
   }
 
-  tbody.innerHTML = data.map(r => `<tr>
+  // Ablauf-Alert prüfen
+  checkReservationExpiryAlerts(data);
+
+  tbody.innerHTML = data.map(r => {
+    const now2 = new Date();
+    const in12h = new Date(now2.getTime() + 12*60*60*1000);
+    const expAt = r.expires_at ? new Date(r.expires_at) : null;
+    const isExpiring = expAt && expAt > now2 && expAt <= in12h && ['soft','hard','pending'].includes(r.status);
+    return `<tr style="${isExpiring ? 'background:#fff3cd;' : ''}">
     <td>${fmtDate(r.created_at)}</td>
     <td><strong>${r.objects?.name||'—'}</strong><div style="font-size:11px;color:var(--g500)">${r.objects?.address||''}</div></td>
-    <td>${r.buyer_name}</td>
+    <td>${r.buyer_name}${isExpiring ? ' <span style="background:#dc3545;color:white;padding:2px 6px;font-size:9px;font-weight:700">⏱ BALD ABGELAUFEN</span>' : ''}</td>
     <td>${r.vp_name||r.vp_email||'—'}</td>
     <td class="r">${fmt(r.equity)}</td>
     <td>${statusBadge(r.status)}</td>
-    <td style="font-size:11px">${fmtDateTime(r.expires_at)}</td>
+    <td style="font-size:11px;${isExpiring?'color:#dc3545;font-weight:700':''}">${fmtDateTime(r.expires_at)}</td>
     <td><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="openResDetail('${r.id}')">Details</button></td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 
 async function openResDetail(id) {
@@ -3612,12 +3794,6 @@ async function regenerateResPdf(resId) {
   notify('✓ PDF heruntergeladen!', 'success');
 }
 
-async function downloadProtocolPdf(path) {
-  const { data, error } = await sb.storage.from('reservation-pdfs').createSignedUrl(path, 60);
-  if (error || !data || !data.signedUrl) { notify('Fehler beim Abrufen des Protokoll-PDFs', 'error'); return; }
-  window.open(data.signedUrl, '_blank');
-}
-
 async function downloadResPdf(path) {
   const { data } = await sb.storage.from('reservation-pdfs').createSignedUrl(path, 3600);
   if (data?.signedUrl) window.open(data.signedUrl, '_blank');
@@ -3866,6 +4042,16 @@ function openProfilModal() {
   } else {
     prev.innerHTML = '<span style="font-family:var(--font-display);font-weight:700;font-size:11px;color:var(--g500)">Logo</span>';
   }
+  // Kalkulator-Voreinstellungen laden
+  const p = loadCalcPresets();
+  const epEl = document.getElementById('preset-ek-pct');
+  const zpEl = document.getElementById('preset-zinssatz');
+  const tpEl = document.getElementById('preset-tilgung');
+  const spEl = document.getElementById('preset-steuer');
+  if (epEl) epEl.value = p.ekPct || '';
+  if (zpEl) zpEl.value = p.zinssatz || '';
+  if (tpEl) tpEl.value = p.tilgung || '';
+  if (spEl) spEl.value = p.steuer || '';
   openModal('profilModal');
 }
 
@@ -3890,6 +4076,14 @@ async function saveProfil() {
   if(error) { notify('Fehler: ' + error.message, 'error'); return; }
   currentProfile.company_name = company;
   currentProfile.company_logo = vpLogoBase64;
+  // Kalkulator-Voreinstellungen speichern
+  const p = {
+    ekPct: document.getElementById('preset-ek-pct')?.value || '',
+    zinssatz: document.getElementById('preset-zinssatz')?.value || '',
+    tilgung: document.getElementById('preset-tilgung')?.value || '',
+    steuer: document.getElementById('preset-steuer')?.value || ''
+  };
+  if (currentUser) localStorage.setItem('calcPresets_' + currentUser.id, JSON.stringify(p));
   updateHeaderBranding(); // Portal-Header sofort aktualisieren
   closeModal('profilModal');
   notify('Profil gespeichert!', 'success');
@@ -5613,16 +5807,7 @@ function exportExposePDF() {
 // ══════════════════════════════════════════════════════
 let calcObj = null;
 
-async function openCalcForObject(id, presetLeadId) {
-  // If presetLeadId is explicitly provided (even null), skip lead-select modal
-  if (presetLeadId !== undefined) {
-    calcLinkedLeadId = (presetLeadId === null || presetLeadId === '__none') ? null : presetLeadId;
-  } else {
-    // Show lead selection modal first, then caller calls openCalcForObject again with presetLeadId
-    pendingCalcObjId = id;
-    await showLeadSelectModal(id);
-    return;
-  }
+async function openCalcForObject(id) {
   const { data: o } = await sb.from('objects').select('*').eq('id', id).single();
   if (!o) return;
   calcObj = o;
@@ -6221,42 +6406,6 @@ function showCalcTab(id, btn) {
   btn.classList.add('active');
 }
 
-// ── Lead Select Modal (vor Kalkulator öffnen) ──
-async function showLeadSelectModal(objId) {
-  pendingCalcObjId = objId;
-  const sel = document.getElementById('calc-lead-select');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— Lead auswählen —</option><option value="__none">Ohne Lead öffnen</option>';
-  const { data: leads } = await sb.from('leads')
-    .select('id, name, phone, status')
-    .eq('vp_id', currentUser.id)
-    .not('status','eq','lost')
-    .order('created_at', { ascending: false });
-  (leads || []).forEach(function(l) {
-    const opt = document.createElement('option');
-    opt.value = l.id;
-    opt.textContent = l.name + (l.phone ? ' · ' + l.phone : '') + ' [' + (l.status || '') + ']';
-    sel.appendChild(opt);
-  });
-  openModal('calcLeadSelectModal');
-}
-
-async function confirmCalcLead() {
-  const sel = document.getElementById('calc-lead-select');
-  if (!sel) return;
-  const val = sel.value;
-  if (!val) { notify('Bitte Lead auswählen oder "Ohne Lead öffnen" wählen.', 'error'); return; }
-  closeModal('calcLeadSelectModal');
-  const leadId = (val === '__none') ? null : val;
-  await openCalcForObject(pendingCalcObjId, leadId);
-}
-
-async function addNewLeadBeforeCalc() {
-  closeModal('calcLeadSelectModal');
-  await openAddLeadModal();
-  notify('Bitte Lead anlegen, dann erneut den Kalkulator öffnen.', '');
-}
-
 function openReservationFromCalc() {
   closeModal('calcModal');
   openReservationModal(currentObjId);
@@ -6296,18 +6445,6 @@ async function openReservationModal(id) {
       if (match) calcSel.value = match.id;
     }
   }
-  // Pre-fill from linked lead if available
-  if (calcLinkedLeadId) {
-    const lead = currentLeads.find(function(l){ return l.id === calcLinkedLeadId; });
-    if (lead) {
-      if (lead.name && !document.getElementById('res-buyer').value) {
-        document.getElementById('res-buyer').value = lead.name;
-      }
-      if ((lead.email || lead.phone) && !document.getElementById('res-contact').value) {
-        document.getElementById('res-contact').value = [lead.email, lead.phone].filter(Boolean).join(' / ');
-      }
-    }
-  }
   openModal('resModal');
 }
 
@@ -6340,7 +6477,7 @@ async function submitReservation() {
     }
   }
 
-  const { data: newRes, error } = await sb.from('reservations').insert({
+  const { error } = await sb.from('reservations').insert({
     object_id: currentObjId,
     vp_id: currentUser.id,
     vp_name: currentProfile.full_name,
@@ -6355,20 +6492,10 @@ async function submitReservation() {
     doc_path: docPath,
     doc_name: docName,
     expires_at: new Date(Date.now()+72*60*60*1000).toISOString()
-  }).select('id').single();
+  });
 
   btn.disabled = false; btn.textContent = 'Reservierung einreichen';
   if (error) { notify('Fehler beim Einreichen: ' + error.message, 'error'); return; }
-
-  // Save reservation_id back to lead if one was linked
-  if (calcLinkedLeadId && newRes && newRes.id) {
-    await sb.from('leads').update({ reservation_id: newRes.id }).eq('id', calcLinkedLeadId);
-    const lead = currentLeads.find(function(l){ return l.id === calcLinkedLeadId; });
-    if (lead) {
-      lead.reservation_id = newRes.id;
-      lead.reservations = { id: newRes.id, status: 'pending', expires_at: new Date(Date.now()+72*60*60*1000).toISOString(), buyer_name: buyer };
-    }
-  }
 
   closeModal('resModal');
   notify('✓ Reservierungsanfrage eingereicht! ' + portalBrand() + ' prüft Ihre Anfrage.', 'success', 6000);
@@ -6382,28 +6509,6 @@ function openSaveCalcModal() {
   if (!calcData || !calcData.o) { notify('Bitte zuerst einen Kalkulator öffnen', 'error'); return; }
   document.getElementById('sc-buyer').value = document.getElementById('c-recipient')?.value || '';
   document.getElementById('sc-notes').value = '';
-  // Show linked lead hint
-  const hintEl = document.getElementById('sc-lead-hint');
-  if (hintEl) {
-    if (calcLinkedLeadId) {
-      const lead = currentLeads.find(function(l){ return l.id === calcLinkedLeadId; });
-      if (lead) {
-        hintEl.textContent = '✓ Verknüpft mit Lead: ' + lead.name + (lead.phone ? ' · ' + lead.phone : '');
-        hintEl.style.color = 'var(--ok)';
-        hintEl.style.background = 'rgba(94,126,99,.08)';
-        hintEl.style.borderColor = 'var(--ok)';
-        hintEl.style.display = 'block';
-      } else {
-        hintEl.style.display = 'none';
-      }
-    } else {
-      hintEl.textContent = '⚠ Kein Lead verknüpft – Kalkulation wird ohne Lead-Bezug gespeichert.';
-      hintEl.style.color = 'var(--warn)';
-      hintEl.style.background = 'rgba(160,122,71,.08)';
-      hintEl.style.borderColor = 'var(--warn)';
-      hintEl.style.display = 'block';
-    }
-  }
   openModal('saveCalcModal');
 }
 
@@ -6419,7 +6524,6 @@ async function saveCalculation() {
     vp_name: currentProfile.full_name || currentProfile.email,
     object_id: o.id,
     object_name: o.name,
-    lead_id: calcLinkedLeadId || null,
     buyer_name: buyer,
     buyer_notes: notes,
     // Eingabewerte
@@ -6505,9 +6609,8 @@ async function loadCalculation(id) {
   const { data: calc } = await sb.from('calculations').select('*').eq('id', id).single();
   if (!calc) { notify('Berechnung nicht gefunden', 'error'); return; }
 
-  // Restore lead link and open calc without lead-select modal (pass null to skip modal)
-  calcLinkedLeadId = calc.lead_id || null;
-  await openCalcForObject(calc.object_id, calcLinkedLeadId);
+  // Kalkulator für das Objekt öffnen
+  await openCalcForObject(calc.object_id);
 
   // Gespeicherte Werte eintragen
   const set = (elId, val) => { const el = document.getElementById(elId); if(el && val !== null && val !== undefined) el.value = val; };
@@ -7047,8 +7150,6 @@ const LEAD_STATUS_CLASS = {
 let currentLeads = [];
 let leadFilterStatus = '';
 let editingLeadId = null;
-let calcLinkedLeadId = null;   // lead linked to current calculator session
-let pendingCalcObjId = null;   // object id waiting for lead selection
 
 function showNotif(msg, type) { notify(msg, type === 'error' ? 'error' : 'success'); }
 
@@ -7111,29 +7212,24 @@ async function loadLeads(isAdmin) {
   tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>`;
 
   // Always load ALL leads (without status filter from server) so we can do client-side stats + search
-  let q = sb.from('leads').select('*, objects(name), profiles(full_name, company_name), reservations:reservation_id(id,status,expires_at,hard_expires_at,buyer_name)').order('created_at', { ascending: false });
+  let q = sb.from('leads').select('*, objects(name), profiles(full_name, company_name)').order('created_at', { ascending: false });
   if (!isAdmin) q = q.eq('vp_id', currentUser.id);
 
   const { data, error } = await q;
   if (error) { tbody.innerHTML = `<tr><td colspan="${cols}" style="color:var(--gone);padding:16px">${error.message}</td></tr>`; return; }
   currentLeads = data || [];
 
-  // Fetch advisory protocols for these leads
-  if (currentLeads.length) {
-    const leadIds = currentLeads.map(l => l.id);
-    const { data: protocols } = await sb.from('advisory_protocols')
-      .select('id, lead_id, pdf_path, signed_at')
-      .in('lead_id', leadIds);
-    const protoMap = {};
-    (protocols || []).forEach(p => { if (p.lead_id) protoMap[p.lead_id] = p; });
-    currentLeads.forEach(l => { l._protocol = protoMap[l.id] || null; });
-  }
-
   renderLeadStats(isAdmin);
   renderLeadsTable(isAdmin);
   // Also re-render kanban if visible
   const kbEl = document.getElementById(isAdmin ? 'admin-kanban-board' : 'vp-kanban-board');
   if (kbEl && kbEl.style.display !== 'none') renderKanbanBoard(isAdmin);
+
+  // VP-spezifische Features
+  if (!isAdmin) {
+    renderWiedervorlagen();
+    showTagesreport();
+  }
 }
 
 function getFilteredLeads(isAdmin) {
@@ -7185,35 +7281,16 @@ function renderLeadsTable(isAdmin) {
     const srcBadge = l.source ? `<span class="source-badge">${l.source}</span>` : '<span style="font-size:11px;color:var(--stone)">—</span>';
 
     // Kalkulator button (only if object assigned)
-    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}','${l.id}')">Kalk.</button>` : '';
+    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}')">Kalk.</button>` : '';
 
     // Protocol link
-    let protoLink = '';
-    if (l._protocol && l._protocol.signed_at && l._protocol.pdf_path) {
-      protoLink = '<span style="font-size:9px;color:var(--ok);font-family:var(--font-mono);white-space:nowrap">Protokoll ✓</span>'
-        + ' <button class="btn-sm btn-outline" style="padding:2px 6px;font-size:9px;color:var(--ok);border-color:var(--ok)" onclick="downloadProtocolPdf(\'' + l._protocol.pdf_path.replace(/'/g,"\\'") + '\')">PDF</button>';
-    } else if (l.protocol_token) {
-      protoLink = '<a href="sign.html?protocol=' + l.protocol_token + '" target="_blank" class="btn-sm btn-outline" style="padding:3px 7px;font-size:9px;color:var(--ok);border-color:var(--ok);text-decoration:none;display:inline-block">Protokoll</a>';
-    }
+    const protoLink = l.protocol_token ? `<a href="sign.html?protocol=${l.protocol_token}" target="_blank" class="btn-sm btn-outline" style="padding:3px 7px;font-size:9px;color:var(--ok);border-color:var(--ok);text-decoration:none;display:inline-block">Protokoll</a>` : '';
 
     // Loss reason
     const lossInfo = l.loss_reason ? `<br><span style="font-size:9px;color:var(--stone);font-family:var(--font-mono)">${l.loss_reason}</span>` : '';
 
-    // Reservation badge
-    const resBadge = (() => {
-      const res = l.reservations;
-      if (!res) return '';
-      const exp = res.expires_at ? new Date(res.expires_at) : null;
-      const hardExp = res.hard_expires_at ? new Date(res.hard_expires_at) : null;
-      const isExpired = (['cancelled','rejected'].includes(res.status)) ||
-        (res.status === 'pending' && exp && exp < new Date()) ||
-        (res.status === 'approved' && hardExp && hardExp < new Date());
-      if (isExpired) return '<br><span style="font-size:8px;font-family:var(--font-mono);color:var(--gone);border:1px solid var(--gone);padding:1px 4px">RES. ABGELAUFEN</span>';
-      return '<br><span style="font-size:8px;font-family:var(--font-mono);color:var(--ok);border:1px solid var(--ok);padding:1px 4px;cursor:pointer" onclick="openResDetail(\'' + (res.id||'') + '\')" title="Reservierung öffnen">RES. AKTIV</span>';
-    })();
-
     return `<tr${rowCls}>
-      <td style="font-weight:600">${l.name||'—'}${lossInfo}${resBadge}</td>
+      <td style="font-weight:600">${l.name||'—'}${lossInfo}</td>
       <td style="font-size:11px">${contactCell}</td>
       ${vpCol}
       <td>${leadStatusSelect(l.id, l.status, isAdmin)}</td>
@@ -7302,7 +7379,7 @@ function filterOverdueLeads(isAdmin) {
     const phoneLink = l.phone ? `<a href="tel:${l.phone}" style="color:var(--accent);text-decoration:none;font-weight:600">${l.phone}</a>` : '';
     const contactCell = [emailLink, phoneLink].filter(Boolean).join('<br>') || '—';
     const srcBadge = l.source ? `<span class="source-badge">${l.source}</span>` : '—';
-    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}','${l.id}')">Kalk.</button>` : '';
+    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}')">Kalk.</button>` : '';
     return `<tr>
       <td style="font-weight:600">${l.name||'—'}</td>
       <td style="font-size:11px">${contactCell}</td>
@@ -7379,25 +7456,6 @@ function renderKanbanBoard(isAdmin) {
       const dateHtml = followup
         ? `<span class="${overdue?'kanban-card-overdue':'kanban-card-date'}">${overdue?'⚠ ':''}${followup}</span>`
         : `<span class="kanban-card-date">—</span>`;
-      // Protocol indicator
-      let protoIndicator = '';
-      if (l._protocol && l._protocol.signed_at && l._protocol.pdf_path) {
-        const safePath = l._protocol.pdf_path.replace(/'/g,"\\'");
-        protoIndicator = '<div style="font-size:8px;color:var(--ok);font-family:var(--font-mono);margin-top:2px">Protokoll ✓ <span style="cursor:pointer;text-decoration:underline" onclick="event.stopPropagation();downloadProtocolPdf(\'' + safePath + '\')">PDF</span></div>';
-      } else if (l.protocol_token) {
-        protoIndicator = '<div style="font-size:8px;color:var(--ok);font-family:var(--font-mono);margin-top:2px"><a href="sign.html?protocol=' + l.protocol_token + '" target="_blank" onclick="event.stopPropagation()" style="color:var(--ok)">Protokoll →</a></div>';
-      }
-      // Reservation indicator
-      let resIndicator = '';
-      if (l.reservations) {
-        const res = l.reservations;
-        const rExp = res.expires_at ? new Date(res.expires_at) : null;
-        const rHardExp = res.hard_expires_at ? new Date(res.hard_expires_at) : null;
-        const rExpired = (['cancelled','rejected'].includes(res.status)) ||
-          (res.status === 'pending' && rExp && rExp < now) ||
-          (res.status === 'approved' && rHardExp && rHardExp < now);
-        resIndicator = '<div style="font-size:8px;font-family:var(--font-mono);margin-top:2px;' + (rExpired ? 'color:var(--gone)' : 'color:var(--ok)') + '">' + (rExpired ? 'RES. ABGELAUFEN' : '● RES. AKTIV') + '</div>';
-      }
       return `<div class="kanban-card" draggable="true" data-lead-id="${l.id}"
         ondragstart="event.dataTransfer.setData('text/plain','${l.id}');event.currentTarget.classList.add('dragging')"
         ondragend="event.currentTarget.classList.remove('dragging')"
@@ -7405,11 +7463,9 @@ function renderKanbanBoard(isAdmin) {
         <div class="kanban-card-name">${l.name||'—'} ${src}</div>
         <div class="kanban-card-phone">${phoneLink||emailLink||''}</div>
         ${l.objects?.name ? `<div class="kanban-card-obj">📦 ${l.objects.name}</div>` : ''}
-        ${protoIndicator}
-        ${resIndicator}
         <div class="kanban-card-foot">
           ${dateHtml}
-          ${l.object_id ? `<button style="font-size:8px;padding:1px 5px;background:var(--brand);color:white;border:none;cursor:pointer;font-family:var(--font-mono)" onclick="event.stopPropagation();openCalcForObject('${l.object_id}','${l.id}')">Kalk</button>` : ''}
+          ${l.object_id ? `<button style="font-size:8px;padding:1px 5px;background:var(--brand);color:white;border:none;cursor:pointer;font-family:var(--font-mono)" onclick="event.stopPropagation();openCalcForObject('${l.object_id}')">Kalk</button>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -7470,6 +7526,8 @@ async function openAddLeadModal() {
   document.getElementById('lead-notes').value = '';
   document.getElementById('lead-loss-reason-fld').style.display = 'none';
   document.getElementById('lead-log-section').style.display = 'none';
+  const anFld2 = document.getElementById('admin-note-fld');
+  if (anFld2) anFld2.style.display = 'none';
   const { data: objs } = await sb.from('objects').select('id,name').in('status',['available','reserved']).order('name');
   const sel = document.getElementById('lead-object');
   sel.innerHTML = '<option value="">— kein Objekt —</option>' + (objs||[]).map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
@@ -7491,6 +7549,32 @@ async function openEditLead(id) {
   document.getElementById('lead-loss-reason-fld').style.display = lead.status === 'lost' ? 'flex' : 'none';
   if (lead.status === 'lost' && lead.loss_reason) document.getElementById('lead-loss-reason').value = lead.loss_reason;
 
+  // Admin-Kommentar
+  const anFld = document.getElementById('admin-note-fld');
+  const anVpView = document.getElementById('admin-note-vp-view');
+  const anInput = document.getElementById('admin-note-input');
+  const anLbl = document.getElementById('admin-note-label');
+  const isAdminRole2 = currentProfile && currentProfile.role === 'admin';
+  if (anFld) {
+    anFld.style.display = '';
+    if (isAdminRole2) {
+      if (anLbl) anLbl.textContent = 'Interner Admin-Kommentar';
+      if (anVpView) anVpView.style.display = 'none';
+      if (anInput) { anInput.style.display = ''; anInput.value = lead.admin_note || ''; }
+    } else {
+      if (anLbl) anLbl.textContent = 'Hinweis vom Admin';
+      if (anInput) anInput.style.display = 'none';
+      if (anVpView) {
+        if (lead.admin_note) {
+          anVpView.style.display = '';
+          anVpView.textContent = lead.admin_note;
+        } else {
+          anFld.style.display = 'none';
+        }
+      }
+    }
+  }
+
   const { data: objs } = await sb.from('objects').select('id,name').in('status',['available','reserved']).order('name');
   const sel = document.getElementById('lead-object');
   sel.innerHTML = '<option value="">— kein Objekt —</option>' + (objs||[]).map(o=>`<option value="${o.id}"${o.id===lead.object_id?' selected':''}>${o.name}</option>`).join('');
@@ -7499,36 +7583,6 @@ async function openEditLead(id) {
   document.getElementById('lead-log-section').style.display = 'block';
   document.getElementById('lead-log-input').value = '';
   renderLeadLog(lead);
-
-  // Reservation section
-  const resSection = document.getElementById('lead-reservation-section');
-  if (resSection) {
-    if (lead.reservation_id && lead.reservations) {
-      const res = lead.reservations;
-      const exp = res.expires_at ? new Date(res.expires_at) : null;
-      const hardExp = res.hard_expires_at ? new Date(res.hard_expires_at) : null;
-      const isExpired = (['cancelled','rejected'].includes(res.status)) ||
-        (res.status === 'pending' && exp && exp < new Date()) ||
-        (res.status === 'approved' && hardExp && hardExp < new Date());
-      const expLabel = res.status === 'approved' && hardExp
-        ? 'Hard-Res. bis ' + hardExp.toLocaleDateString('de-DE')
-        : (exp ? 'Soft-Res. bis ' + exp.toLocaleDateString('de-DE') : '—');
-      resSection.innerHTML = '<div class="form-section" style="margin-top:4px">Reservierung</div>'
-        + '<div style="border:1px solid ' + (isExpired ? 'var(--gone)' : 'var(--ok)') + ';padding:12px 14px;background:' + (isExpired ? 'rgba(140,90,74,.05)' : 'rgba(94,126,99,.05)') + '">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-        + '<span style="font-size:11px;font-weight:700;color:' + (isExpired ? 'var(--gone)' : 'var(--ok)') + '">'
-        + (isExpired ? '✗ Reservierung abgelaufen' : '✓ Reservierung aktiv') + '</span>'
-        + '<button class="btn-sm btn-navy" style="font-size:9px;padding:2px 7px" onclick="closeModal(\'leadModal\');openResDetail(\'' + res.id + '\')">Details →</button>'
-        + '</div>'
-        + '<div style="font-size:11px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr;gap:4px">'
-        + '<span>Käufer: <strong>' + (res.buyer_name || '—') + '</strong></span>'
-        + '<span>Ablauf: <strong>' + expLabel + '</strong></span>'
-        + '</div></div>';
-      resSection.style.display = 'block';
-    } else {
-      resSection.style.display = 'none';
-    }
-  }
 
   // Kalkulationen-Abschnitt laden
   await loadLeadCalcSection(id);
@@ -7584,8 +7638,8 @@ function renderLeadCalcSection(calcs, leadId) {
         + '<div style="font-size:11px;color:var(--accent);margin-top:2px">CF n.St.: <strong>' + cf + '</strong></div>'
         + '</div>'
         + '<div style="display:flex;gap:4px;flex-shrink:0">'
-        + '<button class="btn-sm btn-navy" style="font-size:9px;padding:2px 8px" onclick="loadCalculation(\'' + c.id + '\')">↗ Öffnen</button>'
-        + '<button class="btn-sm btn-danger" style="font-size:9px;padding:2px 8px" onclick="deleteLeadCalc(\'' + c.id + '\',\'' + leadId + '\')">🗑 Löschen</button>'
+        + '<button class="btn-sm btn-navy" style="font-size:9px;padding:2px 8px" onclick="loadCalculation(\''+c.id+'\')">↗ Öffnen</button>'
+        + '<button class="btn-sm btn-danger" style="font-size:9px;padding:2px 8px" onclick="deleteLeadCalc(\''+c.id+'\',\''+leadId+'\')">🗑 Löschen</button>'
         + '</div>'
         + '</div>';
     });
@@ -7598,7 +7652,6 @@ async function deleteLeadCalc(calcId, leadId) {
   if (!confirm('Kalkulation wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.')) return;
   const { error } = await sb.from('calculations').delete().eq('id', calcId);
   if (error) { notify('Fehler beim Löschen der Kalkulation', 'error'); return; }
-  // Abschnitt lokal aktualisieren ohne Modal zu schließen
   const { data: calcs } = await sb.from('calculations')
     .select('id,created_at,object_name,cf_nach_steuer')
     .eq('lead_id', leadId)
@@ -7647,6 +7700,13 @@ async function saveLead() {
   if (status === 'lost') {
     payload.loss_reason = document.getElementById('lead-loss-reason').value || null;
   }
+  // Admin-Kommentar nur speichern wenn Admin
+  if (currentProfile && currentProfile.role === 'admin') {
+    const anInputEl = document.getElementById('admin-note-input');
+    if (anInputEl && anInputEl.style.display !== 'none') {
+      payload.admin_note = anInputEl.value.trim() || null;
+    }
+  }
 
   let error;
   if (editingLeadId) {
@@ -7667,6 +7727,369 @@ async function startProtocolFromLead(leadId) {
   const lead = currentLeads.find(l => l.id === leadId);
   if (!lead) return;
   openProtocolModal(null, lead.object_id || null, lead.name || '', lead.email || '', leadId);
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 1: WIEDERVORLAGEN-SYSTEM
+// ══════════════════════════════════════════════════════
+function renderWiedervorlagen() {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const due = currentLeads.filter(function(l) {
+    return l.next_followup && l.next_followup <= todayStr && !['notary','lost'].includes(l.status);
+  });
+  const banner = document.getElementById('wiedervorlage-banner');
+  if (!banner) return;
+  if (!due.length) { banner.style.display = 'none'; return; }
+  banner.style.display = '';
+  const titleEl = document.getElementById('wv-title');
+  if (titleEl) titleEl.textContent = due.length + ' Kontakt' + (due.length !== 1 ? 'e' : '') + ' stehen heute an';
+  const listEl = document.getElementById('wv-list');
+  if (listEl) {
+    listEl.innerHTML = due.map(function(l) {
+      return '<div class="wv-entry" onclick="openEditLead(\'' + l.id + '\')">' +
+        '<span style="font-weight:600;font-size:12px;color:var(--brand)">' + (l.name || '—') + '</span>' +
+        '<span class="lead-status-badge ls-' + l.status + '">' + l.status + '</span>' +
+        (l.phone ? '<a href="tel:' + l.phone + '" onclick="event.stopPropagation()" style="color:var(--accent);font-size:12px;text-decoration:none">📞 ' + l.phone + '</a>' : '') +
+        '<span style="font-size:10px;color:var(--muted);margin-left:auto">' + (l.next_followup ? new Date(l.next_followup + 'T00:00:00').toLocaleDateString('de-DE') : '') + '</span>' +
+        '</div>';
+    }).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 2: VP-TAGESREPORT
+// ══════════════════════════════════════════════════════
+async function showTagesreport() {
+  if (sessionStorage.getItem('tagesreportClosed') === '1') return;
+  const box = document.getElementById('tagesreport-box');
+  if (!box) return;
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const hour = now.getHours();
+  const greet = hour < 12 ? 'Guten Morgen' : (hour < 18 ? 'Guten Tag' : 'Guten Abend');
+  const nameStr = (currentProfile && currentProfile.full_name) ? ', ' + currentProfile.full_name.split(' ')[0] : '';
+  const greetEl = document.getElementById('tr-greeting');
+  if (greetEl) greetEl.textContent = greet + nameStr + ' 👋';
+  const openLeads = currentLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
+  const followupsToday = currentLeads.filter(function(l) { return l.next_followup && l.next_followup <= todayStr && !['notary','lost'].includes(l.status); }).length;
+  const openEl = document.getElementById('tr-open');
+  const fuEl = document.getElementById('tr-followups');
+  if (openEl) openEl.textContent = openLeads;
+  if (fuEl) fuEl.textContent = followupsToday;
+  // Reservierungen <48h
+  var resAlert = 0;
+  try {
+    var in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
+    var resResp = await sb.from('reservations').select('id,expires_at').eq('vp_id', currentUser.id).in('status', ['soft','hard','pending']).lte('expires_at', in48h).gte('expires_at', now.toISOString());
+    resAlert = (resResp.data || []).length;
+  } catch(e) {}
+  var raEl = document.getElementById('tr-res-alert');
+  if (raEl) {
+    raEl.textContent = resAlert;
+    if (resAlert > 0) raEl.style.color = '#ff9800';
+  }
+  box.style.display = '';
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 4: OBJEKT-VERGLEICH
+// ══════════════════════════════════════════════════════
+var compareSelection = [];
+
+function toggleObjCompare(objId, el) {
+  var idx = compareSelection.indexOf(objId);
+  if (idx > -1) {
+    compareSelection.splice(idx, 1);
+  } else {
+    if (compareSelection.length >= 2) { notify('Maximal 2 Objekte vergleichen', '', 3000); if (el) el.checked = false; return; }
+    compareSelection.push(objId);
+  }
+  updateCompareToolbar();
+}
+
+function updateCompareToolbar() {
+  var tb = document.getElementById('compare-toolbar');
+  var btn = document.getElementById('compare-open-btn');
+  var lbl = document.getElementById('compare-count-label');
+  if (!tb) return;
+  if (compareSelection.length === 0) { tb.style.display = 'none'; return; }
+  tb.style.display = 'flex';
+  if (lbl) lbl.textContent = compareSelection.length + ' ausgewählt';
+  if (btn) btn.disabled = compareSelection.length < 2;
+}
+
+function clearCompare() {
+  compareSelection = [];
+  document.querySelectorAll('.compare-cb').forEach(function(cb) { cb.checked = false; });
+  var tb = document.getElementById('compare-toolbar');
+  if (tb) tb.style.display = 'none';
+}
+
+function openCompareModal() {
+  if (compareSelection.length < 2) return;
+  var objs = compareSelection.map(function(id) { return vpAllObjects.find(function(o) { return o.id === id; }); }).filter(Boolean);
+  if (objs.length < 2) return;
+  var o0 = objs[0], o1 = objs[1];
+
+  function totalKP(o) { return (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0); }
+  function totalRent(o) { return (o.cold_rent||0)+(o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0); }
+  function brutto(o) { var kp=totalKP(o); return kp>0 ? fmtP(totalRent(o)*12/kp*100) : '—'; }
+  function cfMon(o) {
+    var kp=totalKP(o); var r=totalRent(o);
+    var rate=kp*((o.loan_rate||3.95)/100+(o.repay_rate||1.0)/100)/12;
+    return fmt(r-(o.hausgeld||0)-rate, 0)+'/Mo';
+  }
+
+  var fields = [
+    ['Kaufpreis gesamt', function(o) { return fmt(totalKP(o)); }],
+    ['Kaltmiete/Mo.', function(o) { return fmt(o.cold_rent||0); }],
+    ['Wohnfläche', function(o) { return (o.area||'—') + ' m²'; }],
+    ['Zimmer', function(o) { return o.rooms||'—'; }],
+    ['Bruttorendite', brutto],
+    ['Cashflow/Mo.', cfMon],
+    ['Stellplatz', function(o) { return o.parking_active ? '✓ ' + (o.parking_type||'Ja') : '—'; }],
+    ['KfW möglich', function(o) { return o.kfw_moeglich ? '✓ Ja' : '—'; }],
+    ['AfA', function(o) { return o.deg_afa>0 ? fmtP(o.deg_afa)+' deg.' : fmtP(o.lin_afa||2)+' lin.'; }],
+    ['Status', function(o) { return o.status||'—'; }],
+    ['Adresse', function(o) { return o.address||'—'; }],
+  ];
+
+  var hdr = '<div style="display:grid;grid-template-columns:160px 1fr 1fr;gap:1px;background:var(--stone)">' +
+    '<div style="background:var(--brand);padding:10px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-soft)">Merkmal</div>' +
+    '<div style="background:var(--brand);padding:10px 14px;font-size:13px;font-weight:700;color:white">' + o0.name + '</div>' +
+    '<div style="background:var(--brand);padding:10px 14px;font-size:13px;font-weight:700;color:white">' + o1.name + '</div>' +
+    '</div>';
+
+  var rows = fields.map(function(f, i) {
+    var v0 = f[1](o0), v1 = f[1](o1);
+    var bg = i % 2 === 0 ? 'var(--field)' : 'var(--paper)';
+    return '<div style="display:grid;grid-template-columns:160px 1fr 1fr;gap:1px;background:var(--stone)">' +
+      '<div style="background:var(--paper-2);padding:8px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">' + f[0] + '</div>' +
+      '<div style="background:' + bg + ';padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand)">' + v0 + '</div>' +
+      '<div style="background:' + bg + ';padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand)">' + v1 + '</div>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('compareBody').innerHTML = hdr + rows;
+  openModal('compareModal');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 5: KALKULATOR-VORLAGEN
+// ══════════════════════════════════════════════════════
+function loadCalcPresets() {
+  if (!currentUser) return {};
+  try { return JSON.parse(localStorage.getItem('calcPresets_' + currentUser.id) || '{}'); } catch(e) { return {}; }
+}
+
+function applyCalcPresets() {
+  var p = loadCalcPresets();
+  if (p.zinssatz) { var el = document.getElementById('c-loanr'); if (el) el.value = p.zinssatz; }
+  if (p.tilgung) { var el2 = document.getElementById('c-repayr'); if (el2) el2.value = p.tilgung; }
+  if (p.steuer) { var el3 = document.getElementById('c-taxr'); if (el3) el3.value = p.steuer; }
+  if (typeof runCalc === 'function') runCalc();
+  notify('Voreinstellungen angewendet', 'success', 2500);
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 6: VP-PERFORMANCE-ÜBERSICHT (ADMIN)
+// ══════════════════════════════════════════════════════
+var vpPerfPeriod = 'all';
+
+function setVPPerfPeriod(p) {
+  vpPerfPeriod = p;
+  ['week','month','all'].forEach(function(x) {
+    var btn = document.getElementById('vpp-btn-' + x);
+    if (btn) {
+      btn.style.background = x === p ? 'var(--brand)' : 'var(--paper-2)';
+      btn.style.color = x === p ? 'var(--accent-soft)' : 'var(--muted)';
+      btn.style.border = x === p ? 'none' : '1px solid var(--stone)';
+    }
+  });
+  loadVPPerformance();
+}
+
+async function loadVPPerformance() {
+  var tbody = document.getElementById('vpPerfTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>';
+  var now = new Date();
+  var since = null;
+  if (vpPerfPeriod === 'week') {
+    var d = new Date(now); d.setDate(d.getDate() - d.getDay()); d.setHours(0,0,0,0); since = d.toISOString();
+  } else if (vpPerfPeriod === 'month') {
+    since = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  }
+  try {
+    var vpsResp = await sb.from('profiles').select('id,full_name,company_name').eq('role','vp').eq('active',true).order('full_name');
+    var vps = vpsResp.data || [];
+    var leadsQ = sb.from('leads').select('id,vp_id,status,created_at');
+    if (since) leadsQ = leadsQ.gte('created_at', since);
+    var leadsResp = await leadsQ;
+    var leads2 = leadsResp.data || [];
+    var calcsQ = sb.from('calculations').select('id,vp_id,created_at');
+    if (since) calcsQ = calcsQ.gte('created_at', since);
+    var calcsResp = await calcsQ;
+    var calcs2 = calcsResp.data || [];
+    var resQ = sb.from('reservations').select('id,vp_id,status,created_at');
+    if (since) resQ = resQ.gte('created_at', since);
+    var resResp2 = await resQ;
+    var ress2 = resResp2.data || [];
+    if (!vps.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Keine Vertriebspartner gefunden.</td></tr>'; return; }
+    tbody.innerHTML = vps.map(function(vp) {
+      var vpLeads = leads2.filter(function(l) { return l.vp_id === vp.id; });
+      var activeLeads = vpLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
+      var vpCalcs2 = calcs2.filter(function(c) { return c.vp_id === vp.id; }).length;
+      var vpRes2 = ress2.filter(function(r) { return r.vp_id === vp.id && ['soft','hard'].includes(r.status); }).length;
+      var vpNotary = vpLeads.filter(function(l) { return l.status === 'notary'; }).length;
+      return '<tr>' +
+        '<td style="font-weight:600">' + (vp.full_name||'—') + '</td>' +
+        '<td style="font-size:12px;color:var(--muted)">' + (vp.company_name||'—') + '</td>' +
+        '<td class="r">' + vpLeads.length + '</td>' +
+        '<td class="r" style="color:var(--ok);font-weight:600">' + activeLeads + '</td>' +
+        '<td class="r">' + vpCalcs2 + '</td>' +
+        '<td class="r" style="color:var(--warn)">' + vpRes2 + '</td>' +
+        '<td class="r" style="color:var(--ok);font-weight:700">' + vpNotary + '</td>' +
+        '</tr>';
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--gone);padding:16px">' + e.message + '</td></tr>';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 7: RESERVIERUNGS-ABLAUF-ALERT
+// ══════════════════════════════════════════════════════
+function checkReservationExpiryAlerts(reservations) {
+  var now = new Date();
+  var in12h = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+  var expiring = reservations.filter(function(r) {
+    if (!r.expires_at || !['soft','hard','pending'].includes(r.status)) return false;
+    var exp = new Date(r.expires_at);
+    return exp > now && exp <= in12h;
+  });
+  var alertDiv = document.getElementById('res-expiry-alert');
+  var listDiv = document.getElementById('res-expiry-list');
+  var badge = document.getElementById('res-expiry-badge');
+  if (!expiring.length) {
+    if (alertDiv) alertDiv.style.display = 'none';
+    if (badge) badge.style.display = 'none';
+    return;
+  }
+  if (badge) { badge.textContent = expiring.length; badge.style.display = 'inline'; }
+  if (!alertDiv || !listDiv) return;
+  alertDiv.style.display = '';
+  listDiv.innerHTML = expiring.map(function(r) {
+    var exp = new Date(r.expires_at);
+    var diffMin = Math.round((exp - now) / 60000);
+    var diffStr = diffMin < 60 ? diffMin + ' Min.' : Math.round(diffMin/60) + ' Std.';
+    return '<div class="res-expiry-row">' +
+      '<span style="font-weight:600;font-size:12px;color:#721c24">' + (r.buyer_name||'—') + '</span>' +
+      '<span style="font-size:11px;color:var(--muted)">' + (r.objects?.name||'—') + '</span>' +
+      '<span style="background:#dc3545;color:white;padding:2px 8px;font-size:10px;font-weight:700">⏱ noch ' + diffStr + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 8: EXCEL-EXPORT OBJEKTE
+// ══════════════════════════════════════════════════════
+async function exportObjectsXlsx() {
+  if (typeof XLSX === 'undefined') { notify('SheetJS nicht geladen – bitte Seite neu laden', 'error'); return; }
+  notify('Excel wird erstellt…', '', 2000);
+  var resp = await sb.from('objects').select('*').order('name');
+  if (resp.error) { notify('Fehler: ' + resp.error.message, 'error'); return; }
+  var data2 = resp.data || [];
+  var rows = data2.map(function(o) {
+    return {
+      'Name': o.name || '',
+      'Adresse': o.address || '',
+      'Fläche (m²)': o.area || '',
+      'Zimmer': o.rooms || '',
+      'Kaufpreis (€)': (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0),
+      'Kaltmiete/Mo (€)': o.cold_rent || 0,
+      'Status': o.status || '',
+      'Branding': o.branding || '',
+      'Stellplatz': o.parking_active ? 'Ja' : 'Nein',
+      'KfW möglich': o.kfw_moeglich ? 'Ja' : 'Nein',
+      'Veröffentlicht': o.published ? 'Ja' : 'Nein',
+      'Letzte Änderung': o.updated_at ? new Date(o.updated_at).toLocaleDateString('de-DE') : ''
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Objekte');
+  XLSX.writeFile(wb, 'Vestora_Objekte_' + new Date().toISOString().split('T')[0] + '.xlsx');
+  notify('✓ Excel exportiert', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 9: MOBILE NAV (HAMBURGER)
+// ══════════════════════════════════════════════════════
+function toggleMobileNav() {
+  var nav = document.getElementById('appNav');
+  if (nav) nav.classList.toggle('mobile-open');
+}
+
+function closeMobileNav() {
+  var nav = document.getElementById('appNav');
+  if (nav) nav.classList.remove('mobile-open');
+}
+
+// Nav bei Klick außerhalb schließen
+document.addEventListener('click', function(e) {
+  var nav = document.getElementById('appNav');
+  var btn = document.getElementById('hamburger-btn');
+  if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
+    nav.classList.remove('mobile-open');
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// FEATURE 10: ONBOARDING
+// ══════════════════════════════════════════════════════
+var obStep = 0;
+var OB_TOTAL = 4;
+
+function showOnboarding() {
+  obStep = 0;
+  updateOnboardingStep();
+  openModal('onboardingModal');
+}
+
+function updateOnboardingStep() {
+  for (var i = 0; i < OB_TOTAL; i++) {
+    var s = document.getElementById('ob-step-' + i);
+    var d = document.getElementById('ob-dot-' + i);
+    if (s) s.style.display = i === obStep ? '' : 'none';
+    if (d) d.style.background = i === obStep ? 'var(--brand)' : 'var(--stone)';
+  }
+  var prevBtn = document.getElementById('ob-prev-btn');
+  var nextBtn = document.getElementById('ob-next-btn');
+  if (prevBtn) prevBtn.style.visibility = obStep > 0 ? 'visible' : 'hidden';
+  if (nextBtn) nextBtn.textContent = obStep === OB_TOTAL - 1 ? 'Los geht\'s 🚀' : 'Weiter →';
+}
+
+function nextOnboardingStep() {
+  if (obStep < OB_TOTAL - 1) {
+    obStep++;
+    updateOnboardingStep();
+  } else {
+    if (currentUser) localStorage.setItem('onboardingDone_' + currentUser.id, '1');
+    closeModal('onboardingModal');
+    notify('Willkommen! Tutorial jederzeit über den ? Button neu starten.', 'success', 5000);
+  }
+}
+
+function prevOnboardingStep() {
+  if (obStep > 0) { obStep--; updateOnboardingStep(); }
+}
+
+function checkOnboarding() {
+  if (!currentUser || !currentProfile || currentProfile.role !== 'vp') return;
+  if (localStorage.getItem('onboardingDone_' + currentUser.id) !== '1') {
+    showOnboarding();
+  }
 }
 
 // ══════════════════════════════════════════════════════
