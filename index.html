@@ -876,31 +876,15 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   <!-- Selbstauskunft View -->
   <div id="view-vp-selbstauskunft" class="view">
     <div class="view-inner">
-      <div class="page-title">Selbstauskunft</div>
-      <div class="page-sub">Finanzierungsanfrage für Ihren Kunden einreichen – in Zusammenarbeit mit Zinsboutique</div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="background:var(--navy);color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:700;font-size:14px">Selbstauskunft × Zinsboutique</div>
-            <div style="font-size:11px;opacity:.6;margin-top:2px">Nach Einreichung meldet sich Zinsboutique innerhalb von 24h beim Kunden</div>
-          </div>
-          <a href="https://www.zinsboutique.de/selbstauskunft-bequiri-zinsboutique" target="_blank"
-            style="font-size:11px;color:var(--gold2);text-decoration:none;border:1px solid var(--gold2);padding:5px 12px;font-weight:700">
-            ↗ In neuem Tab öffnen
-          </a>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+        <div>
+          <div class="page-title">Selbstauskunft</div>
+          <div class="page-sub">Finanzielle Selbstauskunft Ihrer Kunden – intern, sicher, Vestora-Design</div>
         </div>
-        <div id="sa-iframe-area" style="position:relative;width:100%;min-height:700px;font-family:'Montserrat',sans-serif;">
-          <iframe
-            id="JotFormIFrame-260904626171354"
-            title="ZB Selbstauskunft - Bequiri x Zinsboutique (extern)"
-            allowtransparency="true"
-            allow="geolocation; microphone; camera; fullscreen; payment"
-            src="https://form.jotform.com/260904626171354"
-            frameborder="0"
-            scrolling="yes"
-            style="width:100%;min-width:100%;height:820px;border:none">
-          </iframe>
-        </div>
+        <button class="btn-sm btn-gold" style="font-size:12px;padding:8px 18px" onclick="openNewSelbstauskunft()">+ Neue Selbstauskunft</button>
+      </div>
+      <div id="sa-list-container">
+        <div style="text-align:center;padding:40px;color:var(--muted)"><div class="spinner"></div></div>
       </div>
     </div>
   </div>
@@ -1634,6 +1618,202 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   </div>
 </div>
 
+<!-- Kalkulator Lead-Auswahl Modal -->
+<div class="modal-bg" id="calcLeadSelectModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Kalkulator öffnen</div>
+      <button class="modal-close" onclick="closeModal('calcLeadSelectModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--g100);border-left:3px solid var(--accent);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--g700)">
+        Soll diese Kalkulation einem Lead zugeordnet werden? So erscheint sie direkt im Lead-Profil.
+      </div>
+      <div class="form-fld">
+        <label>Lead zuordnen</label>
+        <select id="calcLeadSelectDd">
+          <option value="">— Ohne Lead öffnen —</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" onclick="closeModal('calcLeadSelectModal')">Abbrechen</button>
+      <button class="btn-sm btn-gold" onclick="confirmCalcLeadSelect()">Kalkulator öffnen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SELBSTAUSKUNFT MODAL ══ -->
+<div class="modal-bg" id="selbstauskunftFormModal">
+  <div class="modal" style="max-width:760px;max-height:92vh;overflow-y:auto">
+    <div class="modal-header" style="background:var(--brand);color:white;position:sticky;top:0;z-index:10">
+      <div>
+        <div class="modal-title" style="color:var(--accent-soft);font-family:var(--font-display);font-style:italic">Selbstauskunft</div>
+        <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);font-family:var(--font-mono)">Vestora Capital · Vertraulich</div>
+      </div>
+      <button class="modal-close" style="color:white" onclick="closeModal('selbstauskunftFormModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Lead Zuordnung -->
+      <div style="background:rgba(160,122,71,.08);border:1px solid var(--accent);padding:12px 16px;margin-bottom:20px">
+        <div class="form-fld" style="margin:0">
+          <label style="color:var(--accent);font-weight:700">Lead zuordnen *</label>
+          <select id="sa-lead-id">
+            <option value="">— Bitte Lead auswählen —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Persönliche Daten -->
+      <div class="form-section" style="margin-bottom:12px">Persönliche Daten</div>
+      <div class="form-grid">
+        <div class="form-fld"><label>Vorname *</label><input id="sa-vorname" type="text" placeholder="Max"></div>
+        <div class="form-fld"><label>Nachname *</label><input id="sa-nachname" type="text" placeholder="Mustermann"></div>
+        <div class="form-fld"><label>Geburtsdatum</label><input id="sa-gebdat" type="date"></div>
+        <div class="form-fld"><label>Geburtsort</label><input id="sa-geboro" type="text" placeholder="München"></div>
+        <div class="form-fld"><label>Staatsangehörigkeit</label><input id="sa-staat" type="text" placeholder="Deutsch" value="Deutsch"></div>
+        <div class="form-fld"><label>Familienstand</label>
+          <select id="sa-famstand">
+            <option value="ledig">Ledig</option>
+            <option value="verheiratet">Verheiratet</option>
+            <option value="geschieden">Geschieden</option>
+            <option value="verwitwet">Verwitwet</option>
+          </select>
+        </div>
+        <div class="form-fld"><label>Unterhaltsberechtigte Kinder</label><input id="sa-kinder" type="number" min="0" value="0" style="width:80px"></div>
+      </div>
+
+      <!-- Kontaktdaten -->
+      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Kontaktdaten</div>
+      <div class="form-grid">
+        <div class="form-fld full"><label>Straße + Hausnummer</label><input id="sa-strasse" type="text" placeholder="Musterstraße 12"></div>
+        <div class="form-fld"><label>PLZ</label><input id="sa-plz" type="text" placeholder="80331" style="max-width:120px"></div>
+        <div class="form-fld"><label>Ort</label><input id="sa-ort" type="text" placeholder="München"></div>
+        <div class="form-fld"><label>Telefon</label><input id="sa-telefon" type="tel" placeholder="+49 ..."></div>
+        <div class="form-fld"><label>E-Mail</label><input id="sa-email" type="email" placeholder="name@firma.de"></div>
+        <div class="form-fld"><label>Wohnsituation</label>
+          <select id="sa-wohnsit">
+            <option value="Miete">Miete</option>
+            <option value="Eigentum">Eigentum</option>
+          </select>
+        </div>
+        <div class="form-fld"><label>Wohnhaft seit</label><input id="sa-wohnseit" type="date"></div>
+      </div>
+
+      <!-- Beschäftigung -->
+      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Beschäftigung</div>
+      <div class="form-grid">
+        <div class="form-fld"><label>Berufsgruppe</label>
+          <select id="sa-berufsgruppe">
+            <option value="Angestellter">Angestellter</option>
+            <option value="Beamter">Beamter</option>
+            <option value="Selbstständig">Selbstständig</option>
+            <option value="Freiberufler">Freiberufler</option>
+            <option value="Rentner">Rentner</option>
+            <option value="Sonstiges">Sonstiges</option>
+          </select>
+        </div>
+        <div class="form-fld"><label>Arbeitgeber / Firma</label><input id="sa-arbeitgeber" type="text" placeholder="Musterfirma GmbH"></div>
+        <div class="form-fld"><label>Branche</label><input id="sa-branche" type="text" placeholder="IT, Bau, Finanzen..."></div>
+        <div class="form-fld"><label>Beschäftigt seit</label><input id="sa-besch-seit" type="date"></div>
+        <div class="form-fld"><label>Unbefristetes Arbeitsverhältnis</label>
+          <select id="sa-unbefristet">
+            <option value="Ja">Ja</option>
+            <option value="Nein">Nein</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Einkommen -->
+      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Einkommen (netto monatlich)</div>
+      <div class="form-grid">
+        <div class="form-fld"><label>Haupteinkommen (€)</label><input id="sa-eink-haupt" type="number" min="0" placeholder="3500"></div>
+        <div class="form-fld"><label>Nebeneinkommen (Miete/Dividenden etc.)</label><input id="sa-eink-neben" type="number" min="0" placeholder="0"></div>
+        <div class="form-fld"><label>Unterhalt erhalten (€)</label><input id="sa-unterhalt-erhalt" type="number" min="0" placeholder="0"></div>
+        <div class="form-fld"><label>Unterhalt zahlen (€)</label><input id="sa-unterhalt-zahlt" type="number" min="0" placeholder="0"></div>
+        <div class="form-fld"><label>Gesamtnettohaushaltseinkommen (€)</label><input id="sa-eink-gesamt" type="number" min="0" placeholder="4000"></div>
+      </div>
+
+      <!-- Vermögen -->
+      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Vermögen</div>
+      <div class="form-grid">
+        <div class="form-fld"><label>Eigenkapital (verfügbar, €)</label><input id="sa-eigenkapital" type="number" min="0" placeholder="80000"></div>
+        <div class="form-fld"><label>Bankguthaben gesamt (ca. €)</label><input id="sa-bankguth" type="number" min="0" placeholder="50000"></div>
+        <div class="form-fld"><label>Bestehende Immobilien – Anzahl</label><input id="sa-immo-anz" type="number" min="0" placeholder="0" style="max-width:80px"></div>
+        <div class="form-fld"><label>Immo-Gesamtwert (ca. €)</label><input id="sa-immo-wert" type="number" min="0" placeholder="0"></div>
+        <div class="form-fld"><label>Depot / Wertpapiere (ca. €)</label><input id="sa-depot" type="number" min="0" placeholder="0"></div>
+        <div class="form-fld"><label>Sonstige Vermögenswerte (€)</label><input id="sa-sonstig-verm" type="number" min="0" placeholder="0"></div>
+      </div>
+
+      <!-- Verbindlichkeiten -->
+      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Verbindlichkeiten</div>
+      <div class="form-grid">
+        <div class="form-fld"><label>Laufende Kredite – Anzahl</label><input id="sa-kred-anz" type="number" min="0" placeholder="0" style="max-width:80px"></div>
+        <div class="form-fld"><label>Kreditraten gesamt / Monat (€)</label><input id="sa-kred-rate" type="number" min="0" placeholder="0"></div>
+        <div class="form-fld"><label>Hypotheken/Baudarlehen – Rate / Monat (€)</label><input id="sa-hypo-rate" type="number" min="0" placeholder="0"></div>
+      </div>
+
+      <!-- Anlageziele -->
+      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Anlageziele</div>
+      <div class="form-grid">
+        <div class="form-fld"><label>Anlagehorizont</label>
+          <select id="sa-horizont">
+            <option value="unter 5 Jahre">Unter 5 Jahre</option>
+            <option value="5–10 Jahre" selected>5–10 Jahre</option>
+            <option value="über 10 Jahre">Über 10 Jahre</option>
+          </select>
+        </div>
+        <div class="form-fld"><label>Risikobereitschaft</label>
+          <select id="sa-risiko">
+            <option value="konservativ">Konservativ</option>
+            <option value="moderat" selected>Moderat</option>
+            <option value="chancenorientiert">Chancenorientiert</option>
+          </select>
+        </div>
+        <div class="form-fld"><label>Erfahrung Immobilieninvestments</label>
+          <select id="sa-erfahrung">
+            <option value="keine">Keine</option>
+            <option value="1–2 Objekte">1–2 Objekte</option>
+            <option value="3–5 Objekte">3–5 Objekte</option>
+            <option value="5+ Objekte">5+ Objekte</option>
+          </select>
+        </div>
+        <div class="form-fld full"><label>Anlagemotiv (Mehrfachauswahl)</label>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px">
+            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Altersvorsorge" checked> Altersvorsorge</label>
+            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Steueroptimierung"> Steueroptimierung</label>
+            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Vermögensaufbau" checked> Vermögensaufbau</label>
+            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Inflationsschutz"> Inflationsschutz</label>
+            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Sonstiges"> Sonstiges</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unterschrift -->
+      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Bestätigung & Unterschrift</div>
+      <div class="form-grid">
+        <div class="form-fld"><label>Datum</label><input id="sa-datum" type="date"></div>
+      </div>
+      <div style="margin:12px 0 8px">
+        <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="sa-bestaetigung" style="margin-top:2px">
+          <span>Ich bestätige die Richtigkeit der gemachten Angaben. Die Daten werden vertraulich behandelt und ausschließlich intern für die Finanzierungsprüfung verwendet.</span>
+        </label>
+      </div>
+      <div style="margin-top:14px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:6px">Unterschrift</div>
+        <canvas id="saSignCanvas" width="700" height="140"
+          style="border:1px solid var(--stone);background:var(--field);cursor:crosshair;touch-action:none;display:block;width:100%;height:140px"></canvas>
+        <button class="btn-sm btn-outline" style="margin-top:6px;font-size:10px;padding:3px 10px;color:var(--muted);border-color:var(--stone)" onclick="saClearSignature()">Zurücksetzen</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" onclick="closeModal('selbstauskunftFormModal')">Abbrechen</button>
+      <button class="btn-sm btn-gold" id="sa-submit-btn" onclick="submitSelbstauskunft()">📄 Selbstauskunft speichern & PDF erzeugen</button>
+    </div>
+  </div>
+</div>
+
 <!-- Reservation Modal -->
 <div class="modal-bg" id="resModal">
   <div class="modal" style="max-width:560px">
@@ -1999,6 +2179,8 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <div id="admin-note-vp-view" style="display:none;background:#fffde7;border:1px solid var(--accent);padding:10px 14px;font-size:12px;color:var(--brand);line-height:1.6"></div>
           <textarea id="admin-note-input" style="display:none" placeholder="Interner Admin-Kommentar zu diesem Lead (nur für Admin sichtbar)..."></textarea>
         </div>
+        <!-- Selbstauskunft – nur im Edit-Modus -->
+        <div class="form-fld full" id="lead-sa-section" style="display:none"></div>
         <!-- Kalkulationen – nur im Edit-Modus -->
         <div class="form-fld full" id="lead-calc-section" style="display:none"></div>
         <!-- Activity Log – nur im Edit-Modus -->
@@ -2810,7 +2992,7 @@ function loadView(name) {
   else if (name === 'vp-leads') loadLeads(false);
   else if (name === 'admin-leads') loadLeads(true);
   else if (name === 'vp-calcs') loadVPCalcs();
-  else if (name === 'vp-selbstauskunft') {} // iFrame lädt automatisch
+  else if (name === 'vp-selbstauskunft') loadSelbstauskunftView();
   else if (name === 'vp-faq') renderFAQ();
   else if (name === 'admin-calcs') loadAdminCalcs();
   else if (name === 'admin-performance') loadVPPerformance();
@@ -6143,8 +6325,45 @@ async function exportExposePDF() {
 // CALCULATOR
 // ══════════════════════════════════════════════════════
 let calcObj = null;
+let calcLinkedLeadId = null;   // Lead that this calculation is linked to
+let _calcPendingObjId = null;  // Object ID waiting for lead selection
 
+// Show lead-select modal before opening calculator (unless called via openCalcWithLead or openCalcForObjectDirect)
 async function openCalcForObject(id) {
+  _calcPendingObjId = id;
+  // Populate lead dropdown
+  const sel = document.getElementById('calcLeadSelectDd');
+  if (sel) {
+    sel.innerHTML = '<option value="">— Ohne Lead öffnen —</option>';
+    const myLeads = currentLeads.filter(l => !['lost'].includes(l.status));
+    myLeads.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    myLeads.forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = l.id;
+      opt.textContent = (l.name || '—') + (l.objects?.name ? ' · ' + l.objects.name : '');
+      sel.appendChild(opt);
+    });
+    // Pre-select if lead has this object
+    const matchLead = currentLeads.find(l => l.object_id === id && !['lost'].includes(l.status));
+    if (matchLead) sel.value = matchLead.id;
+  }
+  openModal('calcLeadSelectModal');
+}
+
+function confirmCalcLeadSelect() {
+  const sel = document.getElementById('calcLeadSelectDd');
+  calcLinkedLeadId = sel?.value || null;
+  closeModal('calcLeadSelectModal');
+  openCalcForObjectDirect(_calcPendingObjId);
+}
+
+// Open calc for a lead's object directly (no modal) – pass the lead_id
+async function openCalcWithLead(leadId, objectId) {
+  calcLinkedLeadId = leadId || null;
+  await openCalcForObjectDirect(objectId);
+}
+
+async function openCalcForObjectDirect(id) {
   const { data: o } = await sb.from('objects').select('*').eq('id', id).single();
   if (!o) return;
   calcObj = o;
@@ -6946,8 +7165,10 @@ async function loadCalculation(id) {
   const { data: calc } = await sb.from('calculations').select('*').eq('id', id).single();
   if (!calc) { notify('Berechnung nicht gefunden', 'error'); return; }
 
-  // Kalkulator für das Objekt öffnen
-  await openCalcForObject(calc.object_id);
+  // Restore lead link from saved calculation (no modal)
+  calcLinkedLeadId = calc.lead_id || null;
+  // Open calculator directly without lead modal
+  await openCalcForObjectDirect(calc.object_id);
 
   // Gespeicherte Werte eintragen
   const set = (elId, val) => { const el = document.getElementById(elId); if(el && val !== null && val !== undefined) el.value = val; };
@@ -7488,6 +7709,8 @@ const LEAD_STATUS_CLASS = {
 let currentLeads = [];
 let leadFilterStatus = '';
 let editingLeadId = null;
+// Protocol status cache: token → { signed_at, pdf_path }
+let _protoStatusCache = {};
 
 function showNotif(msg, type) { notify(msg, type === 'error' ? 'error' : 'success'); }
 
@@ -7646,6 +7869,18 @@ async function loadLeads(isAdmin) {
   if (error) { tbody.innerHTML = `<tr><td colspan="${cols}" style="color:var(--gone);padding:16px">${error.message}</td></tr>`; return; }
   currentLeads = data || [];
 
+  // Fetch protocol sign status for leads that have a protocol_token
+  _protoStatusCache = {};
+  const tokens = currentLeads.filter(l => l.protocol_token).map(l => l.protocol_token);
+  if (tokens.length) {
+    try {
+      const { data: protos } = await sb.from('advisory_protocols')
+        .select('signing_token,signed_at,pdf_path')
+        .in('signing_token', tokens);
+      (protos || []).forEach(p => { _protoStatusCache[p.signing_token] = { signed_at: p.signed_at, pdf_path: p.pdf_path }; });
+    } catch(e) {}
+  }
+
   renderLeadStats(isAdmin);
   renderLeadsTable(isAdmin);
   // Also re-render kanban if visible
@@ -7713,10 +7948,10 @@ function renderLeadsTable(isAdmin) {
     const srcBadge = l.source ? `<span class="source-badge">${l.source}</span>` : '<span style="font-size:11px;color:var(--stone)">—</span>';
 
     // Kalkulator button (only if object assigned)
-    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}')">Kalk.</button>` : '';
+    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcWithLead('${l.id}','${l.object_id}')">Kalk.</button>` : '';
 
-    // Protocol link
-    const protoLink = l.protocol_token ? `<a href="sign.html?protocol=${l.protocol_token}" target="_blank" class="btn-sm btn-outline" style="padding:3px 7px;font-size:9px;color:var(--ok);border-color:var(--ok);text-decoration:none;display:inline-block">Protokoll</a>` : '';
+    // Protocol – single consolidated button
+    const protoBtn = renderProtocolBtn(l);
 
     // Loss reason
     const lossInfo = l.loss_reason ? `<br><span style="font-size:9px;color:var(--stone);font-family:var(--font-mono)">${l.loss_reason}</span>` : '';
@@ -7734,8 +7969,7 @@ function renderLeadsTable(isAdmin) {
         <div style="display:flex;gap:3px;flex-wrap:wrap">
           <button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openEditLead('${l.id}')">Bearbeiten</button>
           ${calcBtn}
-          <button class="btn-sm btn-outline" style="padding:3px 7px;font-size:9px;color:var(--ink);border-color:var(--stone)" onclick="startProtocolFromLead('${l.id}')">Protokoll</button>
-          ${protoLink}
+          ${protoBtn}
         </div>
       </td>
     </tr>`;
@@ -7812,7 +8046,7 @@ function filterOverdueLeads(isAdmin) {
     const phoneLink = l.phone ? `<a href="tel:${l.phone}" style="color:var(--accent);text-decoration:none;font-weight:600">${l.phone}</a>` : '';
     const contactCell = [emailLink, phoneLink].filter(Boolean).join('<br>') || '—';
     const srcBadge = l.source ? `<span class="source-badge">${l.source}</span>` : '—';
-    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}')">Kalk.</button>` : '';
+    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcWithLead('${l.id}','${l.object_id}')">Kalk.</button>` : '';
     return `<tr>
       <td style="font-weight:600">${l.name||'—'}</td>
       <td style="font-size:11px">${contactCell}</td>
@@ -7899,7 +8133,7 @@ function renderKanbanBoard(isAdmin) {
         ${l.objects?.name ? `<div class="kanban-card-obj">📦 ${l.objects.name}</div>` : ''}
         <div class="kanban-card-foot">
           ${dateHtml}
-          ${l.object_id ? `<button style="font-size:8px;padding:1px 5px;background:var(--brand);color:white;border:none;cursor:pointer;font-family:var(--font-mono)" onclick="event.stopPropagation();openCalcForObject('${l.object_id}')">Kalk</button>` : ''}
+          ${l.object_id ? `<button style="font-size:8px;padding:1px 5px;background:var(--brand);color:white;border:none;cursor:pointer;font-family:var(--font-mono)" onclick="event.stopPropagation();openCalcWithLead('${l.id}','${l.object_id}')">Kalk</button>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -8017,6 +8251,25 @@ async function openEditLead(id) {
   document.getElementById('lead-log-section').style.display = 'block';
   document.getElementById('lead-log-input').value = '';
   renderLeadLog(lead);
+
+  // Selbstauskunft-Abschnitt
+  const saSec = document.getElementById('lead-sa-section');
+  if (saSec) {
+    saSec.style.display = 'block';
+    if (lead.selbstauskunft_pdf) {
+      saSec.innerHTML = '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:6px;margin-top:8px">Selbstauskunft</div>'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--accent);padding:10px 12px;background:rgba(160,122,71,.04)">'
+        + '<span style="font-size:12px;font-weight:700;color:var(--ok)">✓ Selbstauskunft vorhanden</span>'
+        + '<button class="btn-sm btn-pos" style="font-size:10px;padding:3px 10px" onclick="downloadSelbstauskunftPdf(\'' + lead.selbstauskunft_pdf + '\')">PDF herunterladen</button>'
+        + '</div>';
+    } else {
+      saSec.innerHTML = '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:6px;margin-top:8px">Selbstauskunft</div>'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0">'
+        + '<span style="font-size:11px;color:var(--muted)">Noch nicht ausgefüllt</span>'
+        + '<button class="btn-sm btn-outline" style="font-size:10px;padding:3px 10px;color:var(--ink);border-color:var(--stone)" onclick="openNewSelbstauskunftForLead(\'' + id + '\');closeModal(\'leadModal\')">+ Selbstauskunft erstellen</button>'
+        + '</div>';
+    }
+  }
 
   // Kalkulationen-Abschnitt laden
   await loadLeadCalcSection(id);
@@ -8189,6 +8442,781 @@ async function startProtocolFromLead(leadId) {
   const lead = currentLeads.find(l => l.id === leadId);
   if (!lead) return;
   openProtocolModal(null, lead.object_id || null, lead.name || '', lead.email || '', leadId);
+}
+
+// ── Protocol button: one smart button per state ──
+function renderProtocolBtn(l) {
+  if (!l.protocol_token) {
+    return `<button class="btn-sm btn-outline" style="padding:3px 7px;font-size:9px;color:var(--ink);border-color:var(--stone)" onclick="startProtocolFromLead('${l.id}')">Protokoll erstellen</button>`;
+  }
+  const ps = _protoStatusCache[l.protocol_token];
+  if (ps && ps.signed_at && ps.pdf_path) {
+    return `<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">`
+      + `<span style="font-size:9px;font-weight:700;color:var(--ok)">✓ Unterzeichnet ${fmtDate(ps.signed_at)}</span>`
+      + `<button class="btn-sm btn-pos" style="padding:2px 7px;font-size:9px" onclick="downloadProtocolPdf('${ps.pdf_path}')">PDF herunterladen</button>`
+      + `</div>`;
+  }
+  return `<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">`
+    + `<button class="btn-sm btn-navy" style="padding:2px 7px;font-size:9px" onclick="copyProtocolLink('${l.protocol_token}')">Protokoll-Link kopieren</button>`
+    + `<span style="font-size:9px;color:var(--muted)">Noch nicht unterzeichnet</span>`
+    + `</div>`;
+}
+
+async function downloadProtocolPdf(pdfPath) {
+  const { data, error } = await sb.storage.from('reservation-pdfs').createSignedUrl(pdfPath, 3600);
+  if (error || !data?.signedUrl) { notify('Fehler beim Abrufen des PDFs', 'error'); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+async function copyProtocolLink(token) {
+  let baseUrl = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/$/, '');
+  if (currentProfile?.partner_domain) baseUrl = 'https://' + currentProfile.partner_domain;
+  const url = baseUrl + '/sign.html?protocol=' + token;
+  try {
+    await navigator.clipboard.writeText(url);
+    notify('✓ Protokoll-Link kopiert!', 'success', 3000);
+  } catch(e) {
+    prompt('Protokoll-Link:', url);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 1: WIEDERVORLAGEN-SYSTEM
+// ══════════════════════════════════════════════════════
+function renderWiedervorlagen() {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const due = currentLeads.filter(function(l) {
+    return l.next_followup && l.next_followup <= todayStr && !['notary','lost'].includes(l.status);
+  });
+  const banner = document.getElementById('wiedervorlage-banner');
+  if (!banner) return;
+  if (!due.length) { banner.style.display = 'none'; return; }
+  banner.style.display = '';
+  const titleEl = document.getElementById('wv-title');
+  if (titleEl) titleEl.textContent = due.length + ' Kontakt' + (due.length !== 1 ? 'e' : '') + ' stehen heute an';
+  const listEl = document.getElementById('wv-list');
+  if (listEl) {
+    listEl.innerHTML = due.map(function(l) {
+      return '<div class="wv-entry" onclick="openEditLead(\'' + l.id + '\')">' +
+        '<span style="font-weight:600;font-size:12px;color:var(--brand)">' + (l.name || '—') + '</span>' +
+        '<span class="lead-status-badge ls-' + l.status + '">' + l.status + '</span>' +
+        (l.phone ? '<a href="tel:' + l.phone + '" onclick="event.stopPropagation()" style="color:var(--accent);font-size:12px;text-decoration:none">📞 ' + l.phone + '</a>' : '') +
+        '<span style="font-size:10px;color:var(--muted);margin-left:auto">' + (l.next_followup ? new Date(l.next_followup + 'T00:00:00').toLocaleDateString('de-DE') : '') + '</span>' +
+        '</div>';
+    }).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 2: VP-TAGESREPORT
+// ══════════════════════════════════════════════════════
+async function showTagesreport() {
+  if (sessionStorage.getItem('tagesreportClosed') === '1') return;
+  const box = document.getElementById('tagesreport-box');
+  if (!box) return;
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const hour = now.getHours();
+  const greet = hour < 12 ? 'Guten Morgen' : (hour < 18 ? 'Guten Tag' : 'Guten Abend');
+  const nameStr = (currentProfile && currentProfile.full_name) ? ', ' + currentProfile.full_name.split(' ')[0] : '';
+  const greetEl = document.getElementById('tr-greeting');
+  if (greetEl) greetEl.textContent = greet + nameStr + ' 👋';
+  const openLeads = currentLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
+  const followupsToday = currentLeads.filter(function(l) { return l.next_followup && l.next_followup <= todayStr && !['notary','lost'].includes(l.status); }).length;
+  const openEl = document.getElementById('tr-open');
+  const fuEl = document.getElementById('tr-followups');
+  if (openEl) openEl.textContent = openLeads;
+  if (fuEl) fuEl.textContent = followupsToday;
+  // Reservierungen <48h
+  var resAlert = 0;
+  try {
+    var in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
+    var resResp = await sb.from('reservations').select('id,expires_at').eq('vp_id', currentUser.id).in('status', ['soft','hard','pending']).lte('expires_at', in48h).gte('expires_at', now.toISOString());
+    resAlert = (resResp.data || []).length;
+  } catch(e) {}
+  var raEl = document.getElementById('tr-res-alert');
+  if (raEl) {
+    raEl.textContent = resAlert;
+    if (resAlert > 0) raEl.style.color = '#ff9800';
+  }
+  box.style.display = '';
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 4: OBJEKT-VERGLEICH
+// ══════════════════════════════════════════════════════
+var compareSelection = [];
+
+function toggleObjCompare(objId, el) {
+  var idx = compareSelection.indexOf(objId);
+  if (idx > -1) {
+    compareSelection.splice(idx, 1);
+  } else {
+    if (compareSelection.length >= 2) { notify('Maximal 2 Objekte vergleichen', '', 3000); if (el) el.checked = false; return; }
+    compareSelection.push(objId);
+  }
+  updateCompareToolbar();
+}
+
+function updateCompareToolbar() {
+  var tb = document.getElementById('compare-toolbar');
+  var btn = document.getElementById('compare-open-btn');
+  var lbl = document.getElementById('compare-count-label');
+  if (!tb) return;
+  if (compareSelection.length === 0) { tb.style.display = 'none'; return; }
+  tb.style.display = 'flex';
+  if (lbl) lbl.textContent = compareSelection.length + ' ausgewählt';
+  if (btn) btn.disabled = compareSelection.length < 2;
+}
+
+function clearCompare() {
+  compareSelection = [];
+  document.querySelectorAll('.compare-cb').forEach(function(cb) { cb.checked = false; });
+  var tb = document.getElementById('compare-toolbar');
+  if (tb) tb.style.display = 'none';
+}
+
+function openCompareModal() {
+  if (compareSelection.length < 2) return;
+  var objs = compareSelection.map(function(id) { return vpAllObjects.find(function(o) { return o.id === id; }); }).filter(Boolean);
+  if (objs.length < 2) return;
+  var o0 = objs[0], o1 = objs[1];
+
+  function totalKP(o) { return (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0); }
+  function totalRent(o) { return (o.cold_rent||0)+(o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0); }
+  function brutto(o) { var kp=totalKP(o); return kp>0 ? fmtP(totalRent(o)*12/kp*100) : '—'; }
+  function cfMon(o) {
+    var kp=totalKP(o); var r=totalRent(o);
+    var rate=kp*((o.loan_rate||3.95)/100+(o.repay_rate||1.0)/100)/12;
+    return fmt(r-(o.hausgeld||0)-rate, 0)+'/Mo';
+  }
+
+  var fields = [
+    ['Kaufpreis gesamt', function(o) { return fmt(totalKP(o)); }],
+    ['Kaltmiete/Mo.', function(o) { return fmt(o.cold_rent||0); }],
+    ['Wohnfläche', function(o) { return (o.area||'—') + ' m²'; }],
+    ['Zimmer', function(o) { return o.rooms||'—'; }],
+    ['Bruttorendite', brutto],
+    ['Cashflow/Mo.', cfMon],
+    ['Stellplatz', function(o) { return o.parking_active ? '✓ ' + (o.parking_type||'Ja') : '—'; }],
+    ['KfW möglich', function(o) { return o.kfw_moeglich ? '✓ Ja' : '—'; }],
+    ['AfA', function(o) { return o.deg_afa>0 ? fmtP(o.deg_afa)+' deg.' : fmtP(o.lin_afa||2)+' lin.'; }],
+    ['Status', function(o) { return o.status||'—'; }],
+    ['Adresse', function(o) { return o.address||'—'; }],
+  ];
+
+  var hdr = '<div style="display:grid;grid-template-columns:160px 1fr 1fr;gap:1px;background:var(--stone)">' +
+    '<div style="background:var(--brand);padding:10px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-soft)">Merkmal</div>' +
+    '<div style="background:var(--brand);padding:10px 14px;font-size:13px;font-weight:700;color:white">' + o0.name + '</div>' +
+    '<div style="background:var(--brand);padding:10px 14px;font-size:13px;font-weight:700;color:white">' + o1.name + '</div>' +
+    '</div>';
+
+  var rows = fields.map(function(f, i) {
+    var v0 = f[1](o0), v1 = f[1](o1);
+    var bg = i % 2 === 0 ? 'var(--field)' : 'var(--paper)';
+    return '<div style="display:grid;grid-template-columns:160px 1fr 1fr;gap:1px;background:var(--stone)">' +
+      '<div style="background:var(--paper-2);padding:8px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">' + f[0] + '</div>' +
+      '<div style="background:' + bg + ';padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand)">' + v0 + '</div>' +
+      '<div style="background:' + bg + ';padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand)">' + v1 + '</div>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('compareBody').innerHTML = hdr + rows;
+  openModal('compareModal');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 5: KALKULATOR-VORLAGEN
+// ══════════════════════════════════════════════════════
+function loadCalcPresets() {
+  if (!currentUser) return {};
+  // Supabase-Presets bevorzugen, localStorage als Fallback
+  if (currentProfile && currentProfile.calc_presets && typeof currentProfile.calc_presets === 'object') {
+    return currentProfile.calc_presets;
+  }
+  try { return JSON.parse(localStorage.getItem('calcPresets_' + currentUser.id) || '{}'); } catch(e) { return {}; }
+}
+
+function applyCalcPresets() {
+  var p = loadCalcPresets();
+  if (p.zinssatz) { var el = document.getElementById('c-loanr'); if (el) el.value = p.zinssatz; }
+  if (p.tilgung) { var el2 = document.getElementById('c-repayr'); if (el2) el2.value = p.tilgung; }
+  if (p.steuer) { var el3 = document.getElementById('c-taxr'); if (el3) el3.value = p.steuer; }
+  if (typeof runCalc === 'function') runCalc();
+  notify('Voreinstellungen angewendet', 'success', 2500);
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 6: VP-PERFORMANCE-ÜBERSICHT (ADMIN)
+// ══════════════════════════════════════════════════════
+var vpPerfPeriod = 'all';
+
+function setVPPerfPeriod(p) {
+  vpPerfPeriod = p;
+  ['week','month','all'].forEach(function(x) {
+    var btn = document.getElementById('vpp-btn-' + x);
+    if (btn) {
+      btn.style.background = x === p ? 'var(--brand)' : 'var(--paper-2)';
+      btn.style.color = x === p ? 'var(--accent-soft)' : 'var(--muted)';
+      btn.style.border = x === p ? 'none' : '1px solid var(--stone)';
+    }
+  });
+  loadVPPerformance();
+}
+
+async function loadVPPerformance() {
+  var tbody = document.getElementById('vpPerfTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>';
+  var now = new Date();
+  var since = null;
+  if (vpPerfPeriod === 'week') {
+    var d = new Date(now); d.setDate(d.getDate() - d.getDay()); d.setHours(0,0,0,0); since = d.toISOString();
+  } else if (vpPerfPeriod === 'month') {
+    since = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  }
+  try {
+    var vpsResp = await sb.from('profiles').select('id,full_name,company_name').eq('role','vp').eq('active',true).order('full_name');
+    var vps = vpsResp.data || [];
+    var leadsQ = sb.from('leads').select('id,vp_id,status,created_at');
+    if (since) leadsQ = leadsQ.gte('created_at', since);
+    var leadsResp = await leadsQ;
+    var leads2 = leadsResp.data || [];
+    var calcsQ = sb.from('calculations').select('id,vp_id,created_at');
+    if (since) calcsQ = calcsQ.gte('created_at', since);
+    var calcsResp = await calcsQ;
+    var calcs2 = calcsResp.data || [];
+    var resQ = sb.from('reservations').select('id,vp_id,status,created_at');
+    if (since) resQ = resQ.gte('created_at', since);
+    var resResp2 = await resQ;
+    var ress2 = resResp2.data || [];
+    if (!vps.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--muted)">Keine Vertriebspartner gefunden.</td></tr>'; return; }
+    tbody.innerHTML = vps.map(function(vp) {
+      var vpLeads = leads2.filter(function(l) { return l.vp_id === vp.id; });
+      var activeLeads = vpLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
+      var vpCalcs2 = calcs2.filter(function(c) { return c.vp_id === vp.id; }).length;
+      var vpRes2 = ress2.filter(function(r) { return r.vp_id === vp.id && ['soft','hard'].includes(r.status); }).length;
+      var vpNotary = vpLeads.filter(function(l) { return l.status === 'notary'; }).length;
+      var leads = vpLeads.length, calcs = vpCalcs2, reservations = vpRes2, closings = vpNotary;
+      var conv1 = leads > 0 ? Math.round(calcs/leads*100) + '%' : '—';
+      var conv2 = calcs > 0 ? Math.round(reservations/calcs*100) + '%' : '—';
+      var conv3 = reservations > 0 ? Math.round(closings/reservations*100) + '%' : '—';
+      return '<tr>' +
+        '<td style="font-weight:600">' + (vp.full_name||'—') + '</td>' +
+        '<td style="font-size:12px;color:var(--muted)">' + (vp.company_name||'—') + '</td>' +
+        '<td class="r">' + vpLeads.length + '</td>' +
+        '<td class="r" style="color:var(--ok);font-weight:600">' + activeLeads + '</td>' +
+        '<td class="r">' + vpCalcs2 + '</td>' +
+        '<td class="r" style="color:var(--warn)">' + vpRes2 + '</td>' +
+        '<td class="r" style="color:var(--ok);font-weight:700">' + vpNotary + '</td>' +
+        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv1 + '</td>' +
+        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv2 + '</td>' +
+        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv3 + '</td>' +
+        '</tr>';
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="10" style="color:var(--gone);padding:16px">' + e.message + '</td></tr>';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE: PROVISION (COMMISSION)
+// ══════════════════════════════════════════════════════
+async function updateCommission(resId, paid, amount) {
+  const { error } = await sb.from('reservations').update({ commission_paid: paid, commission_amount: amount }).eq('id', resId);
+  if (error) notify('Fehler: ' + error.message, 'error');
+  else notify(paid ? '✓ Provision als ausgezahlt markiert' : 'Provision als offen markiert', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE: ADMIN DASHBOARD
+// ══════════════════════════════════════════════════════
+async function loadDashboard() {
+  const now = new Date();
+  const weekAgo = new Date(now - 7*24*60*60*1000).toISOString();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const in48h = new Date(now.getTime() + 48*60*60*1000).toISOString();
+
+  try {
+    const [{ count: avail }, { count: activeRes }, { count: leadsWeek }, { count: closingsMonth }] = await Promise.all([
+      sb.from('objects').select('*', {count:'exact',head:true}).eq('status','available'),
+      sb.from('reservations').select('*', {count:'exact',head:true}).eq('status','active'),
+      sb.from('leads').select('*', {count:'exact',head:true}).gte('created_at', weekAgo),
+      sb.from('leads').select('*', {count:'exact',head:true}).eq('status','notary').gte('updated_at', monthStart),
+    ]);
+    document.getElementById('dash-available').textContent = avail || 0;
+    document.getElementById('dash-reservations').textContent = activeRes || 0;
+    document.getElementById('dash-leads-week').textContent = leadsWeek || 0;
+    document.getElementById('dash-closings').textContent = closingsMonth || 0;
+  } catch(e) {}
+
+  // Ablaufende Reservierungen
+  try {
+    const { data: expiringRes } = await sb.from('reservations')
+      .select('buyer_name, expires_at, hard_expires_at, objects(name), profiles(full_name)')
+      .lt('expires_at', in48h).gt('expires_at', now.toISOString()).eq('status','active');
+    const expiringEl = document.getElementById('dashExpiringRes');
+    if (expiringEl) {
+      if (expiringRes && expiringRes.length) {
+        expiringEl.innerHTML = expiringRes.map(r => `<tr>
+          <td>${r.profiles?.full_name || '—'}</td>
+          <td>${r.objects?.name || '—'}</td>
+          <td>${r.buyer_name || '—'}</td>
+          <td style="color:var(--gone);font-weight:700">${new Date(r.expires_at).toLocaleString('de-DE')}</td>
+        </tr>`).join('');
+      } else {
+        expiringEl.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine ablaufenden Reservierungen</td></tr>';
+      }
+    }
+  } catch(e) {}
+
+  // Letzte Aktivitäten
+  try {
+    const { data: recentLeads } = await sb.from('leads').select('name, status, created_at, profiles(full_name)').gte('created_at', weekAgo).order('created_at', {ascending:false}).limit(10);
+    const { data: recentRes } = await sb.from('reservations').select('buyer_name, created_at, profiles(full_name)').gte('created_at', weekAgo).order('created_at', {ascending:false}).limit(5);
+    const activities = [
+      ...(recentLeads||[]).map(l => ({date: l.created_at, type:'Lead', detail: l.name + ' ('+l.status+')', vp: l.profiles?.full_name})),
+      ...(recentRes||[]).map(r => ({date: r.created_at, type:'Reservierung', detail: r.buyer_name, vp: r.profiles?.full_name})),
+    ].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
+    const actEl = document.getElementById('dashActivities');
+    if (actEl) {
+      actEl.innerHTML = activities.length ? activities.map(a => `<tr>
+        <td style="font-size:11px;color:var(--muted)">${new Date(a.date).toLocaleDateString('de-DE')}</td>
+        <td><span class="badge badge-gold">${a.type}</span></td>
+        <td>${a.detail}</td>
+        <td style="font-size:11px">${a.vp||'—'}</td>
+      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine Aktivitäten</td></tr>';
+    }
+  } catch(e) {}
+
+  // VP Aktivität
+  try {
+    const { data: vpActivity } = await sb.from('leads').select('vp_id, profiles!leads_vp_id_fkey(full_name)').gte('created_at', weekAgo);
+    const vpMap = {};
+    (vpActivity||[]).forEach(l => {
+      const n = l.profiles?.full_name || l.vp_id;
+      vpMap[n] = (vpMap[n]||0) + 1;
+    });
+    const vpEl = document.getElementById('dashVPActivity');
+    if (vpEl) {
+      const sorted = Object.entries(vpMap).sort((a,b) => b[1]-a[1]);
+      vpEl.innerHTML = sorted.length ? sorted.map(([name, cnt]) => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-size:12px;width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+          <div style="flex:1;background:var(--paper-2);height:18px;position:relative">
+            <div style="position:absolute;left:0;top:0;height:100%;background:var(--brand);width:${Math.round(cnt/Math.max(...Object.values(vpMap))*100)}%"></div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);width:30px;text-align:right">${cnt}</div>
+        </div>`).join('') : '<p style="color:var(--muted);font-size:13px">Keine Aktivitäten in den letzten 7 Tagen.</p>';
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 7: RESERVIERUNGS-ABLAUF-ALERT
+// ══════════════════════════════════════════════════════
+function checkReservationExpiryAlerts(reservations) {
+  var now = new Date();
+  var in12h = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+  var expiring = reservations.filter(function(r) {
+    if (!r.expires_at || !['soft','hard','pending'].includes(r.status)) return false;
+    var exp = new Date(r.expires_at);
+    return exp > now && exp <= in12h;
+  });
+  var alertDiv = document.getElementById('res-expiry-alert');
+  var listDiv = document.getElementById('res-expiry-list');
+  var badge = document.getElementById('res-expiry-badge');
+  if (!expiring.length) {
+    if (alertDiv) alertDiv.style.display = 'none';
+    if (badge) badge.style.display = 'none';
+    return;
+  }
+  if (badge) { badge.textContent = expiring.length; badge.style.display = 'inline'; }
+  if (!alertDiv || !listDiv) return;
+  alertDiv.style.display = '';
+  listDiv.innerHTML = expiring.map(function(r) {
+    var exp = new Date(r.expires_at);
+    var diffMin = Math.round((exp - now) / 60000);
+    var diffStr = diffMin < 60 ? diffMin + ' Min.' : Math.round(diffMin/60) + ' Std.';
+    return '<div class="res-expiry-row">' +
+      '<span style="font-weight:600;font-size:12px;color:#721c24">' + (r.buyer_name||'—') + '</span>' +
+      '<span style="font-size:11px;color:var(--muted)">' + (r.objects?.name||'—') + '</span>' +
+      '<span style="background:#dc3545;color:white;padding:2px 8px;font-size:10px;font-weight:700">⏱ noch ' + diffStr + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 8: EXCEL-EXPORT OBJEKTE
+// ══════════════════════════════════════════════════════
+async function exportObjectsXlsx() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+  if (typeof XLSX === 'undefined') { notify('SheetJS nicht geladen – bitte Seite neu laden', 'error'); return; }
+  notify('Excel wird erstellt…', '', 2000);
+  var resp = await sb.from('objects').select('*').order('name');
+  if (resp.error) { notify('Fehler: ' + resp.error.message, 'error'); return; }
+  var data2 = resp.data || [];
+  var rows = data2.map(function(o) {
+    return {
+      'Name': o.name || '',
+      'Adresse': o.address || '',
+      'Fläche (m²)': o.area || '',
+      'Zimmer': o.rooms || '',
+      'Kaufpreis (€)': (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0),
+      'Kaltmiete/Mo (€)': o.cold_rent || 0,
+      'Status': o.status || '',
+      'Branding': o.branding || '',
+      'Stellplatz': o.parking_active ? 'Ja' : 'Nein',
+      'KfW möglich': o.kfw_moeglich ? 'Ja' : 'Nein',
+      'Veröffentlicht': o.published ? 'Ja' : 'Nein',
+      'Letzte Änderung': o.updated_at ? new Date(o.updated_at).toLocaleDateString('de-DE') : ''
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Objekte');
+  XLSX.writeFile(wb, 'Vestora_Objekte_' + new Date().toISOString().split('T')[0] + '.xlsx');
+  notify('✓ Excel exportiert', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 9: MOBILE NAV (HAMBURGER)
+// ══════════════════════════════════════════════════════
+function toggleMobileNav() {
+  var nav = document.getElementById('appNav');
+  if (nav) nav.classList.toggle('mobile-open');
+}
+
+function closeMobileNav() {
+  var nav = document.getElementById('appNav');
+  if (nav) nav.classList.remove('mobile-open');
+}
+
+// Nav bei Klick außerhalb schließen
+document.addEventListener('click', function(e) {
+  var nav = document.getElementById('appNav');
+  var btn = document.getElementById('hamburger-btn');
+  if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
+    nav.classList.remove('mobile-open');
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// FEATURE 10: ONBOARDING
+// ══════════════════════════════════════════════════════
+var obStep = 0;
+var OB_TOTAL = 4;
+
+function showOnboarding() {
+  obStep = 0;
+  updateOnboardingStep();
+  openModal('onboardingModal');
+}
+
+function updateOnboardingStep() {
+  for (var i = 0; i < OB_TOTAL; i++) {
+    var s = document.getElementById('ob-step-' + i);
+    var d = document.getElementById('ob-dot-' + i);
+    if (s) s.style.display = i === obStep ? '' : 'none';
+    if (d) d.style.background = i === obStep ? 'var(--brand)' : 'var(--stone)';
+  }
+  var prevBtn = document.getElementById('ob-prev-btn');
+  var nextBtn = document.getElementById('ob-next-btn');
+  if (prevBtn) prevBtn.style.visibility = obStep > 0 ? 'visible' : 'hidden';
+  if (nextBtn) nextBtn.textContent = obStep === OB_TOTAL - 1 ? 'Los geht\'s 🚀' : 'Weiter →';
+}
+
+function nextOnboardingStep() {
+  if (obStep < OB_TOTAL - 1) {
+    obStep++;
+    updateOnboardingStep();
+  } else {
+    if (currentUser) localStorage.setItem('onboardingDone_' + currentUser.id, '1');
+    closeModal('onboardingModal');
+    notify('Willkommen! Tutorial jederzeit über den ? Button neu starten.', 'success', 5000);
+  }
+}
+
+function prevOnboardingStep() {
+  if (obStep > 0) { obStep--; updateOnboardingStep(); }
+}
+
+function checkOnboarding() {
+  if (!currentUser || !currentProfile || currentProfile.role !== 'vp') return;
+  if (localStorage.getItem('onboardingDone_' + currentUser.id) !== '1') {
+    showOnboarding();
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// SELBSTAUSKUNFT
+// ══════════════════════════════════════════════════════
+let _saSignCanvas = null, _saSignCtx = null, _saSignDrawing = false;
+
+function saInitSignature() {
+  _saSignCanvas = document.getElementById('saSignCanvas');
+  if (!_saSignCanvas) return;
+  _saSignCtx = _saSignCanvas.getContext('2d');
+  _saSignCtx.strokeStyle = '#1F2A24'; _saSignCtx.lineWidth = 2; _saSignCtx.lineCap = 'round';
+  _saSignCanvas.addEventListener('mousedown', e => { _saSignDrawing = true; _saSignCtx.beginPath(); const r = _saSignCanvas.getBoundingClientRect(); _saSignCtx.moveTo((e.clientX-r.left)*(_saSignCanvas.width/r.width),(e.clientY-r.top)*(_saSignCanvas.height/r.height)); });
+  _saSignCanvas.addEventListener('mousemove', e => { if(!_saSignDrawing) return; const r = _saSignCanvas.getBoundingClientRect(); _saSignCtx.lineTo((e.clientX-r.left)*(_saSignCanvas.width/r.width),(e.clientY-r.top)*(_saSignCanvas.height/r.height)); _saSignCtx.stroke(); });
+  _saSignCanvas.addEventListener('mouseup', () => _saSignDrawing = false);
+  _saSignCanvas.addEventListener('mouseleave', () => _saSignDrawing = false);
+  _saSignCanvas.addEventListener('touchstart', e => { e.preventDefault(); _saSignDrawing = true; _saSignCtx.beginPath(); const r = _saSignCanvas.getBoundingClientRect(), t = e.touches[0]; _saSignCtx.moveTo((t.clientX-r.left)*(_saSignCanvas.width/r.width),(t.clientY-r.top)*(_saSignCanvas.height/r.height)); });
+  _saSignCanvas.addEventListener('touchmove', e => { e.preventDefault(); if(!_saSignDrawing) return; const r = _saSignCanvas.getBoundingClientRect(), t = e.touches[0]; _saSignCtx.lineTo((t.clientX-r.left)*(_saSignCanvas.width/r.width),(t.clientY-r.top)*(_saSignCanvas.height/r.height)); _saSignCtx.stroke(); });
+  _saSignCanvas.addEventListener('touchend', () => _saSignDrawing = false);
+}
+
+function saClearSignature() {
+  if (_saSignCtx && _saSignCanvas) _saSignCtx.clearRect(0, 0, _saSignCanvas.width, _saSignCanvas.height);
+}
+
+function saSignatureIsBlank() {
+  if (!_saSignCanvas || !_saSignCtx) return true;
+  const d = _saSignCtx.getImageData(0, 0, _saSignCanvas.width, _saSignCanvas.height).data;
+  for (let i = 3; i < d.length; i += 4) { if (d[i] > 10) return false; }
+  return true;
+}
+
+function openNewSelbstauskunft() {
+  // Populate lead dropdown
+  const sel = document.getElementById('sa-lead-id');
+  if (sel) {
+    sel.innerHTML = '<option value="">— Bitte Lead auswählen —</option>';
+    const myLeads = currentLeads.filter(l => !['lost'].includes(l.status));
+    myLeads.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    myLeads.forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = l.id;
+      opt.textContent = (l.name || '—') + (l.phone ? ' · ' + l.phone : '');
+      sel.appendChild(opt);
+    });
+  }
+  // Set today's date
+  const today = new Date().toISOString().split('T')[0];
+  const dateFld = document.getElementById('sa-datum');
+  if (dateFld) dateFld.value = today;
+  // Clear signature canvas
+  saClearSignature();
+  openModal('selbstauskunftFormModal');
+  // Init signature after modal is visible
+  setTimeout(() => saInitSignature(), 100);
+}
+
+async function loadSelbstauskunftView() {
+  const container = document.getElementById('sa-list-container');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div class="spinner"></div></div>';
+
+  const isAdm = currentProfile && currentProfile.role === 'admin';
+  let q = sb.from('leads').select('id,name,email,phone,selbstauskunft_pdf,created_at').not('name','is',null).order('created_at',{ascending:false});
+  if (!isAdm) q = q.eq('vp_id', currentUser.id);
+  const { data: leads } = await q;
+
+  if (!leads || !leads.length) {
+    container.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--muted)">Noch keine Selbstauskünfte vorhanden.<br><small style="margin-top:8px;display:block">Klicken Sie auf "Neue Selbstauskunft" um eine zu erstellen.</small></div>';
+    return;
+  }
+
+  const withSA = leads.filter(l => l.selbstauskunft_pdf);
+  const withoutSA = leads.filter(l => !l.selbstauskunft_pdf);
+
+  let html = '';
+  if (withSA.length) {
+    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:10px;margin-top:4px">Eingereichte Selbstauskünfte (' + withSA.length + ')</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">';
+    withSA.forEach(l => {
+      html += '<div style="border:1px solid var(--accent);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(160,122,71,.04)">'
+        + '<div><div style="font-weight:700;font-size:13px;color:var(--brand)">' + (l.name||'—') + '</div>'
+        + '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + [l.email,l.phone].filter(Boolean).join(' · ') + '</div></div>'
+        + '<div style="display:flex;gap:8px;align-items:center">'
+        + '<span style="font-size:11px;font-weight:700;color:var(--ok)">✓ Selbstauskunft vorhanden</span>'
+        + '<button class="btn-sm btn-pos" style="font-size:10px;padding:3px 10px" onclick="downloadSelbstauskunftPdf(\'' + l.selbstauskunft_pdf + '\')">PDF herunterladen</button>'
+        + '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  if (withoutSA.length) {
+    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:10px">Leads ohne Selbstauskunft (' + withoutSA.length + ')</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:6px">';
+    withoutSA.forEach(l => {
+      html += '<div style="border:1px solid var(--g200);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px">'
+        + '<div><div style="font-weight:600;font-size:12px;color:var(--brand)">' + (l.name||'—') + '</div>'
+        + '<div style="font-size:11px;color:var(--muted)">' + [l.email,l.phone].filter(Boolean).join(' · ') + '</div></div>'
+        + '<button class="btn-sm btn-outline" style="font-size:10px;padding:3px 10px;color:var(--ink);border-color:var(--stone)" onclick="openNewSelbstauskunftForLead(\'' + l.id + '\')">+ Erstellen</button>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  container.innerHTML = '<div class="card">' + html + '</div>';
+}
+
+function openNewSelbstauskunftForLead(leadId) {
+  openNewSelbstauskunft();
+  setTimeout(() => {
+    const sel = document.getElementById('sa-lead-id');
+    if (sel) sel.value = leadId;
+  }, 50);
+}
+
+async function downloadSelbstauskunftPdf(path) {
+  const { data, error } = await sb.storage.from('reservation-pdfs').createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl) { notify('Fehler beim Abrufen des PDFs', 'error'); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+async function submitSelbstauskunft() {
+  // Validation
+  const leadId = document.getElementById('sa-lead-id').value;
+  if (!leadId) { notify('Bitte einen Lead auswählen', 'error'); return; }
+  const vorname = document.getElementById('sa-vorname').value.trim();
+  const nachname = document.getElementById('sa-nachname').value.trim();
+  if (!vorname || !nachname) { notify('Bitte Vor- und Nachname eingeben', 'error'); return; }
+  if (!document.getElementById('sa-bestaetigung').checked) { notify('Bitte die Richtigkeit der Angaben bestätigen', 'error'); return; }
+  if (saSignatureIsBlank()) { notify('Bitte Unterschrift leisten', 'error'); return; }
+
+  const btn = document.getElementById('sa-submit-btn');
+  btn.disabled = true; btn.textContent = '⏳ Wird erstellt...';
+
+  // Collect form data
+  const gV = id => (document.getElementById(id)?.value || '').trim();
+  const gN = id => parseFloat(document.getElementById(id)?.value) || 0;
+  const motivs = Array.from(document.querySelectorAll('.sa-motiv:checked')).map(el => el.value);
+  const sigData = _saSignCanvas ? _saSignCanvas.toDataURL('image/png') : null;
+  const datum = gV('sa-datum') || new Date().toISOString().split('T')[0];
+
+  // Generate PDF with jsPDF
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  if (typeof jspdf === 'undefined') { notify('PDF-Export nicht verfügbar', 'error'); btn.disabled=false; btn.textContent='📄 Selbstauskunft speichern & PDF erzeugen'; return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+
+  const W = 210, margin = 18;
+  let y = 0;
+
+  // Header bar
+  doc.setFillColor(31,42,36); doc.rect(0,0,W,26,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(200,164,114);
+  doc.text('Vestora Capital', margin, 11);
+  doc.setFontSize(8); doc.setTextColor(180,180,160); doc.setFont('helvetica','normal');
+  doc.text('FINANZIELLE SELBSTAUSKUNFT · VERTRAULICH', margin, 19);
+  doc.setFontSize(8); doc.setTextColor(160,160,140);
+  doc.text('Datum: ' + new Date(datum).toLocaleDateString('de-DE'), W-margin, 19, {align:'right'});
+  y = 34;
+
+  function saSection(title) {
+    doc.setFillColor(245,243,238); doc.rect(margin,y,W-2*margin,5.5,'F');
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(100,90,70);
+    doc.text(title.toUpperCase(), margin+2, y+3.8); y += 8;
+  }
+  function saRow(label, value) {
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+    doc.text(label + ':', margin, y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(31,42,36);
+    doc.text(String(value||'—'), 82, y);
+    doc.setDrawColor(225,220,210); doc.line(margin, y+1.2, W-margin, y+1.2); y += 6.5;
+    if (y > 270) { doc.addPage(); y = 20; }
+  }
+  function saFmt(n) { return n ? '€ ' + Number(n).toLocaleString('de-DE') : '—'; }
+
+  // Content
+  saSection('Persönliche Daten');
+  saRow('Name', vorname + ' ' + nachname);
+  saRow('Geburtsdatum', gV('sa-gebdat') ? new Date(gV('sa-gebdat')).toLocaleDateString('de-DE') : '—');
+  saRow('Geburtsort', gV('sa-geboro') || '—');
+  saRow('Staatsangehörigkeit', gV('sa-staat') || '—');
+  saRow('Familienstand', gV('sa-famstand') || '—');
+  saRow('Unterhaltsberechtigte Kinder', gV('sa-kinder') || '0');
+
+  saSection('Kontaktdaten');
+  saRow('Adresse', (gV('sa-strasse')||'—') + (gV('sa-plz')||gV('sa-ort') ? ', ' + [gV('sa-plz'),gV('sa-ort')].filter(Boolean).join(' ') : ''));
+  saRow('Telefon', gV('sa-telefon') || '—');
+  saRow('E-Mail', gV('sa-email') || '—');
+  saRow('Wohnsituation', gV('sa-wohnsit') + (gV('sa-wohnseit') ? ', seit ' + new Date(gV('sa-wohnseit')).toLocaleDateString('de-DE') : ''));
+
+  saSection('Beschäftigung');
+  saRow('Berufsgruppe', gV('sa-berufsgruppe') || '—');
+  saRow('Arbeitgeber / Firma', gV('sa-arbeitgeber') || '—');
+  saRow('Branche', gV('sa-branche') || '—');
+  saRow('Beschäftigt seit', gV('sa-besch-seit') ? new Date(gV('sa-besch-seit')).toLocaleDateString('de-DE') : '—');
+  saRow('Unbefristetes Arbeitsverhältnis', gV('sa-unbefristet') || '—');
+
+  saSection('Einkommen (netto monatlich)');
+  saRow('Haupteinkommen', saFmt(gN('sa-eink-haupt')));
+  saRow('Nebeneinkommen', saFmt(gN('sa-eink-neben')));
+  saRow('Unterhalt erhalten', saFmt(gN('sa-unterhalt-erhalt')));
+  saRow('Unterhalt zahlen', saFmt(gN('sa-unterhalt-zahlt')));
+  saRow('Gesamtnettoeinkommen Haushalt', saFmt(gN('sa-eink-gesamt')));
+
+  saSection('Vermögen');
+  saRow('Eigenkapital (verfügbar)', saFmt(gN('sa-eigenkapital')));
+  saRow('Bankguthaben gesamt', saFmt(gN('sa-bankguth')));
+  saRow('Immobilien (Anzahl)', gV('sa-immo-anz') || '0');
+  saRow('Immobilien-Gesamtwert', saFmt(gN('sa-immo-wert')));
+  saRow('Depot / Wertpapiere', saFmt(gN('sa-depot')));
+  saRow('Sonstige Vermögenswerte', saFmt(gN('sa-sonstig-verm')));
+
+  saSection('Verbindlichkeiten');
+  saRow('Laufende Kredite (Anzahl)', gV('sa-kred-anz') || '0');
+  saRow('Kreditraten gesamt / Monat', saFmt(gN('sa-kred-rate')));
+  saRow('Hypotheken – Rate / Monat', saFmt(gN('sa-hypo-rate')));
+
+  saSection('Anlageziele');
+  saRow('Anlagehorizont', gV('sa-horizont') || '—');
+  saRow('Risikobereitschaft', gV('sa-risiko') || '—');
+  saRow('Anlagemotiv', motivs.join(', ') || '—');
+  saRow('Erfahrung Immobilien', gV('sa-erfahrung') || '—');
+
+  // Signature section
+  y += 4;
+  if (y > 240) { doc.addPage(); y = 20; }
+  saSection('Bestätigung & Unterschrift');
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  doc.text('Ich bestätige die Richtigkeit der gemachten Angaben. Unterzeichnet am ' + new Date(datum).toLocaleDateString('de-DE') + '.', margin, y); y += 6;
+  if (sigData) {
+    try { doc.addImage(sigData, 'PNG', margin, y, 70, 22); } catch(e) {}
+    y += 25;
+  }
+  doc.setDrawColor(31,42,36); doc.line(margin, y, margin+70, y);
+  doc.setFontSize(7.5); doc.setTextColor(120,120,120);
+  doc.text(vorname + ' ' + nachname + '  (digitale Unterschrift)', margin, y+4);
+  doc.setFontSize(7); doc.setTextColor(160,160,160);
+  doc.text('Vestora Capital · Vertraulich · Nur für interne Zwecke', margin, 289);
+
+  // Convert PDF to Blob and upload
+  const pdfBlob = doc.output('blob');
+  const ts = Date.now();
+  const fileName = ts + '_selbstauskunft.pdf';
+  const storagePath = 'selbstauskunft/' + leadId + '/' + fileName;
+  const { error: uploadErr } = await sb.storage.from('reservation-pdfs').upload(storagePath, pdfBlob, { contentType: 'application/pdf', upsert: false });
+  if (uploadErr) {
+    notify('Upload-Fehler: ' + uploadErr.message, 'error');
+    btn.disabled=false; btn.textContent='📄 Selbstauskunft speichern & PDF erzeugen';
+    return;
+  }
+
+  // Save path to lead
+  const { error: dbErr } = await sb.from('leads').update({ selbstauskunft_pdf: storagePath }).eq('id', leadId);
+  if (dbErr) {
+    notify('DB-Fehler: ' + dbErr.message, 'error');
+    btn.disabled=false; btn.textContent='📄 Selbstauskunft speichern & PDF erzeugen';
+    return;
+  }
+
+  // Update local cache
+  const lc = currentLeads.find(l => l.id === leadId);
+  if (lc) lc.selbstauskunft_pdf = storagePath;
+
+  closeModal('selbstauskunftFormModal');
+  btn.disabled = false; btn.textContent = '📄 Selbstauskunft speichern & PDF erzeugen';
+  notify('✓ Selbstauskunft gespeichert! PDF wurde hochgeladen.', 'success', 5000);
+
+  // Reload view if open
+  if (document.getElementById('view-vp-selbstauskunft')?.classList.contains('active')) {
+    loadSelbstauskunftView();
+  }
 }
 
 // ══════════════════════════════════════════════════════
