@@ -1600,14 +1600,25 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
       <div style="background:var(--g100);border-left:3px solid var(--pos);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--g700)">
         Alle aktuellen Eingabewerte und Ergebnisse werden gespeichert und sind für Sie und den Admin einsehbar.
       </div>
+      <!-- Lead verknüpft: zeige Lead-Info statt Name-Eingabe -->
+      <div id="sc-lead-info" style="display:none;background:rgba(94,126,99,.08);border:1px solid var(--ok);padding:10px 14px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ok);margin-bottom:4px">Lead verknüpft</div>
+        <div style="font-weight:700;font-size:13px;color:var(--brand)" id="sc-lead-name-display"></div>
+      </div>
       <div class="form-grid" style="grid-template-columns:1fr">
-        <div class="form-fld">
+        <!-- Nur ohne Lead: Kundenname -->
+        <div class="form-fld" id="sc-buyer-field">
           <label>Kundenname *</label>
           <input id="sc-buyer" type="text" placeholder="Max Mustermann">
         </div>
+        <!-- Mit oder ohne Lead: optionale Bezeichnung -->
         <div class="form-fld">
-          <label>Notizen zum Kunden</label>
-          <textarea id="sc-notes" rows="3" placeholder="z.B. Investor, 42J., Finanzierung über Volksbank München geplant..."></textarea>
+          <label id="sc-notes-label">Bezeichnung dieser Kalkulation</label>
+          <input id="sc-bezeichnung" type="text" placeholder="z.B. Wohnung 3. OG links">
+        </div>
+        <div class="form-fld">
+          <label>Notizen</label>
+          <textarea id="sc-notes" rows="2" placeholder="z.B. Finanzierung über Volksbank München geplant..."></textarea>
         </div>
       </div>
     </div>
@@ -1645,171 +1656,274 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
 
 <!-- ══ SELBSTAUSKUNFT MODAL ══ -->
 <div class="modal-bg" id="selbstauskunftFormModal">
-  <div class="modal" style="max-width:760px;max-height:92vh;overflow-y:auto">
-    <div class="modal-header" style="background:var(--brand);color:white;position:sticky;top:0;z-index:10">
+  <div class="modal" style="max-width:780px;max-height:94vh;overflow-y:auto;display:flex;flex-direction:column">
+
+    <!-- Header sticky -->
+    <div class="modal-header" style="background:var(--brand);color:white;position:sticky;top:0;z-index:20;flex-shrink:0">
       <div>
-        <div class="modal-title" style="color:var(--accent-soft);font-family:var(--font-display);font-style:italic">Selbstauskunft</div>
-        <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);font-family:var(--font-mono)">Vestora Capital · Vertraulich</div>
+        <div class="modal-title" style="color:var(--accent-soft);font-family:var(--font-display);font-style:italic;font-size:15px">Selbstauskunft</div>
+        <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);font-family:var(--font-mono)">Vestora Capital · Vertraulich</div>
       </div>
       <button class="modal-close" style="color:white" onclick="closeModal('selbstauskunftFormModal')">×</button>
     </div>
-    <div class="modal-body">
-      <!-- Lead Zuordnung -->
-      <div style="background:rgba(160,122,71,.08);border:1px solid var(--accent);padding:12px 16px;margin-bottom:20px">
+
+    <!-- Progress bar -->
+    <div style="background:var(--brand-2);padding:10px 20px 12px;position:sticky;top:62px;z-index:19;flex-shrink:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+        <span style="font-size:10px;font-family:var(--font-mono);color:rgba(255,255,255,.6);letter-spacing:.1em;text-transform:uppercase">Schritt <span id="sa-step-num">1</span> von 8</span>
+        <span id="sa-step-label" style="font-size:11px;color:var(--accent-soft);font-weight:600"></span>
+      </div>
+      <div style="height:4px;background:rgba(255,255,255,.12);position:relative">
+        <div id="sa-progress-fill" style="height:100%;background:var(--accent-soft);transition:width .35s ease;width:12.5%"></div>
+      </div>
+    </div>
+
+    <div class="modal-body" style="flex:1;overflow-y:auto">
+
+      <!-- Lead Zuordnung (immer sichtbar) -->
+      <div style="background:rgba(160,122,71,.08);border:1px solid var(--accent);padding:10px 14px;margin-bottom:20px">
         <div class="form-fld" style="margin:0">
           <label style="color:var(--accent);font-weight:700">Lead zuordnen *</label>
-          <select id="sa-lead-id">
+          <select id="sa-lead-id" onchange="saDraftLoad()">
             <option value="">— Bitte Lead auswählen —</option>
           </select>
         </div>
       </div>
 
-      <!-- Persönliche Daten -->
-      <div class="form-section" style="margin-bottom:12px">Persönliche Daten</div>
-      <div class="form-grid">
-        <div class="form-fld"><label>Vorname *</label><input id="sa-vorname" type="text" placeholder="Max"></div>
-        <div class="form-fld"><label>Nachname *</label><input id="sa-nachname" type="text" placeholder="Mustermann"></div>
-        <div class="form-fld"><label>Geburtsdatum</label><input id="sa-gebdat" type="date"></div>
-        <div class="form-fld"><label>Geburtsort</label><input id="sa-geboro" type="text" placeholder="München"></div>
-        <div class="form-fld"><label>Staatsangehörigkeit</label><input id="sa-staat" type="text" placeholder="Deutsch" value="Deutsch"></div>
-        <div class="form-fld"><label>Familienstand</label>
-          <select id="sa-famstand">
-            <option value="ledig">Ledig</option>
-            <option value="verheiratet">Verheiratet</option>
-            <option value="geschieden">Geschieden</option>
-            <option value="verwitwet">Verwitwet</option>
-          </select>
-        </div>
-        <div class="form-fld"><label>Unterhaltsberechtigte Kinder</label><input id="sa-kinder" type="number" min="0" value="0" style="width:80px"></div>
-      </div>
-
-      <!-- Kontaktdaten -->
-      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Kontaktdaten</div>
-      <div class="form-grid">
-        <div class="form-fld full"><label>Straße + Hausnummer</label><input id="sa-strasse" type="text" placeholder="Musterstraße 12"></div>
-        <div class="form-fld"><label>PLZ</label><input id="sa-plz" type="text" placeholder="80331" style="max-width:120px"></div>
-        <div class="form-fld"><label>Ort</label><input id="sa-ort" type="text" placeholder="München"></div>
-        <div class="form-fld"><label>Telefon</label><input id="sa-telefon" type="tel" placeholder="+49 ..."></div>
-        <div class="form-fld"><label>E-Mail</label><input id="sa-email" type="email" placeholder="name@firma.de"></div>
-        <div class="form-fld"><label>Wohnsituation</label>
-          <select id="sa-wohnsit">
-            <option value="Miete">Miete</option>
-            <option value="Eigentum">Eigentum</option>
-          </select>
-        </div>
-        <div class="form-fld"><label>Wohnhaft seit</label><input id="sa-wohnseit" type="date"></div>
-      </div>
-
-      <!-- Beschäftigung -->
-      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Beschäftigung</div>
-      <div class="form-grid">
-        <div class="form-fld"><label>Berufsgruppe</label>
-          <select id="sa-berufsgruppe">
-            <option value="Angestellter">Angestellter</option>
-            <option value="Beamter">Beamter</option>
-            <option value="Selbstständig">Selbstständig</option>
-            <option value="Freiberufler">Freiberufler</option>
-            <option value="Rentner">Rentner</option>
-            <option value="Sonstiges">Sonstiges</option>
-          </select>
-        </div>
-        <div class="form-fld"><label>Arbeitgeber / Firma</label><input id="sa-arbeitgeber" type="text" placeholder="Musterfirma GmbH"></div>
-        <div class="form-fld"><label>Branche</label><input id="sa-branche" type="text" placeholder="IT, Bau, Finanzen..."></div>
-        <div class="form-fld"><label>Beschäftigt seit</label><input id="sa-besch-seit" type="date"></div>
-        <div class="form-fld"><label>Unbefristetes Arbeitsverhältnis</label>
-          <select id="sa-unbefristet">
-            <option value="Ja">Ja</option>
-            <option value="Nein">Nein</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Einkommen -->
-      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Einkommen (netto monatlich)</div>
-      <div class="form-grid">
-        <div class="form-fld"><label>Haupteinkommen (€)</label><input id="sa-eink-haupt" type="number" min="0" placeholder="3500"></div>
-        <div class="form-fld"><label>Nebeneinkommen (Miete/Dividenden etc.)</label><input id="sa-eink-neben" type="number" min="0" placeholder="0"></div>
-        <div class="form-fld"><label>Unterhalt erhalten (€)</label><input id="sa-unterhalt-erhalt" type="number" min="0" placeholder="0"></div>
-        <div class="form-fld"><label>Unterhalt zahlen (€)</label><input id="sa-unterhalt-zahlt" type="number" min="0" placeholder="0"></div>
-        <div class="form-fld"><label>Gesamtnettohaushaltseinkommen (€)</label><input id="sa-eink-gesamt" type="number" min="0" placeholder="4000"></div>
-      </div>
-
-      <!-- Vermögen -->
-      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Vermögen</div>
-      <div class="form-grid">
-        <div class="form-fld"><label>Eigenkapital (verfügbar, €)</label><input id="sa-eigenkapital" type="number" min="0" placeholder="80000"></div>
-        <div class="form-fld"><label>Bankguthaben gesamt (ca. €)</label><input id="sa-bankguth" type="number" min="0" placeholder="50000"></div>
-        <div class="form-fld"><label>Bestehende Immobilien – Anzahl</label><input id="sa-immo-anz" type="number" min="0" placeholder="0" style="max-width:80px"></div>
-        <div class="form-fld"><label>Immo-Gesamtwert (ca. €)</label><input id="sa-immo-wert" type="number" min="0" placeholder="0"></div>
-        <div class="form-fld"><label>Depot / Wertpapiere (ca. €)</label><input id="sa-depot" type="number" min="0" placeholder="0"></div>
-        <div class="form-fld"><label>Sonstige Vermögenswerte (€)</label><input id="sa-sonstig-verm" type="number" min="0" placeholder="0"></div>
-      </div>
-
-      <!-- Verbindlichkeiten -->
-      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Verbindlichkeiten</div>
-      <div class="form-grid">
-        <div class="form-fld"><label>Laufende Kredite – Anzahl</label><input id="sa-kred-anz" type="number" min="0" placeholder="0" style="max-width:80px"></div>
-        <div class="form-fld"><label>Kreditraten gesamt / Monat (€)</label><input id="sa-kred-rate" type="number" min="0" placeholder="0"></div>
-        <div class="form-fld"><label>Hypotheken/Baudarlehen – Rate / Monat (€)</label><input id="sa-hypo-rate" type="number" min="0" placeholder="0"></div>
-      </div>
-
-      <!-- Anlageziele -->
-      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Anlageziele</div>
-      <div class="form-grid">
-        <div class="form-fld"><label>Anlagehorizont</label>
-          <select id="sa-horizont">
-            <option value="unter 5 Jahre">Unter 5 Jahre</option>
-            <option value="5–10 Jahre" selected>5–10 Jahre</option>
-            <option value="über 10 Jahre">Über 10 Jahre</option>
-          </select>
-        </div>
-        <div class="form-fld"><label>Risikobereitschaft</label>
-          <select id="sa-risiko">
-            <option value="konservativ">Konservativ</option>
-            <option value="moderat" selected>Moderat</option>
-            <option value="chancenorientiert">Chancenorientiert</option>
-          </select>
-        </div>
-        <div class="form-fld"><label>Erfahrung Immobilieninvestments</label>
-          <select id="sa-erfahrung">
-            <option value="keine">Keine</option>
-            <option value="1–2 Objekte">1–2 Objekte</option>
-            <option value="3–5 Objekte">3–5 Objekte</option>
-            <option value="5+ Objekte">5+ Objekte</option>
-          </select>
-        </div>
-        <div class="form-fld full"><label>Anlagemotiv (Mehrfachauswahl)</label>
-          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px">
-            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Altersvorsorge" checked> Altersvorsorge</label>
-            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Steueroptimierung"> Steueroptimierung</label>
-            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Vermögensaufbau" checked> Vermögensaufbau</label>
-            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Inflationsschutz"> Inflationsschutz</label>
-            <label style="font-weight:400;display:flex;gap:5px;align-items:center"><input type="checkbox" class="sa-motiv" value="Sonstiges"> Sonstiges</label>
+      <!-- ── STEP 1: Persönliche Angaben ── -->
+      <div class="sa-step" data-step="1">
+        <div class="form-section" style="margin-top:0">Persönliche Angaben</div>
+        <div class="form-grid">
+          <div class="form-fld"><label>Anrede</label>
+            <select id="sa-anrede">
+              <option value="Herr">Herr</option>
+              <option value="Frau">Frau</option>
+              <option value="Divers">Divers</option>
+            </select>
+          </div>
+          <div class="form-fld"><label>Vorname *</label><input id="sa-vorname" type="text" placeholder="Max"></div>
+          <div class="form-fld"><label>Nachname *</label><input id="sa-nachname" type="text" placeholder="Mustermann"></div>
+          <div class="form-fld"><label>Geburtsdatum</label><input id="sa-gebdat" type="date"></div>
+          <div class="form-fld"><label>Geburtsort</label><input id="sa-geboro" type="text" placeholder="München"></div>
+          <div class="form-fld"><label>Geburtsland</label><input id="sa-geborland" type="text" placeholder="Deutschland" value="Deutschland"></div>
+          <div class="form-fld"><label>Staatsangehörigkeit</label><input id="sa-staat" type="text" placeholder="Deutsch" value="Deutsch"></div>
+          <div class="form-fld"><label>Familienstand</label>
+            <select id="sa-famstand" onchange="saToggleGueterstand()">
+              <option value="ledig">Ledig</option>
+              <option value="verheiratet">Verheiratet</option>
+              <option value="eingetragene Partnerschaft">Eingetragene Partnerschaft</option>
+              <option value="geschieden">Geschieden</option>
+              <option value="verwitwet">Verwitwet</option>
+              <option value="getrennt lebend">Getrennt lebend</option>
+            </select>
+          </div>
+          <div class="form-fld" id="sa-gueterstand-field" style="display:none"><label>Güterstand</label>
+            <select id="sa-gueterstand">
+              <option value="Zugewinngemeinschaft">Zugewinngemeinschaft</option>
+              <option value="Gütertrennung">Gütertrennung</option>
+              <option value="Gütergemeinschaft">Gütergemeinschaft</option>
+            </select>
           </div>
         </div>
       </div>
 
-      <!-- Unterschrift -->
-      <div class="form-section" style="margin-top:16px;margin-bottom:12px">Bestätigung & Unterschrift</div>
-      <div class="form-grid">
-        <div class="form-fld"><label>Datum</label><input id="sa-datum" type="date"></div>
+      <!-- ── STEP 2: Wohnanschrift ── -->
+      <div class="sa-step" data-step="2" style="display:none">
+        <div class="form-section" style="margin-top:0">Wohnanschrift</div>
+        <div class="form-grid">
+          <div class="form-fld full"><label>Straße + Hausnummer</label><input id="sa-strasse" type="text" placeholder="Musterstraße 12"></div>
+          <div class="form-fld"><label>PLZ</label><input id="sa-plz" type="text" placeholder="80331"></div>
+          <div class="form-fld"><label>Ort</label><input id="sa-ort" type="text" placeholder="München"></div>
+          <div class="form-fld"><label>Land</label><input id="sa-land" type="text" placeholder="Deutschland" value="Deutschland"></div>
+          <div class="form-fld"><label>Telefon</label><input id="sa-telefon" type="tel" placeholder="+49 ..."></div>
+          <div class="form-fld"><label>E-Mail</label><input id="sa-email" type="email" placeholder="name@firma.de"></div>
+          <div class="form-fld"><label>Wohnform</label>
+            <select id="sa-wohnform" onchange="saToggleMiete()">
+              <option value="Mieter">Mieter</option>
+              <option value="Eigentümer">Eigentümer</option>
+              <option value="Bei Eltern">Bei Eltern</option>
+              <option value="Sonstiges">Sonstiges</option>
+            </select>
+          </div>
+          <div class="form-fld"><label id="sa-wohnseit-label">Mietbeginn</label><input id="sa-wohnseit" type="date"></div>
+          <div class="form-fld" id="sa-miete-field"><label>Monatliche Mietkosten (€)</label><input id="sa-miete-mtl" type="number" min="0" placeholder="900"></div>
+        </div>
       </div>
-      <div style="margin:12px 0 8px">
-        <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:12px;cursor:pointer">
-          <input type="checkbox" id="sa-bestaetigung" style="margin-top:2px">
-          <span>Ich bestätige die Richtigkeit der gemachten Angaben. Die Daten werden vertraulich behandelt und ausschließlich intern für die Finanzierungsprüfung verwendet.</span>
-        </label>
+
+      <!-- ── STEP 3: Beschäftigung ── -->
+      <div class="sa-step" data-step="3" style="display:none">
+        <div class="form-section" style="margin-top:0">Beschäftigung</div>
+        <div class="form-grid">
+          <div class="form-fld"><label>Berufsgruppe</label>
+            <select id="sa-berufsgruppe">
+              <option value="Angestellter">Angestellter</option>
+              <option value="Beamter">Beamter</option>
+              <option value="Selbstständiger">Selbstständiger</option>
+              <option value="Freiberufler">Freiberufler</option>
+              <option value="Rentner">Rentner</option>
+              <option value="nicht erwerbstätig">Nicht erwerbstätig</option>
+              <option value="Sonstiges">Sonstiges</option>
+            </select>
+          </div>
+          <div class="form-fld"><label>Beruf / Position</label><input id="sa-beruf-position" type="text" placeholder="z.B. Ingenieur, Geschäftsführer"></div>
+          <div class="form-fld"><label>Arbeitgeber / Firmenname</label><input id="sa-arbeitgeber" type="text" placeholder="Musterfirma GmbH"></div>
+          <div class="form-fld"><label>Branche</label><input id="sa-branche" type="text" placeholder="IT, Bau, Finanzen..."></div>
+          <div class="form-fld full"><label>Anschrift Arbeitgeber</label><input id="sa-ag-adresse" type="text" placeholder="Musterstraße 1, 80331 München"></div>
+          <div class="form-fld"><label>Beschäftigt seit</label><input id="sa-besch-seit" type="date"></div>
+          <div class="form-fld"><label>Befristung</label>
+            <select id="sa-befristung" onchange="saToggleBefristet()">
+              <option value="unbefristet">Unbefristet</option>
+              <option value="befristet">Befristet</option>
+            </select>
+          </div>
+          <div class="form-fld" id="sa-befristet-field" style="display:none"><label>Befristet bis</label><input id="sa-befristet-bis" type="date"></div>
+          <div class="form-fld"><label>Probezeit</label>
+            <select id="sa-probezeit">
+              <option value="Nein">Nein</option>
+              <option value="Ja">Ja</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div style="margin-top:14px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:6px">Unterschrift</div>
-        <canvas id="saSignCanvas" width="700" height="140"
-          style="border:1px solid var(--stone);background:var(--field);cursor:crosshair;touch-action:none;display:block;width:100%;height:140px"></canvas>
-        <button class="btn-sm btn-outline" style="margin-top:6px;font-size:10px;padding:3px 10px;color:var(--muted);border-color:var(--stone)" onclick="saClearSignature()">Zurücksetzen</button>
+
+      <!-- ── STEP 4: Einkommensverhältnisse ── -->
+      <div class="sa-step" data-step="4" style="display:none">
+        <div class="form-section" style="margin-top:0">Einkommensverhältnisse (monatlich netto)</div>
+        <div class="form-grid">
+          <div class="form-fld"><label>Gehalt / Lohn (€)</label><input id="sa-eink-haupt" type="number" min="0" placeholder="3500"></div>
+          <div class="form-fld"><label>Mieteinnahmen netto kalt (€)</label><input id="sa-mieteinnahmen" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Kapitalerträge (€)</label><input id="sa-kapitalertraege" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Sonstige Einnahmen – Art</label><input id="sa-sonst-einnahmen-art" type="text" placeholder="z.B. Kindergeld, Rente"></div>
+          <div class="form-fld"><label>Sonstige Einnahmen – Betrag (€)</label><input id="sa-sonst-einnahmen-betrag" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Unterhalt erhalten (€)</label><input id="sa-unterhalt-erhalt" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Unterhalt zahlen (€)</label><input id="sa-unterhalt-zahlt" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Gesamteinkommen Haushalt (€)</label><input id="sa-eink-gesamt" type="number" min="0" placeholder="4000"></div>
+        </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" onclick="closeModal('selbstauskunftFormModal')">Abbrechen</button>
-      <button class="btn-sm btn-gold" id="sa-submit-btn" onclick="submitSelbstauskunft()">📄 Selbstauskunft speichern & PDF erzeugen</button>
+
+      <!-- ── STEP 5: Vermögensverhältnisse ── -->
+      <div class="sa-step" data-step="5" style="display:none">
+        <div class="form-section" style="margin-top:0">Vermögensverhältnisse</div>
+        <div class="form-grid">
+          <div class="form-fld"><label>Barvermögen / Bankguthaben (€)</label><input id="sa-bankguth" type="number" min="0" placeholder="50000"></div>
+          <div class="form-fld"><label>Wertpapiere / Depot – aktueller Wert (€)</label><input id="sa-depot" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Immobilien im Eigentum – Anzahl</label><input id="sa-immo-anz" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Immobilien – Gesamtwert (€)</label><input id="sa-immo-wert" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Immobilien – Gesamtbelastung (€)</label><input id="sa-immo-belastung" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>LV / Bausparvertrag – Rückkaufwert (€)</label><input id="sa-lv-bsv" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Sonstiges Vermögen (€)</label><input id="sa-sonstig-verm" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Eigenkapital für diese Investition (€)</label><input id="sa-eigenkapital" type="number" min="0" placeholder="80000"></div>
+        </div>
+      </div>
+
+      <!-- ── STEP 6: Verbindlichkeiten ── -->
+      <div class="sa-step" data-step="6" style="display:none">
+        <div class="form-section" style="margin-top:0">Verbindlichkeiten</div>
+        <div class="form-grid">
+          <div class="form-fld"><label>Ratenkredit – Restschuld (€)</label><input id="sa-ratenkredit-restschuld" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Ratenkredit – monatl. Rate (€)</label><input id="sa-kred-rate" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Immobiliendarlehen – Restschuld (€)</label><input id="sa-immo-restschuld" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Immobiliendarlehen – monatl. Rate (€)</label><input id="sa-hypo-rate" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Leasing – monatl. Rate (€)</label><input id="sa-leasing-rate" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Sonstige Verbindlichkeiten (€)</label><input id="sa-sonst-verbindl" type="number" min="0" placeholder="0"></div>
+        </div>
+      </div>
+
+      <!-- ── STEP 7: Anlageziele & Erfahrungen ── -->
+      <div class="sa-step" data-step="7" style="display:none">
+        <div class="form-section" style="margin-top:0">Anlageziele &amp; Erfahrungen</div>
+        <div class="form-grid">
+          <div class="form-fld full"><label>Anlageziel (Mehrfachauswahl)</label>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-motiv" value="Altersvorsorge" checked> Altersvorsorge</label>
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-motiv" value="Steueroptimierung"> Steueroptimierung</label>
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-motiv" value="Vermögensaufbau" checked> Vermögensaufbau</label>
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-motiv" value="Sachwertanlage"> Sachwertanlage</label>
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-motiv" value="Inflationsschutz"> Inflationsschutz</label>
+            </div>
+          </div>
+          <div class="form-fld"><label>Anlagehorizont</label>
+            <select id="sa-horizont">
+              <option value="unter 5 Jahre">Unter 5 Jahre</option>
+              <option value="5–10 Jahre" selected>5–10 Jahre</option>
+              <option value="10–20 Jahre">10–20 Jahre</option>
+              <option value="über 20 Jahre">Über 20 Jahre</option>
+            </select>
+          </div>
+          <div class="form-fld"><label>Risikobereitschaft</label>
+            <select id="sa-risiko">
+              <option value="sicherheitsorientiert">Sicherheitsorientiert</option>
+              <option value="konservativ">Konservativ</option>
+              <option value="ausgewogen" selected>Ausgewogen</option>
+              <option value="wachstumsorientiert">Wachstumsorientiert</option>
+              <option value="spekulativ">Spekulativ</option>
+            </select>
+          </div>
+          <div class="form-fld"><label>Bisherige Immobilienerfahrung</label>
+            <select id="sa-erfahrung">
+              <option value="Keine">Keine</option>
+              <option value="1–2 Objekte">1–2 Objekte</option>
+              <option value="3–5 Objekte">3–5 Objekte</option>
+              <option value="Mehr als 5">Mehr als 5 Objekte</option>
+            </select>
+          </div>
+          <div class="form-fld full"><label>Sonstige Anlageerfahrungen (Mehrfachauswahl)</label>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-erfahrung-sonst" value="Aktien"> Aktien</label>
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-erfahrung-sonst" value="Fonds"> Fonds</label>
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-erfahrung-sonst" value="ETF"> ETF</label>
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-erfahrung-sonst" value="Anleihen"> Anleihen</label>
+              <label style="font-weight:400;display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" class="sa-erfahrung-sonst" value="Keine"> Keine</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 8: Finanzierungswunsch + Datenschutz + Unterschrift ── -->
+      <div class="sa-step" data-step="8" style="display:none">
+        <div class="form-section" style="margin-top:0">Finanzierungswunsch</div>
+        <div class="form-grid">
+          <div class="form-fld"><label>Eigenkapital einsetzen (€)</label><input id="sa-ek-einsetzen" type="number" min="0" placeholder="0"></div>
+          <div class="form-fld"><label>Finanzierungsbedarf (€)</label><input id="sa-finanzierungsbedarf" type="number" min="0" placeholder="200000"></div>
+          <div class="form-fld"><label>Gewünschte Laufzeit (Jahre)</label><input id="sa-laufzeit" type="number" min="1" max="40" placeholder="20"></div>
+          <div class="form-fld"><label>Bereits Finanzierung angefragt?</label>
+            <select id="sa-finanzierung-angefragt">
+              <option value="Nein">Nein</option>
+              <option value="Ja">Ja</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section" style="margin-top:22px">Datenschutz &amp; Unterschrift</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+          <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:13px;cursor:pointer;line-height:1.5">
+            <input type="checkbox" id="sa-dsgvo" style="margin-top:2px;flex-shrink:0">
+            <span>Ich stimme der Verarbeitung meiner Daten durch Vestora Capital zum Zweck der Anlageberatung zu.</span>
+          </label>
+          <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:13px;cursor:pointer;line-height:1.5">
+            <input type="checkbox" id="sa-bestaetigung" style="margin-top:2px;flex-shrink:0">
+            <span>Ich bestätige die Vollständigkeit und Richtigkeit meiner Angaben.</span>
+          </label>
+        </div>
+        <div class="form-grid">
+          <div class="form-fld"><label>Datum</label><input id="sa-datum" type="date"></div>
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-family:var(--font-mono)">Unterschrift</div>
+          <canvas id="saSignCanvas" width="700" height="140"
+            style="border:1px solid var(--stone);background:var(--field);cursor:crosshair;touch-action:none;display:block;width:100%;height:140px"></canvas>
+          <button class="btn-sm btn-outline" style="margin-top:6px;font-size:10px;padding:3px 10px;color:var(--muted);border-color:var(--stone)" onclick="saClearSignature()">Zurücksetzen</button>
+        </div>
+      </div>
+
+    </div><!-- /modal-body -->
+
+    <div class="modal-footer" style="position:sticky;bottom:0;z-index:19;background:var(--paper-2);flex-shrink:0">
+      <button class="btn-sm btn-outline" style="color:var(--muted);border-color:var(--stone)" onclick="saDraftSave()" title="Zwischenspeichern">💾 Speichern</button>
+      <div style="flex:1"></div>
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" id="sa-prev-btn" onclick="saStepNav(-1)" style="display:none">← Zurück</button>
+      <button class="btn-sm btn-gold" id="sa-next-btn" onclick="saStepNav(1)">Weiter →</button>
+      <button class="btn-sm btn-gold" id="sa-submit-btn" onclick="submitSelbstauskunft()" style="display:none">📄 Speichern &amp; PDF erstellen</button>
     </div>
   </div>
 </div>
@@ -4142,6 +4256,8 @@ async function createAndSendProtocol() {
     // Update local cache
     const lc = currentLeads.find(l => l.id === protoLeadId);
     if (lc) lc.protocol_token = proto.signing_token;
+    // Init proto status cache so button immediately shows "Link kopieren"
+    _protoStatusCache[proto.signing_token] = { signed_at: null, pdf_path: null };
   }
 
   closeModal('protocolModal');
@@ -6431,6 +6547,15 @@ async function openCalcForObjectDirect(id) {
 
   runCalc();
 
+  // Prefill Kundenname aus verknüpftem Lead
+  if (calcLinkedLeadId) {
+    const linkedLead = currentLeads.find(l => l.id === calcLinkedLeadId);
+    if (linkedLead) {
+      const recipientEl = document.getElementById('c-recipient');
+      if (recipientEl) { recipientEl.value = linkedLead.name || ''; runCalc(); }
+    }
+  }
+
   // Bilder laden für Galerie + PDF
   const galleryEl = document.getElementById('cr-gallery');
   const galleryImgs = document.getElementById('cr-gallery-imgs');
@@ -7063,15 +7188,38 @@ async function submitReservation() {
 // ══════════════════════════════════════════════════════
 function openSaveCalcModal() {
   if (!calcData || !calcData.o) { notify('Bitte zuerst einen Kalkulator öffnen', 'error'); return; }
-  document.getElementById('sc-buyer').value = document.getElementById('c-recipient')?.value || '';
+  const leadInfoEl  = document.getElementById('sc-lead-info');
+  const buyerFldEl  = document.getElementById('sc-buyer-field');
+  const leadNameEl  = document.getElementById('sc-lead-name-display');
+  if (calcLinkedLeadId) {
+    const lead = currentLeads.find(l => l.id === calcLinkedLeadId);
+    if (leadInfoEl)  leadInfoEl.style.display  = 'block';
+    if (buyerFldEl)  buyerFldEl.style.display  = 'none';
+    if (leadNameEl)  leadNameEl.textContent     = lead ? (lead.name || '—') : calcLinkedLeadId;
+  } else {
+    if (leadInfoEl)  leadInfoEl.style.display  = 'none';
+    if (buyerFldEl)  buyerFldEl.style.display  = '';
+    document.getElementById('sc-buyer').value = document.getElementById('c-recipient')?.value || '';
+  }
+  document.getElementById('sc-bezeichnung').value = '';
   document.getElementById('sc-notes').value = '';
   openModal('saveCalcModal');
 }
 
 async function saveCalculation() {
-  const buyer = document.getElementById('sc-buyer').value.trim();
-  if (!buyer) { notify('Bitte Kundenname eingeben', 'error'); return; }
-  const notes = document.getElementById('sc-notes').value.trim();
+  let buyer, notes;
+  notes = document.getElementById('sc-notes').value.trim();
+  const bezeichnung = document.getElementById('sc-bezeichnung')?.value.trim() || '';
+
+  if (calcLinkedLeadId) {
+    const lead = currentLeads.find(l => l.id === calcLinkedLeadId);
+    buyer = lead ? (lead.name || 'Unbekannt') : 'Unbekannt';
+  } else {
+    buyer = document.getElementById('sc-buyer').value.trim();
+    if (!buyer) { notify('Bitte Kundenname eingeben', 'error'); return; }
+  }
+  if (bezeichnung) buyer = buyer + (bezeichnung ? ' – ' + bezeichnung : '');
+
   const d = calcData;
   const o = d.o;
 
@@ -7080,6 +7228,7 @@ async function saveCalculation() {
     vp_name: currentProfile.full_name || currentProfile.email,
     object_id: o.id,
     object_name: o.name,
+    lead_id: calcLinkedLeadId || null,
     buyer_name: buyer,
     buyer_notes: notes,
     // Eingabewerte
@@ -8450,14 +8599,19 @@ function renderProtocolBtn(l) {
     return `<button class="btn-sm btn-outline" style="padding:3px 7px;font-size:9px;color:var(--ink);border-color:var(--stone)" onclick="startProtocolFromLead('${l.id}')">Protokoll erstellen</button>`;
   }
   const ps = _protoStatusCache[l.protocol_token];
-  if (ps && ps.signed_at && ps.pdf_path) {
-    return `<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">`
-      + `<span style="font-size:9px;font-weight:700;color:var(--ok)">✓ Unterzeichnet ${fmtDate(ps.signed_at)}</span>`
-      + `<button class="btn-sm btn-pos" style="padding:2px 7px;font-size:9px" onclick="downloadProtocolPdf('${ps.pdf_path}')">PDF herunterladen</button>`
-      + `</div>`;
+  // State: signed (signed_at set) — pdf_path optional
+  if (ps && ps.signed_at) {
+    let html = `<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">`
+      + `<span style="font-size:9px;font-weight:700;color:var(--ok)">✓ Unterzeichnet am ${fmtDate(ps.signed_at)}</span>`;
+    if (ps.pdf_path) {
+      html += `<button class="btn-sm btn-pos" style="padding:2px 7px;font-size:9px" onclick="downloadProtocolPdf('${ps.pdf_path}')">PDF herunterladen</button>`;
+    }
+    html += `</div>`;
+    return html;
   }
+  // State: protocol exists but not yet signed (ps may be undefined if cache miss = freshly created)
   return `<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">`
-    + `<button class="btn-sm btn-navy" style="padding:2px 7px;font-size:9px" onclick="copyProtocolLink('${l.protocol_token}')">Protokoll-Link kopieren</button>`
+    + `<button class="btn-sm btn-navy" style="padding:2px 7px;font-size:9px" onclick="copyProtocolLink('${l.protocol_token}')">Link kopieren</button>`
     + `<span style="font-size:9px;color:var(--muted)">Noch nicht unterzeichnet</span>`
     + `</div>`;
 }
@@ -8949,28 +9103,79 @@ function checkOnboarding() {
 }
 
 // ══════════════════════════════════════════════════════
-// SELBSTAUSKUNFT
+// ══════════════════════════════════════════════════════
+// SELBSTAUSKUNFT — Stepped Form (8 Schritte)
 // ══════════════════════════════════════════════════════
 let _saSignCanvas = null, _saSignCtx = null, _saSignDrawing = false;
+let _saCurrentStep = 1;
+const SA_STEP_LABELS = ['Persönliche Angaben','Wohnanschrift','Beschäftigung','Einkommensverhältnisse','Vermögensverhältnisse','Verbindlichkeiten','Anlageziele & Erfahrungen','Finanzierung & Unterschrift'];
+const SA_TOTAL_STEPS = 8;
+
+function saUpdateStepUI() {
+  document.querySelectorAll('.sa-step').forEach(el => {
+    el.style.display = parseInt(el.dataset.step) === _saCurrentStep ? '' : 'none';
+  });
+  const numEl   = document.getElementById('sa-step-num');
+  const lblEl   = document.getElementById('sa-step-label');
+  const fillEl  = document.getElementById('sa-progress-fill');
+  const prevBtn = document.getElementById('sa-prev-btn');
+  const nextBtn = document.getElementById('sa-next-btn');
+  const subBtn  = document.getElementById('sa-submit-btn');
+  if (numEl)   numEl.textContent   = _saCurrentStep;
+  if (lblEl)   lblEl.textContent   = SA_STEP_LABELS[_saCurrentStep - 1] || '';
+  if (fillEl)  fillEl.style.width  = Math.round((_saCurrentStep / SA_TOTAL_STEPS) * 100) + '%';
+  if (prevBtn) prevBtn.style.display = _saCurrentStep > 1 ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = _saCurrentStep < SA_TOTAL_STEPS ? '' : 'none';
+  if (subBtn)  subBtn.style.display  = _saCurrentStep === SA_TOTAL_STEPS ? '' : 'none';
+  if (_saCurrentStep === SA_TOTAL_STEPS) setTimeout(() => saInitSignature(), 80);
+}
+
+function saStepNav(dir) {
+  const next = _saCurrentStep + dir;
+  if (next < 1 || next > SA_TOTAL_STEPS) return;
+  _saCurrentStep = next;
+  saUpdateStepUI();
+  const mb = document.querySelector('#selbstauskunftFormModal .modal-body');
+  if (mb) mb.scrollTop = 0;
+}
+
+function saToggleGueterstand() {
+  const val = document.getElementById('sa-famstand')?.value;
+  const fld = document.getElementById('sa-gueterstand-field');
+  if (fld) fld.style.display = (val === 'verheiratet' || val === 'eingetragene Partnerschaft') ? '' : 'none';
+}
+function saToggleMiete() {
+  const val = document.getElementById('sa-wohnform')?.value;
+  const mieteFld = document.getElementById('sa-miete-field');
+  const lblEl    = document.getElementById('sa-wohnseit-label');
+  if (mieteFld) mieteFld.style.display = (val === 'Mieter') ? '' : 'none';
+  if (lblEl)    lblEl.textContent       = (val === 'Eigentümer') ? 'Im Eigentum seit' : 'Mietbeginn / Wohnhaft seit';
+}
+function saToggleBefristet() {
+  const val = document.getElementById('sa-befristung')?.value;
+  const fld = document.getElementById('sa-befristet-field');
+  if (fld) fld.style.display = (val === 'befristet') ? '' : 'none';
+}
 
 function saInitSignature() {
   _saSignCanvas = document.getElementById('saSignCanvas');
   if (!_saSignCanvas) return;
+  const nc = _saSignCanvas.cloneNode(true);
+  _saSignCanvas.parentNode.replaceChild(nc, _saSignCanvas);
+  _saSignCanvas = nc;
   _saSignCtx = _saSignCanvas.getContext('2d');
   _saSignCtx.strokeStyle = '#1F2A24'; _saSignCtx.lineWidth = 2; _saSignCtx.lineCap = 'round';
   _saSignCanvas.addEventListener('mousedown', e => { _saSignDrawing = true; _saSignCtx.beginPath(); const r = _saSignCanvas.getBoundingClientRect(); _saSignCtx.moveTo((e.clientX-r.left)*(_saSignCanvas.width/r.width),(e.clientY-r.top)*(_saSignCanvas.height/r.height)); });
   _saSignCanvas.addEventListener('mousemove', e => { if(!_saSignDrawing) return; const r = _saSignCanvas.getBoundingClientRect(); _saSignCtx.lineTo((e.clientX-r.left)*(_saSignCanvas.width/r.width),(e.clientY-r.top)*(_saSignCanvas.height/r.height)); _saSignCtx.stroke(); });
   _saSignCanvas.addEventListener('mouseup', () => _saSignDrawing = false);
   _saSignCanvas.addEventListener('mouseleave', () => _saSignDrawing = false);
-  _saSignCanvas.addEventListener('touchstart', e => { e.preventDefault(); _saSignDrawing = true; _saSignCtx.beginPath(); const r = _saSignCanvas.getBoundingClientRect(), t = e.touches[0]; _saSignCtx.moveTo((t.clientX-r.left)*(_saSignCanvas.width/r.width),(t.clientY-r.top)*(_saSignCanvas.height/r.height)); });
-  _saSignCanvas.addEventListener('touchmove', e => { e.preventDefault(); if(!_saSignDrawing) return; const r = _saSignCanvas.getBoundingClientRect(), t = e.touches[0]; _saSignCtx.lineTo((t.clientX-r.left)*(_saSignCanvas.width/r.width),(t.clientY-r.top)*(_saSignCanvas.height/r.height)); _saSignCtx.stroke(); });
+  _saSignCanvas.addEventListener('touchstart', e => { e.preventDefault(); _saSignDrawing = true; _saSignCtx.beginPath(); const r = _saSignCanvas.getBoundingClientRect(), t = e.touches[0]; _saSignCtx.moveTo((t.clientX-r.left)*(_saSignCanvas.width/r.width),(t.clientY-r.top)*(_saSignCanvas.height/r.height)); }, {passive:false});
+  _saSignCanvas.addEventListener('touchmove', e => { e.preventDefault(); if(!_saSignDrawing) return; const r = _saSignCanvas.getBoundingClientRect(), t = e.touches[0]; _saSignCtx.lineTo((t.clientX-r.left)*(_saSignCanvas.width/r.width),(t.clientY-r.top)*(_saSignCanvas.height/r.height)); _saSignCtx.stroke(); }, {passive:false});
   _saSignCanvas.addEventListener('touchend', () => _saSignDrawing = false);
 }
-
 function saClearSignature() {
   if (_saSignCtx && _saSignCanvas) _saSignCtx.clearRect(0, 0, _saSignCanvas.width, _saSignCanvas.height);
 }
-
 function saSignatureIsBlank() {
   if (!_saSignCanvas || !_saSignCtx) return true;
   const d = _saSignCtx.getImageData(0, 0, _saSignCanvas.width, _saSignCanvas.height).data;
@@ -8978,8 +9183,105 @@ function saSignatureIsBlank() {
   return true;
 }
 
+function saCollectDraft() {
+  const gV = id => document.getElementById(id)?.value || '';
+  const gCB = cls => Array.from(document.querySelectorAll('.' + cls + ':checked')).map(el => el.value);
+  return {
+    anrede: gV('sa-anrede'), vorname: gV('sa-vorname'), nachname: gV('sa-nachname'),
+    gebdat: gV('sa-gebdat'), geboro: gV('sa-geboro'), geborland: gV('sa-geborland'),
+    staat: gV('sa-staat'), famstand: gV('sa-famstand'), gueterstand: gV('sa-gueterstand'),
+    strasse: gV('sa-strasse'), plz: gV('sa-plz'), ort: gV('sa-ort'), land: gV('sa-land'),
+    telefon: gV('sa-telefon'), email: gV('sa-email'),
+    wohnform: gV('sa-wohnform'), wohnseit: gV('sa-wohnseit'), miete_mtl: gV('sa-miete-mtl'),
+    berufsgruppe: gV('sa-berufsgruppe'), beruf_position: gV('sa-beruf-position'),
+    arbeitgeber: gV('sa-arbeitgeber'), branche: gV('sa-branche'), ag_adresse: gV('sa-ag-adresse'),
+    besch_seit: gV('sa-besch-seit'), befristung: gV('sa-befristung'), befristet_bis: gV('sa-befristet-bis'),
+    probezeit: gV('sa-probezeit'),
+    eink_haupt: gV('sa-eink-haupt'), mieteinnahmen: gV('sa-mieteinnahmen'),
+    kapitalertraege: gV('sa-kapitalertraege'),
+    sonst_einnahmen_art: gV('sa-sonst-einnahmen-art'), sonst_einnahmen_betrag: gV('sa-sonst-einnahmen-betrag'),
+    unterhalt_erhalt: gV('sa-unterhalt-erhalt'), unterhalt_zahlt: gV('sa-unterhalt-zahlt'),
+    eink_gesamt: gV('sa-eink-gesamt'),
+    bankguth: gV('sa-bankguth'), depot: gV('sa-depot'),
+    immo_anz: gV('sa-immo-anz'), immo_wert: gV('sa-immo-wert'), immo_belastung: gV('sa-immo-belastung'),
+    lv_bsv: gV('sa-lv-bsv'), sonstig_verm: gV('sa-sonstig-verm'), eigenkapital: gV('sa-eigenkapital'),
+    ratenkredit_restschuld: gV('sa-ratenkredit-restschuld'), kred_rate: gV('sa-kred-rate'),
+    immo_restschuld: gV('sa-immo-restschuld'), hypo_rate: gV('sa-hypo-rate'),
+    leasing_rate: gV('sa-leasing-rate'), sonst_verbindl: gV('sa-sonst-verbindl'),
+    motiv: gCB('sa-motiv'), horizont: gV('sa-horizont'), risiko: gV('sa-risiko'),
+    erfahrung: gV('sa-erfahrung'), erfahrung_sonst: gCB('sa-erfahrung-sonst'),
+    ek_einsetzen: gV('sa-ek-einsetzen'), finanzierungsbedarf: gV('sa-finanzierungsbedarf'),
+    laufzeit: gV('sa-laufzeit'), finanzierung_angefragt: gV('sa-finanzierung-angefragt'),
+    datum: gV('sa-datum')
+  };
+}
+
+function saRestoreDraft(d) {
+  if (!d) return;
+  const sV = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+  sV('sa-anrede', d.anrede); sV('sa-vorname', d.vorname); sV('sa-nachname', d.nachname);
+  sV('sa-gebdat', d.gebdat); sV('sa-geboro', d.geboro); sV('sa-geborland', d.geborland);
+  sV('sa-staat', d.staat); sV('sa-famstand', d.famstand); sV('sa-gueterstand', d.gueterstand);
+  sV('sa-strasse', d.strasse); sV('sa-plz', d.plz); sV('sa-ort', d.ort); sV('sa-land', d.land);
+  sV('sa-telefon', d.telefon); sV('sa-email', d.email);
+  sV('sa-wohnform', d.wohnform); sV('sa-wohnseit', d.wohnseit); sV('sa-miete-mtl', d.miete_mtl);
+  sV('sa-berufsgruppe', d.berufsgruppe); sV('sa-beruf-position', d.beruf_position);
+  sV('sa-arbeitgeber', d.arbeitgeber); sV('sa-branche', d.branche); sV('sa-ag-adresse', d.ag_adresse);
+  sV('sa-besch-seit', d.besch_seit); sV('sa-befristung', d.befristung); sV('sa-befristet-bis', d.befristet_bis);
+  sV('sa-probezeit', d.probezeit);
+  sV('sa-eink-haupt', d.eink_haupt); sV('sa-mieteinnahmen', d.mieteinnahmen);
+  sV('sa-kapitalertraege', d.kapitalertraege);
+  sV('sa-sonst-einnahmen-art', d.sonst_einnahmen_art); sV('sa-sonst-einnahmen-betrag', d.sonst_einnahmen_betrag);
+  sV('sa-unterhalt-erhalt', d.unterhalt_erhalt); sV('sa-unterhalt-zahlt', d.unterhalt_zahlt);
+  sV('sa-eink-gesamt', d.eink_gesamt);
+  sV('sa-bankguth', d.bankguth); sV('sa-depot', d.depot);
+  sV('sa-immo-anz', d.immo_anz); sV('sa-immo-wert', d.immo_wert); sV('sa-immo-belastung', d.immo_belastung);
+  sV('sa-lv-bsv', d.lv_bsv); sV('sa-sonstig-verm', d.sonstig_verm); sV('sa-eigenkapital', d.eigenkapital);
+  sV('sa-ratenkredit-restschuld', d.ratenkredit_restschuld); sV('sa-kred-rate', d.kred_rate);
+  sV('sa-immo-restschuld', d.immo_restschuld); sV('sa-hypo-rate', d.hypo_rate);
+  sV('sa-leasing-rate', d.leasing_rate); sV('sa-sonst-verbindl', d.sonst_verbindl);
+  if (d.motiv) document.querySelectorAll('.sa-motiv').forEach(cb => { cb.checked = d.motiv.includes(cb.value); });
+  sV('sa-horizont', d.horizont); sV('sa-risiko', d.risiko); sV('sa-erfahrung', d.erfahrung);
+  if (d.erfahrung_sonst) document.querySelectorAll('.sa-erfahrung-sonst').forEach(cb => { cb.checked = d.erfahrung_sonst.includes(cb.value); });
+  sV('sa-ek-einsetzen', d.ek_einsetzen); sV('sa-finanzierungsbedarf', d.finanzierungsbedarf);
+  sV('sa-laufzeit', d.laufzeit); sV('sa-finanzierung-angefragt', d.finanzierung_angefragt);
+  sV('sa-datum', d.datum);
+  saToggleGueterstand(); saToggleMiete(); saToggleBefristet();
+}
+
+async function saDraftSave() {
+  const leadId = document.getElementById('sa-lead-id')?.value;
+  if (!leadId) { notify('Bitte erst einen Lead auswählen', 'error'); return; }
+  const draft = saCollectDraft();
+  const { error } = await sb.from('leads').update({ selbstauskunft_draft: draft }).eq('id', leadId);
+  if (error) { notify('Fehler beim Speichern: ' + error.message, 'error'); return; }
+  notify('✓ Zwischengespeichert', 'success', 2000);
+}
+
+async function saDraftLoad() {
+  const leadId = document.getElementById('sa-lead-id')?.value;
+  if (!leadId) return;
+  try {
+    const { data: lead } = await sb.from('leads').select('selbstauskunft_draft,name,email,phone').eq('id', leadId).single();
+    if (lead && lead.selbstauskunft_draft) {
+      saRestoreDraft(lead.selbstauskunft_draft);
+      notify('Entwurf geladen', 'success', 2000);
+    } else if (lead) {
+      if (lead.name) {
+        const parts = lead.name.trim().split(' ');
+        const vorEl = document.getElementById('sa-vorname');
+        const nachEl = document.getElementById('sa-nachname');
+        if (vorEl && !vorEl.value && parts.length) vorEl.value = parts[0];
+        if (nachEl && !nachEl.value && parts.length > 1) nachEl.value = parts.slice(1).join(' ');
+      }
+      if (lead.email) { const el = document.getElementById('sa-email'); if (el && !el.value) el.value = lead.email; }
+      if (lead.phone) { const el = document.getElementById('sa-telefon'); if (el && !el.value) el.value = lead.phone; }
+    }
+  } catch(e) {}
+}
+
 function openNewSelbstauskunft() {
-  // Populate lead dropdown
+  _saCurrentStep = 1;
   const sel = document.getElementById('sa-lead-id');
   if (sel) {
     sel.innerHTML = '<option value="">— Bitte Lead auswählen —</option>';
@@ -8992,56 +9294,58 @@ function openNewSelbstauskunft() {
       sel.appendChild(opt);
     });
   }
-  // Set today's date
   const today = new Date().toISOString().split('T')[0];
   const dateFld = document.getElementById('sa-datum');
   if (dateFld) dateFld.value = today;
-  // Clear signature canvas
+  document.querySelectorAll('.sa-motiv').forEach(cb => { cb.checked = (cb.value === 'Altersvorsorge' || cb.value === 'Vermögensaufbau'); });
+  document.querySelectorAll('.sa-erfahrung-sonst').forEach(cb => { cb.checked = false; });
+  const staatEl = document.getElementById('sa-staat');
+  if (staatEl && !staatEl.value) staatEl.value = 'Deutsch';
+  const geborlandEl = document.getElementById('sa-geborland');
+  if (geborlandEl && !geborlandEl.value) geborlandEl.value = 'Deutschland';
+  const landEl = document.getElementById('sa-land');
+  if (landEl && !landEl.value) landEl.value = 'Deutschland';
+  saToggleGueterstand(); saToggleMiete(); saToggleBefristet();
   saClearSignature();
+  saUpdateStepUI();
   openModal('selbstauskunftFormModal');
-  // Init signature after modal is visible
-  setTimeout(() => saInitSignature(), 100);
 }
 
 async function loadSelbstauskunftView() {
   const container = document.getElementById('sa-list-container');
   if (!container) return;
   container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div class="spinner"></div></div>';
-
   const isAdm = currentProfile && currentProfile.role === 'admin';
   let q = sb.from('leads').select('id,name,email,phone,selbstauskunft_pdf,created_at').not('name','is',null).order('created_at',{ascending:false});
   if (!isAdm) q = q.eq('vp_id', currentUser.id);
   const { data: leads } = await q;
-
   if (!leads || !leads.length) {
-    container.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--muted)">Noch keine Selbstauskünfte vorhanden.<br><small style="margin-top:8px;display:block">Klicken Sie auf "Neue Selbstauskunft" um eine zu erstellen.</small></div>';
+    container.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--muted)">Noch keine Selbstauskünfte vorhanden.<br><small style="margin-top:8px;display:block">Klicken Sie auf "+ Neue Selbstauskunft" um eine zu erstellen.</small></div>';
     return;
   }
-
   const withSA = leads.filter(l => l.selbstauskunft_pdf);
   const withoutSA = leads.filter(l => !l.selbstauskunft_pdf);
-
   let html = '';
   if (withSA.length) {
-    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:10px;margin-top:4px">Eingereichte Selbstauskünfte (' + withSA.length + ')</div>';
+    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:4px">Eingereichte Selbstauskünfte (' + withSA.length + ')</div>';
     html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">';
     withSA.forEach(l => {
       html += '<div style="border:1px solid var(--accent);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(160,122,71,.04)">'
         + '<div><div style="font-weight:700;font-size:13px;color:var(--brand)">' + (l.name||'—') + '</div>'
         + '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + [l.email,l.phone].filter(Boolean).join(' · ') + '</div></div>'
         + '<div style="display:flex;gap:8px;align-items:center">'
-        + '<span style="font-size:11px;font-weight:700;color:var(--ok)">✓ Selbstauskunft vorhanden</span>'
-        + '<button class="btn-sm btn-pos" style="font-size:10px;padding:3px 10px" onclick="downloadSelbstauskunftPdf(\'' + l.selbstauskunft_pdf + '\')">PDF herunterladen</button>'
+        + '<span style="font-size:11px;font-weight:700;color:var(--ok)">✓ Eingereicht</span>'
+        + '<button class="btn-sm btn-pos" style="font-size:10px;padding:3px 10px" onclick="downloadSelbstauskunftPdf(\'' + l.selbstauskunft_pdf + '\')">PDF</button>'
+        + '<button class="btn-sm btn-outline" style="font-size:10px;padding:3px 10px;color:var(--ink);border-color:var(--stone)" onclick="openNewSelbstauskunftForLead(\'' + l.id + '\')">Neu erstellen</button>'
         + '</div></div>';
     });
     html += '</div>';
   }
-
   if (withoutSA.length) {
-    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:10px">Leads ohne Selbstauskunft (' + withoutSA.length + ')</div>';
+    html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Leads ohne Selbstauskunft (' + withoutSA.length + ')</div>';
     html += '<div style="display:flex;flex-direction:column;gap:6px">';
     withoutSA.forEach(l => {
-      html += '<div style="border:1px solid var(--g200);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px">'
+      html += '<div style="border:1px solid var(--stone);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px">'
         + '<div><div style="font-weight:600;font-size:12px;color:var(--brand)">' + (l.name||'—') + '</div>'
         + '<div style="font-size:11px;color:var(--muted)">' + [l.email,l.phone].filter(Boolean).join(' · ') + '</div></div>'
         + '<button class="btn-sm btn-outline" style="font-size:10px;padding:3px 10px;color:var(--ink);border-color:var(--stone)" onclick="openNewSelbstauskunftForLead(\'' + l.id + '\')">+ Erstellen</button>'
@@ -9049,16 +9353,15 @@ async function loadSelbstauskunftView() {
     });
     html += '</div>';
   }
-
   container.innerHTML = '<div class="card">' + html + '</div>';
 }
 
 function openNewSelbstauskunftForLead(leadId) {
   openNewSelbstauskunft();
-  setTimeout(() => {
+  setTimeout(async () => {
     const sel = document.getElementById('sa-lead-id');
-    if (sel) sel.value = leadId;
-  }, 50);
+    if (sel) { sel.value = leadId; await saDraftLoad(); }
+  }, 80);
 }
 
 async function downloadSelbstauskunftPdf(path) {
@@ -9068,35 +9371,32 @@ async function downloadSelbstauskunftPdf(path) {
 }
 
 async function submitSelbstauskunft() {
-  // Validation
   const leadId = document.getElementById('sa-lead-id').value;
   if (!leadId) { notify('Bitte einen Lead auswählen', 'error'); return; }
   const vorname = document.getElementById('sa-vorname').value.trim();
   const nachname = document.getElementById('sa-nachname').value.trim();
-  if (!vorname || !nachname) { notify('Bitte Vor- und Nachname eingeben', 'error'); return; }
-  if (!document.getElementById('sa-bestaetigung').checked) { notify('Bitte die Richtigkeit der Angaben bestätigen', 'error'); return; }
+  if (!vorname || !nachname) { notify('Bitte Vor- und Nachname eingeben (Schritt 1)', 'error'); _saCurrentStep=1; saUpdateStepUI(); return; }
+  if (!document.getElementById('sa-dsgvo')?.checked) { notify('Bitte Datenschutz-Zustimmung erteilen', 'error'); return; }
+  if (!document.getElementById('sa-bestaetigung')?.checked) { notify('Bitte Vollständigkeit der Angaben bestätigen', 'error'); return; }
   if (saSignatureIsBlank()) { notify('Bitte Unterschrift leisten', 'error'); return; }
 
   const btn = document.getElementById('sa-submit-btn');
   btn.disabled = true; btn.textContent = '⏳ Wird erstellt...';
 
-  // Collect form data
   const gV = id => (document.getElementById(id)?.value || '').trim();
   const gN = id => parseFloat(document.getElementById(id)?.value) || 0;
   const motivs = Array.from(document.querySelectorAll('.sa-motiv:checked')).map(el => el.value);
+  const erfahrungSonst = Array.from(document.querySelectorAll('.sa-erfahrung-sonst:checked')).map(el => el.value);
   const sigData = _saSignCanvas ? _saSignCanvas.toDataURL('image/png') : null;
   const datum = gV('sa-datum') || new Date().toISOString().split('T')[0];
 
-  // Generate PDF with jsPDF
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-  if (typeof jspdf === 'undefined') { notify('PDF-Export nicht verfügbar', 'error'); btn.disabled=false; btn.textContent='📄 Selbstauskunft speichern & PDF erzeugen'; return; }
+  if (typeof jspdf === 'undefined') { notify('PDF-Export nicht verfügbar', 'error'); btn.disabled=false; btn.textContent='📄 Speichern & PDF erstellen'; return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:'mm', format:'a4' });
-
   const W = 210, margin = 18;
   let y = 0;
 
-  // Header bar
   doc.setFillColor(31,42,36); doc.rect(0,0,W,26,'F');
   doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(200,164,114);
   doc.text('Vestora Capital', margin, 11);
@@ -9106,119 +9406,135 @@ async function submitSelbstauskunft() {
   doc.text('Datum: ' + new Date(datum).toLocaleDateString('de-DE'), W-margin, 19, {align:'right'});
   y = 34;
 
-  function saSection(title) {
+  const saSection = title => {
+    if (y > 262) { doc.addPage(); y = 20; }
     doc.setFillColor(245,243,238); doc.rect(margin,y,W-2*margin,5.5,'F');
     doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(100,90,70);
-    doc.text(title.toUpperCase(), margin+2, y+3.8); y += 8;
-  }
-  function saRow(label, value) {
+    doc.text(title.toUpperCase(), margin+2, y+3.8); y += 9;
+  };
+  const saRow = (label, value) => {
+    if (y > 275) { doc.addPage(); y = 20; }
     doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
     doc.text(label + ':', margin, y);
     doc.setFont('helvetica','bold'); doc.setTextColor(31,42,36);
     doc.text(String(value||'—'), 82, y);
-    doc.setDrawColor(225,220,210); doc.line(margin, y+1.2, W-margin, y+1.2); y += 6.5;
-    if (y > 270) { doc.addPage(); y = 20; }
+    doc.setDrawColor(225,220,210); doc.line(margin, y+1.2, W-margin, y+1.2);
+    y += 6.5;
+  };
+  const saFmt = n => n ? '€ ' + Number(n).toLocaleString('de-DE') : '—';
+  const saDate = id => { const v = gV(id); return v ? new Date(v).toLocaleDateString('de-DE') : '—'; };
+
+  saSection('Persönliche Angaben');
+  saRow('Anrede', gV('sa-anrede')||'—');
+  saRow('Name', (gV('sa-anrede') ? gV('sa-anrede') + ' ' : '') + vorname + ' ' + nachname);
+  saRow('Geburtsdatum', saDate('sa-gebdat'));
+  saRow('Geburtsort / -land', [gV('sa-geboro'), gV('sa-geborland')].filter(Boolean).join(', ')||'—');
+  saRow('Staatsangehörigkeit', gV('sa-staat')||'—');
+  saRow('Familienstand', gV('sa-famstand')||'—');
+  if (gV('sa-famstand') === 'verheiratet' || gV('sa-famstand') === 'eingetragene Partnerschaft') {
+    saRow('Güterstand', gV('sa-gueterstand')||'—');
   }
-  function saFmt(n) { return n ? '€ ' + Number(n).toLocaleString('de-DE') : '—'; }
 
-  // Content
-  saSection('Persönliche Daten');
-  saRow('Name', vorname + ' ' + nachname);
-  saRow('Geburtsdatum', gV('sa-gebdat') ? new Date(gV('sa-gebdat')).toLocaleDateString('de-DE') : '—');
-  saRow('Geburtsort', gV('sa-geboro') || '—');
-  saRow('Staatsangehörigkeit', gV('sa-staat') || '—');
-  saRow('Familienstand', gV('sa-famstand') || '—');
-  saRow('Unterhaltsberechtigte Kinder', gV('sa-kinder') || '0');
-
-  saSection('Kontaktdaten');
-  saRow('Adresse', (gV('sa-strasse')||'—') + (gV('sa-plz')||gV('sa-ort') ? ', ' + [gV('sa-plz'),gV('sa-ort')].filter(Boolean).join(' ') : ''));
-  saRow('Telefon', gV('sa-telefon') || '—');
-  saRow('E-Mail', gV('sa-email') || '—');
-  saRow('Wohnsituation', gV('sa-wohnsit') + (gV('sa-wohnseit') ? ', seit ' + new Date(gV('sa-wohnseit')).toLocaleDateString('de-DE') : ''));
+  saSection('Wohnanschrift');
+  const adressParts = [gV('sa-strasse'), (gV('sa-plz') + ' ' + gV('sa-ort')).trim(), gV('sa-land')].filter(s => s.trim());
+  saRow('Adresse', adressParts.join(', ')||'—');
+  saRow('Telefon', gV('sa-telefon')||'—');
+  saRow('E-Mail', gV('sa-email')||'—');
+  saRow('Wohnform', gV('sa-wohnform')||'—');
+  saRow(gV('sa-wohnform') === 'Eigentümer' ? 'Im Eigentum seit' : 'Mietbeginn', saDate('sa-wohnseit'));
+  if (gV('sa-wohnform') === 'Mieter') saRow('Monatl. Mietkosten', saFmt(gN('sa-miete-mtl')));
 
   saSection('Beschäftigung');
-  saRow('Berufsgruppe', gV('sa-berufsgruppe') || '—');
-  saRow('Arbeitgeber / Firma', gV('sa-arbeitgeber') || '—');
-  saRow('Branche', gV('sa-branche') || '—');
-  saRow('Beschäftigt seit', gV('sa-besch-seit') ? new Date(gV('sa-besch-seit')).toLocaleDateString('de-DE') : '—');
-  saRow('Unbefristetes Arbeitsverhältnis', gV('sa-unbefristet') || '—');
+  saRow('Berufsgruppe', gV('sa-berufsgruppe')||'—');
+  saRow('Beruf / Position', gV('sa-beruf-position')||'—');
+  saRow('Arbeitgeber', gV('sa-arbeitgeber')||'—');
+  saRow('Branche', gV('sa-branche')||'—');
+  saRow('Anschrift Arbeitgeber', gV('sa-ag-adresse')||'—');
+  saRow('Beschäftigt seit', saDate('sa-besch-seit'));
+  saRow('Befristung', gV('sa-befristung') === 'befristet' ? 'Befristet bis ' + saDate('sa-befristet-bis') : 'Unbefristet');
+  saRow('Probezeit', gV('sa-probezeit')||'Nein');
 
-  saSection('Einkommen (netto monatlich)');
-  saRow('Haupteinkommen', saFmt(gN('sa-eink-haupt')));
-  saRow('Nebeneinkommen', saFmt(gN('sa-eink-neben')));
+  saSection('Einkommensverhältnisse (monatlich netto)');
+  saRow('Gehalt / Lohn', saFmt(gN('sa-eink-haupt')));
+  saRow('Mieteinnahmen (netto kalt)', saFmt(gN('sa-mieteinnahmen')));
+  saRow('Kapitalerträge', saFmt(gN('sa-kapitalertraege')));
+  if (gV('sa-sonst-einnahmen-art')) saRow('Sonstige Einnahmen (' + gV('sa-sonst-einnahmen-art') + ')', saFmt(gN('sa-sonst-einnahmen-betrag')));
   saRow('Unterhalt erhalten', saFmt(gN('sa-unterhalt-erhalt')));
   saRow('Unterhalt zahlen', saFmt(gN('sa-unterhalt-zahlt')));
-  saRow('Gesamtnettoeinkommen Haushalt', saFmt(gN('sa-eink-gesamt')));
+  saRow('Gesamteinkommen Haushalt', saFmt(gN('sa-eink-gesamt')));
 
-  saSection('Vermögen');
-  saRow('Eigenkapital (verfügbar)', saFmt(gN('sa-eigenkapital')));
-  saRow('Bankguthaben gesamt', saFmt(gN('sa-bankguth')));
-  saRow('Immobilien (Anzahl)', gV('sa-immo-anz') || '0');
-  saRow('Immobilien-Gesamtwert', saFmt(gN('sa-immo-wert')));
-  saRow('Depot / Wertpapiere', saFmt(gN('sa-depot')));
-  saRow('Sonstige Vermögenswerte', saFmt(gN('sa-sonstig-verm')));
+  saSection('Vermögensverhältnisse');
+  saRow('Barvermögen / Bankguthaben', saFmt(gN('sa-bankguth')));
+  saRow('Wertpapiere / Depot', saFmt(gN('sa-depot')));
+  saRow('Immobilien (Anzahl)', gV('sa-immo-anz')||'0');
+  saRow('Immobilien Gesamtwert', saFmt(gN('sa-immo-wert')));
+  saRow('Immobilien Gesamtbelastung', saFmt(gN('sa-immo-belastung')));
+  saRow('LV / Bausparvertrag Rückkaufwert', saFmt(gN('sa-lv-bsv')));
+  saRow('Sonstiges Vermögen', saFmt(gN('sa-sonstig-verm')));
+  saRow('Eigenkapital für diese Investition', saFmt(gN('sa-eigenkapital')));
 
   saSection('Verbindlichkeiten');
-  saRow('Laufende Kredite (Anzahl)', gV('sa-kred-anz') || '0');
-  saRow('Kreditraten gesamt / Monat', saFmt(gN('sa-kred-rate')));
-  saRow('Hypotheken – Rate / Monat', saFmt(gN('sa-hypo-rate')));
+  saRow('Ratenkredit Restschuld', saFmt(gN('sa-ratenkredit-restschuld')));
+  saRow('Ratenkredit monatl. Rate', saFmt(gN('sa-kred-rate')));
+  saRow('Immobiliendarlehen Restschuld', saFmt(gN('sa-immo-restschuld')));
+  saRow('Immobiliendarlehen monatl. Rate', saFmt(gN('sa-hypo-rate')));
+  saRow('Leasing monatl. Rate', saFmt(gN('sa-leasing-rate')));
+  saRow('Sonstige Verbindlichkeiten', saFmt(gN('sa-sonst-verbindl')));
 
-  saSection('Anlageziele');
-  saRow('Anlagehorizont', gV('sa-horizont') || '—');
-  saRow('Risikobereitschaft', gV('sa-risiko') || '—');
-  saRow('Anlagemotiv', motivs.join(', ') || '—');
-  saRow('Erfahrung Immobilien', gV('sa-erfahrung') || '—');
+  saSection('Anlageziele & Erfahrungen');
+  saRow('Anlageziele', motivs.join(', ')||'—');
+  saRow('Anlagehorizont', gV('sa-horizont')||'—');
+  saRow('Risikobereitschaft', gV('sa-risiko')||'—');
+  saRow('Immobilienerfahrung', gV('sa-erfahrung')||'—');
+  saRow('Sonstige Anlageerfahrungen', erfahrungSonst.join(', ')||'Keine');
 
-  // Signature section
-  y += 4;
-  if (y > 240) { doc.addPage(); y = 20; }
-  saSection('Bestätigung & Unterschrift');
+  saSection('Finanzierungswunsch');
+  saRow('Eigenkapital einsetzen', saFmt(gN('sa-ek-einsetzen')));
+  saRow('Finanzierungsbedarf', saFmt(gN('sa-finanzierungsbedarf')));
+  saRow('Gewünschte Laufzeit', gV('sa-laufzeit') ? gV('sa-laufzeit') + ' Jahre' : '—');
+  saRow('Finanzierung bereits angefragt', gV('sa-finanzierung-angefragt')||'Nein');
+
+  if (y > 230) { doc.addPage(); y = 20; }
+  saSection('Datenschutz & Unterschrift');
   doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-  doc.text('Ich bestätige die Richtigkeit der gemachten Angaben. Unterzeichnet am ' + new Date(datum).toLocaleDateString('de-DE') + '.', margin, y); y += 6;
+  const declText = 'Ich stimme der Verarbeitung meiner Daten durch Vestora Capital zum Zweck der Anlageberatung zu.';
+  const declLines = doc.splitTextToSize(declText, W - 2*margin);
+  doc.text(declLines, margin, y); y += declLines.length * 4.5 + 3;
+  doc.text('Ich bestätige die Vollständigkeit und Richtigkeit meiner Angaben. Unterzeichnet am ' + new Date(datum).toLocaleDateString('de-DE') + '.', margin, y); y += 8;
   if (sigData) {
     try { doc.addImage(sigData, 'PNG', margin, y, 70, 22); } catch(e) {}
-    y += 25;
+    y += 26;
   }
   doc.setDrawColor(31,42,36); doc.line(margin, y, margin+70, y);
   doc.setFontSize(7.5); doc.setTextColor(120,120,120);
-  doc.text(vorname + ' ' + nachname + '  (digitale Unterschrift)', margin, y+4);
+  doc.text((gV('sa-anrede') ? gV('sa-anrede') + ' ' : '') + vorname + ' ' + nachname + '  (digitale Unterschrift)', margin, y+4);
   doc.setFontSize(7); doc.setTextColor(160,160,160);
   doc.text('Vestora Capital · Vertraulich · Nur für interne Zwecke', margin, 289);
 
-  // Convert PDF to Blob and upload
   const pdfBlob = doc.output('blob');
   const ts = Date.now();
   const fileName = ts + '_selbstauskunft.pdf';
   const storagePath = 'selbstauskunft/' + leadId + '/' + fileName;
-  const { error: uploadErr } = await sb.storage.from('reservation-pdfs').upload(storagePath, pdfBlob, { contentType: 'application/pdf', upsert: false });
+  const { error: uploadErr } = await sb.storage.from('reservation-pdfs').upload(storagePath, pdfBlob, { contentType:'application/pdf', upsert:false });
   if (uploadErr) {
     notify('Upload-Fehler: ' + uploadErr.message, 'error');
-    btn.disabled=false; btn.textContent='📄 Selbstauskunft speichern & PDF erzeugen';
-    return;
+    btn.disabled=false; btn.textContent='📄 Speichern & PDF erstellen'; return;
   }
 
-  // Save path to lead
-  const { error: dbErr } = await sb.from('leads').update({ selbstauskunft_pdf: storagePath }).eq('id', leadId);
+  const { error: dbErr } = await sb.from('leads').update({ selbstauskunft_pdf: storagePath, selbstauskunft_draft: null }).eq('id', leadId);
   if (dbErr) {
     notify('DB-Fehler: ' + dbErr.message, 'error');
-    btn.disabled=false; btn.textContent='📄 Selbstauskunft speichern & PDF erzeugen';
-    return;
+    btn.disabled=false; btn.textContent='📄 Speichern & PDF erstellen'; return;
   }
 
-  // Update local cache
   const lc = currentLeads.find(l => l.id === leadId);
-  if (lc) lc.selbstauskunft_pdf = storagePath;
+  if (lc) { lc.selbstauskunft_pdf = storagePath; delete lc.selbstauskunft_draft; }
 
   closeModal('selbstauskunftFormModal');
-  btn.disabled = false; btn.textContent = '📄 Selbstauskunft speichern & PDF erzeugen';
-  notify('✓ Selbstauskunft gespeichert! PDF wurde hochgeladen.', 'success', 5000);
-
-  // Reload view if open
-  if (document.getElementById('view-vp-selbstauskunft')?.classList.contains('active')) {
-    loadSelbstauskunftView();
-  }
+  btn.disabled=false; btn.textContent='📄 Speichern & PDF erstellen';
+  notify('✓ Selbstauskunft gespeichert & PDF hochgeladen!', 'success', 5000);
+  if (document.getElementById('view-vp-selbstauskunft')?.classList.contains('active')) loadSelbstauskunftView();
 }
-
 // ══════════════════════════════════════════════════════
 // FEATURE 1: WIEDERVORLAGEN-SYSTEM
 // ══════════════════════════════════════════════════════
