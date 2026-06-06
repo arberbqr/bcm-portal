@@ -11,19 +11,22 @@
 <link rel="icon" id="dynamic-favicon" type="image/png" href="data:,">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- jsPDF, JSZip, XLSX werden lazy on-demand geladen via loadScript() -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<!-- DSGVO-konform: Fonts via fonts.bunny.net (kein Google-Tracking) -->
+<link href="https://fonts.bunny.net/css?family=instrument-serif:400,400i|geist:300,400,500,600|geist-mono:400,500&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#0E1110;--paper:#F1ECE2;--paper-2:#E7E0D2;--stone:#C9C2B5;
   --rule:#1F2A24;--brand:#1F2A24;--brand-2:#141A17;--accent:#A07A47;
   --accent-soft:#C8A472;--muted:#6B6A60;--ok:#5E7E63;--warn:#A07A47;
   --gone:#8C5A4A;--field:#FBF8F2;
+  /* Legacy aliases for compatibility */
   --navy:#1F2A24;--navy2:#141A17;--gold:#A07A47;--gold2:#C8A472;
   --g100:#F1ECE2;--g200:#E7E0D2;--g300:#C9C2B5;--g500:#6B6A60;
   --white:#FBF8F2;--text:#0E1110;--pos:#5E7E63;--neg:#8C5A4A;
   --bcm-navy:#1F2A24;--dwi-navy:#1F2A24;
+  /* Font vars */
   --font-display:"Instrument Serif",serif;
   --font-body:"Geist",system-ui,sans-serif;
   --font-mono:"Geist Mono",monospace;
@@ -328,6 +331,58 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   .view-inner{padding:16px}
   .app-nav{display:none}
 }
+
+/* ── MOBILE RESPONSIVE (768px) ── */
+@media(max-width:768px){
+  #hamburger-btn{display:flex!important}
+  .app-nav{display:none;position:fixed;top:60px;left:0;right:0;background:var(--brand-2);z-index:98;flex-direction:column;padding:4px 0;border-bottom:2px solid var(--accent);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+  .app-nav.mobile-open{display:flex}
+  .app-nav-btn{padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;min-height:44px;text-align:left;width:100%;border-left:none;border-right:none;border-top:none}
+  .app-header{padding:0 12px;gap:8px}
+  .app-logo-txt{font-size:15px}
+  .app-header-right .app-user{display:none}
+  .btn-sm{min-height:44px;padding:8px 12px}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .lead-stats-row{flex-wrap:wrap}
+  .lead-stat{min-width:45%}
+  .modal-bg{padding:0;align-items:flex-end}
+  .modal{max-width:100%!important;width:100%!important;max-height:92vh}
+  .modal-body{padding:14px}
+  .modal-footer{flex-wrap:wrap}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:560px}
+  .form-grid{grid-template-columns:1fr!important}
+  .form-grid.three{grid-template-columns:1fr!important}
+  .obj-grid{grid-template-columns:1fr}
+  .kanban-board{grid-template-columns:repeat(7,minmax(155px,1fr))}
+  .view-inner{padding:12px 10px}
+  .page-title{font-size:18px}
+  #tr-stats{grid-template-columns:1fr!important}
+  #compare-toolbar{width:calc(100% - 32px);left:16px;transform:none;bottom:16px}
+  .calc-modal .modal-body > div{grid-template-columns:1fr!important;gap:12px}
+}
+
+/* ── WIEDERVORLAGE BANNER ── */
+.wv-banner{background:#fff8e1;border:1px solid var(--accent);border-left:4px solid var(--accent);padding:14px 18px;margin-bottom:14px}
+.wv-entry{display:flex;align-items:center;gap:10px;padding:6px 10px;background:white;border:1px solid var(--stone);cursor:pointer;transition:background .15s}
+.wv-entry:hover{background:var(--paper-2)}
+
+/* ── TAGESREPORT ── */
+.tagesreport-stat{background:rgba(255,255,255,.08);padding:10px 14px}
+.tagesreport-stat-lbl{font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px;font-family:var(--font-mono)}
+.tagesreport-stat-val{font-family:var(--font-display);font-style:italic;font-size:26px;color:var(--accent-soft)}
+
+/* ── ONBOARDING ── */
+.ob-dot{width:8px;height:8px;display:inline-block;transition:background .2s}
+
+/* ── COMPARE ── */
+.compare-check-wrap{padding:5px 14px;border-top:1px dashed var(--stone);display:flex;align-items:center;gap:6px;background:var(--paper)}
+.compare-check-wrap label{font-size:11px;color:var(--muted);cursor:pointer;user-select:none}
+#compare-toolbar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--brand);color:white;padding:11px 20px;z-index:150;display:flex;align-items:center;gap:14px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+
+/* ── RES EXPIRY ALERT ── */
+.res-expiry-row{display:flex;align-items:center;gap:10px;padding:5px 10px;background:white;border:1px solid #f5c6cb;margin-bottom:4px}
+
 </style>
 </head>
 <body>
@@ -467,6 +522,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
         <span class="app-logo-sub" id="headerBrandSub">Vertriebsportal</span>
       </div>
     </a>
+    <button id="hamburger-btn" onclick="toggleMobileNav()" style="display:none;background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;padding:8px;min-height:44px;margin-left:8px" aria-label="Navigation">☰</button>
     <nav class="app-nav" id="appNav">
       <!-- filled by JS based on role -->
     </nav>
@@ -476,6 +532,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
         <span id="headerUserRole">—</span>
       </div>
       <button class="btn-sm btn-outline" id="btnProfil" onclick="openProfilModal()" style="display:none">⚙ Profil</button>
+      <button class="btn-sm btn-outline" id="btnOnboarding" onclick="showOnboarding()" title="Onboarding-Tour starten" style="display:none">?</button>
       <button class="btn-sm btn-outline" id="btnPresent" onclick="togglePresentMode()" title="Präsentationsmodus – versteckt die Browser-Leiste">⛶ Präsentation</button>
       <button class="btn-sm btn-outline" onclick="doLogout()">Abmelden</button>
     </div>
@@ -490,14 +547,29 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <div class="page-sub">Alle Projekte und Einheiten verwalten</div>
         </div>
         <div style="display:flex;gap:8px">
+          <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="exportObjectsXlsx()">↓ Excel</button>
           <button class="btn-sm btn-gold" onclick="openAddObject()">+ Objekt hinzufügen</button>
         </div>
       </div>
-      <div class="stats-row" id="adminObjStats">
+      <div class="stats-row" id="adminObjStats" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat"><div class="stat-lbl">Verfügbar</div><div class="stat-val pos" id="stat-available">—</div></div>
         <div class="stat"><div class="stat-lbl">Reserviert</div><div class="stat-val" style="color:var(--gold)" id="stat-reserved">—</div></div>
         <div class="stat"><div class="stat-lbl">Verkauft</div><div class="stat-val" id="stat-sold">—</div></div>
         <div class="stat"><div class="stat-lbl">Entwurf</div><div class="stat-val" style="color:var(--g500)" id="stat-draft">—</div></div>
+        <div class="stat"><div class="stat-lbl">Bald verfügbar</div><div class="stat-val" style="color:var(--brand-2)" id="stat-coming-soon">—</div></div>
+      </div>
+      <div id="bulkToolbar" style="display:none;background:var(--brand);color:white;padding:12px 18px;margin-bottom:14px;align-items:center;gap:14px">
+        <span id="bulkCount" style="font-size:12px;color:rgba(255,255,255,.7)">0 ausgewählt</span>
+        <span style="font-size:12px">Status ändern auf:</span>
+        <select id="bulkStatus" style="padding:6px 10px;font-size:12px;border:none;background:var(--field);color:var(--ink);font-family:var(--font-body)">
+          <option value="available">Verfügbar</option>
+          <option value="reserved">Reserviert</option>
+          <option value="sold">Verkauft</option>
+          <option value="draft">Entwurf</option>
+          <option value="coming_soon">Coming Soon</option>
+        </select>
+        <button class="btn-sm btn-gold" onclick="applyBulkStatus()">Anwenden</button>
+        <button class="btn-sm btn-outline" onclick="clearBulkSelection()">Abbrechen</button>
       </div>
       <div class="obj-grid" id="adminObjGrid"><div class="spinner"></div></div>
     </div>
@@ -507,6 +579,11 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
     <div class="view-inner">
       <div class="page-title">Reservierungen</div>
       <div class="page-sub">Alle eingegangenen Reservierungsanfragen</div>
+      <!-- Ablauf-Alert -->
+      <div id="res-expiry-alert" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-left:4px solid #dc3545;padding:12px 18px;margin-bottom:14px">
+        <div style="font-weight:700;color:#721c24;margin-bottom:8px;font-size:13px">🔴 Reservierungen laufen in &lt;12h ab</div>
+        <div id="res-expiry-list"></div>
+      </div>
       <div class="card">
         <div class="card-header">
           <div class="card-header-title">Offene Anfragen</div>
@@ -670,7 +747,28 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <div class="page-title">Meine Leads</div>
           <div class="page-sub">Interessenten und Kontakte verwalten</div>
         </div>
-        <button class="btn-sm btn-gold" onclick="openAddLeadModal()">+ Lead anlegen</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="document.getElementById('csvImportModal').style.display='flex'">↑ CSV Import</button>
+          <button class="btn-sm btn-gold" onclick="openAddLeadModal()">+ Lead anlegen</button>
+        </div>
+      </div>
+      <!-- Tagesreport Box -->
+      <div id="tagesreport-box" style="display:none;background:var(--brand);color:white;padding:16px 20px;margin-bottom:14px;position:relative">
+        <button onclick="sessionStorage.setItem('tagesreportClosed','1');document.getElementById('tagesreport-box').style.display='none'" style="position:absolute;top:10px;right:14px;background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;line-height:1">×</button>
+        <div id="tr-greeting" style="font-family:var(--font-display);font-style:italic;font-size:16px;color:var(--accent-soft);margin-bottom:10px">Guten Morgen</div>
+        <div id="tr-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="tagesreport-stat"><div class="tagesreport-stat-lbl">Offene Leads</div><div class="tagesreport-stat-val" id="tr-open">—</div></div>
+          <div class="tagesreport-stat"><div class="tagesreport-stat-lbl">Follow-ups heute</div><div class="tagesreport-stat-val" id="tr-followups">—</div></div>
+          <div class="tagesreport-stat"><div class="tagesreport-stat-lbl">Reservierungen &lt;48h</div><div class="tagesreport-stat-val" id="tr-res-alert" style="color:var(--accent-soft)">0</div></div>
+        </div>
+      </div>
+      <!-- Wiedervorlage Banner -->
+      <div id="wiedervorlage-banner" style="display:none" class="wv-banner">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:700;font-size:13px;color:var(--brand)">📋 <span id="wv-title">0 Kontakte stehen heute an</span></div>
+          <button onclick="document.getElementById('wiedervorlage-banner').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);line-height:1">×</button>
+        </div>
+        <div id="wv-list" style="display:flex;flex-direction:column;gap:5px"></div>
       </div>
       <!-- Stats Row -->
       <div class="lead-stats-row" id="vp-lead-stats"></div>
@@ -709,6 +807,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
             </table>
           </div>
         </div>
+        <div id="vpLeadPagination"></div>
       </div>
     </div>
   </div>
@@ -758,6 +857,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
             </table>
           </div>
         </div>
+        <div id="adminLeadPagination"></div>
       </div>
     </div>
   </div>
@@ -810,7 +910,13 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
     <div class="view-inner">
       <div class="page-title">📚 Vertriebshandbuch</div>
       <div class="page-sub">Alles was Sie für erfolgreiche Kundengespräche wissen müssen – Kennzahlen, Einwandbehandlung, Prozesse</div>
-      <div id="faq-container" style="margin-top:20px"></div>
+      <div style="margin-bottom:14px;margin-top:20px">
+        <input type="text" id="faqSearch" placeholder="Im Handbuch suchen..."
+          style="width:100%;padding:10px 14px;border:1px solid var(--stone);font-size:13px;font-family:var(--font-body);outline:none;background:var(--field)"
+          oninput="filterFAQ(this.value)">
+      </div>
+      <div id="faq-container"></div>
+      <div id="faqNoResults" style="display:none;text-align:center;padding:20px;color:var(--muted)">Keine Ergebnisse gefunden.</div>
     </div>
   </div>
 
@@ -821,6 +927,68 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
       <div class="card">
         <div class="card-header"><div class="card-header-title">Berechnungen</div></div>
         <div class="tbl-wrap" id="adminCalcsWrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN DASHBOARD VIEW ── -->
+  <div id="view-dashboard" class="view">
+    <div class="view-inner">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Übersicht aller wichtigen Kennzahlen</div>
+      <div class="stats-row" id="dashboardKPIs" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="stat"><div class="stat-lbl">Objekte verfügbar</div><div class="stat-val pos" id="dash-available">—</div></div>
+        <div class="stat"><div class="stat-lbl">Reservierungen aktiv</div><div class="stat-val" style="color:var(--accent)" id="dash-reservations">—</div></div>
+        <div class="stat"><div class="stat-lbl">Leads diese Woche</div><div class="stat-val" id="dash-leads-week">—</div></div>
+        <div class="stat"><div class="stat-lbl">Abschlüsse diesen Monat</div><div class="stat-val pos" id="dash-closings">—</div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-header-title">Ablaufende Reservierungen (48h)</div></div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>VP</th><th>Objekt</th><th>Käufer</th><th>Läuft ab</th></tr></thead>
+          <tbody id="dashExpiringRes"><tr><td colspan="4" style="text-align:center;padding:16px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-header-title">Letzte Aktivitäten (7 Tage)</div></div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>Datum</th><th>Typ</th><th>Details</th><th>VP</th></tr></thead>
+          <tbody id="dashActivities"><tr><td colspan="4" style="text-align:center;padding:16px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title">VP-Aktivität (letzte 7 Tage)</div></div>
+        <div id="dashVPActivity" style="padding:16px"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VP PERFORMANCE VIEW ── -->
+  <div id="view-admin-performance" class="view">
+    <div class="view-inner">
+      <div class="flex" style="justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="page-title">VP Performance</div>
+          <div class="page-sub">Übersicht aller Vertriebspartner</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="setVPPerfPeriod('week')" id="vpp-btn-week" style="padding:6px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;background:var(--paper-2);color:var(--muted);border:1px solid var(--stone)">Diese Woche</button>
+          <button onclick="setVPPerfPeriod('month')" id="vpp-btn-month" style="padding:6px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;background:var(--paper-2);color:var(--muted);border:1px solid var(--stone)">Dieser Monat</button>
+          <button onclick="setVPPerfPeriod('all')" id="vpp-btn-all" style="padding:6px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;background:var(--brand);color:var(--accent-soft);border:none">Gesamt</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title">VP-Übersicht</div></div>
+        <div class="tbl-wrap">
+          <table id="vpPerfTable">
+            <thead><tr>
+              <th>VP Name</th><th>Firma</th><th class="r">Leads gesamt</th><th class="r">Aktiv</th><th class="r">Kalkulationen</th><th class="r">Reservierungen</th><th class="r">Abschlüsse</th><th class="r">Lead→Kalk</th><th class="r">Kalk→Res</th><th class="r">Res→Abs.</th>
+            </tr></thead>
+            <tbody id="vpPerfTableBody"><tr><td colspan="10" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -855,6 +1023,14 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
         </div>
       </div>
     </div>
+      <div class="form-section" style="margin-top:16px">Kalkulator-Voreinstellungen</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-fld"><label>Eigenkapital (%)</label><input id="preset-ek-pct" type="number" placeholder="z.B. 20" step="1" min="0" max="100"></div>
+        <div class="form-fld"><label>Zinssatz (%)</label><input id="preset-zinssatz" type="number" placeholder="z.B. 3.95" step="0.01" min="0"></div>
+        <div class="form-fld"><label>Tilgung (%)</label><input id="preset-tilgung" type="number" placeholder="z.B. 1.0" step="0.01" min="0"></div>
+        <div class="form-fld"><label>Steuersatz (%)</label><input id="preset-steuer" type="number" placeholder="z.B. 42" step="1" min="0" max="100"></div>
+      </div>
+    </div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('profilModal')">Abbrechen</button>
       <button class="btn-sm btn-gold" onclick="saveProfil()">Profil speichern</button>
@@ -878,10 +1054,6 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <label>Adresse</label>
           <div style="display:flex;gap:6px">
             <input id="of-addr" type="text" placeholder="Straße, PLZ Ort" style="flex:1">
-            <button type="button" id="ki-loc-btn" onclick="generateLocationDesc()"
-              style="display:none;padding:7px 12px;background:var(--navy);color:var(--gold2);border:none;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;font-family:var(--font-body)">
-              ✨ KI-Beschreibung
-            </button>
           </div>
         </div>
         <div class="form-fld full"><label>Beschreibung</label><textarea id="of-desc" placeholder="Kurze Objektbeschreibung..."></textarea></div>
@@ -1425,6 +1597,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
     </div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('calcModal')">Schließen</button>
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="applyCalcPresets()" title="Gespeicherte Voreinstellungen anwenden">↩ Voreinstellungen</button>
       <button class="btn-sm btn-navy" onclick="openSaveCalcModal()" style="background:#2e7d52">💾 Berechnung speichern</button>
       <button class="btn-sm btn-navy" onclick="openReservationFromCalc()">Einheit reservieren</button>
       <button class="btn-sm btn-gold" onclick="printCalc()">📄 PDF drucken</button>
@@ -1443,7 +1616,6 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
       <div style="background:var(--g100);border-left:3px solid var(--pos);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--g700)">
         Alle aktuellen Eingabewerte und Ergebnisse werden gespeichert und sind für Sie und den Admin einsehbar.
       </div>
-      <div id="sc-lead-hint" style="display:none;padding:8px 12px;margin-bottom:12px;font-size:11px;border:1px solid var(--ok);color:var(--ok);background:rgba(94,126,99,.08)"></div>
       <div class="form-grid" style="grid-template-columns:1fr">
         <div class="form-fld">
           <label>Kundenname *</label>
@@ -1771,31 +1943,6 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   </div>
 </div>
 
-<!-- Lead-Auswahl vor Kalkulator öffnen -->
-<div class="modal-bg" id="calcLeadSelectModal">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <div class="modal-title">Für welchen Lead ist diese Kalkulation?</div>
-      <button class="modal-close" onclick="closeModal('calcLeadSelectModal')">×</button>
-    </div>
-    <div class="modal-body">
-      <div style="background:var(--g100);border-left:3px solid var(--gold);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--g500);line-height:1.6">
-        Bitte wählen Sie den Lead aus, für den diese Kalkulation erstellt wird. So bleibt die Verbindung zwischen Interessent und Berechnung erhalten.
-      </div>
-      <div class="form-fld">
-        <label>Lead auswählen</label>
-        <select id="calc-lead-select" style="width:100%;padding:9px 10px;border:1px solid var(--stone);background:var(--field);font-family:var(--font-body);font-size:13px;outline:none">
-          <option value="">— Lead auswählen —</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" onclick="addNewLeadBeforeCalc()">+ Neuen Lead anlegen</button>
-      <button class="btn-sm btn-gold" onclick="confirmCalcLead()">Weiter zum Kalkulator →</button>
-    </div>
-  </div>
-</div>
-
 <!-- Lead Modal -->
 <div class="modal-bg" id="leadModal">
   <div class="modal" style="max-width:600px">
@@ -1846,8 +1993,12 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <select id="lead-object"><option value="">— kein Objekt —</option></select>
         </div>
         <div class="form-fld full"><label>Notiz</label><textarea id="lead-notes" placeholder="Gesprächsnotizen, Einwände, nächste Schritte..."></textarea></div>
-        <!-- Reservierung – nur im Edit-Modus wenn reservation_id gesetzt -->
-        <div class="form-fld full" id="lead-reservation-section" style="display:none"></div>
+        <!-- Admin-Kommentar -->
+        <div class="form-fld full" id="admin-note-fld" style="display:none">
+          <label id="admin-note-label">Admin-Kommentar</label>
+          <div id="admin-note-vp-view" style="display:none;background:#fffde7;border:1px solid var(--accent);padding:10px 14px;font-size:12px;color:var(--brand);line-height:1.6"></div>
+          <textarea id="admin-note-input" style="display:none" placeholder="Interner Admin-Kommentar zu diesem Lead (nur für Admin sichtbar)..."></textarea>
+        </div>
         <!-- Kalkulationen – nur im Edit-Modus -->
         <div class="form-fld full" id="lead-calc-section" style="display:none"></div>
         <!-- Activity Log – nur im Edit-Modus -->
@@ -1871,10 +2022,143 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   </div>
 </div>
 
+<!-- ══ CSV IMPORT MODAL ══ -->
+<div id="csvImportModal" class="modal-bg" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <div class="modal-title">Leads importieren (CSV)</div>
+      <button class="modal-close" onclick="document.getElementById('csvImportModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">CSV-Datei auswählen. Erwartete Spalten: Name, E-Mail, Telefon, Quelle (oder ähnliche Bezeichnungen)</p>
+      <div class="upload-area" onclick="document.getElementById('csvFileInput').click()">
+        <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVUpload(this)">
+        <div style="font-size:13px;color:var(--muted)">📄 CSV-Datei auswählen</div>
+      </div>
+      <div id="csvPreview" style="margin-top:16px;display:none">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Vorschau</div>
+        <div class="tbl-wrap" id="csvPreviewTable"></div>
+        <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
+          <span id="csvPreviewInfo" style="font-size:12px;color:var(--muted)"></span>
+          <button class="btn-sm btn-gold" onclick="importCSVLeads()">Importieren</button>
+        </div>
+      </div>
+      <div id="csvImportResult" style="margin-top:14px;font-size:12px;display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DIRTY-CHECK MODAL ══ -->
+<div id="dirtyModal" class="modal-bg" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header"><div class="modal-title">Ungespeicherte Änderungen</div></div>
+    <div class="modal-body"><p style="font-size:14px;color:var(--muted)">Möchten Sie die Änderungen verwerfen?</p></div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="closeDirtyModal()">Zurück</button>
+      <button class="btn-sm btn-danger" onclick="confirmDiscard()">Verwerfen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE CONFIRM MODAL ══ -->
+<div id="deleteModal" class="modal-bg" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title">Löschen bestätigen</div></div>
+    <div class="modal-body">
+      <p id="deleteModalMsg" style="font-size:14px;color:var(--ink);margin-bottom:12px">Wirklich löschen?</p>
+      <p id="deleteModalWarn" style="font-size:12px;color:var(--gone);display:none">⚠️ Alle Fotos und Dokumente werden unwiderruflich gelöscht.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone);background:var(--field)" onclick="closeDeleteModal()">Abbrechen</button>
+      <button class="btn-sm btn-danger" id="deleteModalConfirmBtn" onclick="">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OBJEKT-VERGLEICH TOOLBAR ══ -->
+<div id="compare-toolbar" style="display:none">
+  <span style="font-size:12px;font-weight:600" id="compare-count-label">0 ausgewählt</span>
+  <button onclick="openCompareModal()" class="btn-sm btn-gold" id="compare-open-btn" style="padding:6px 14px">Vergleichen</button>
+  <button onclick="clearCompare()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:20px;line-height:1;padding:2px 4px">×</button>
+</div>
+
+<!-- ══ VERGLEICHS-MODAL ══ -->
+<div class="modal-bg" id="compareModal">
+  <div class="modal" style="max-width:920px;width:98%">
+    <div class="modal-header">
+      <div class="modal-title">Objekt-Vergleich</div>
+      <button class="modal-close" onclick="closeModal('compareModal')">×</button>
+    </div>
+    <div class="modal-body" id="compareBody" style="padding:20px"></div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" onclick="closeModal('compareModal')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ONBOARDING MODAL ══ -->
+<div class="modal-bg" id="onboardingModal" style="z-index:9000">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <div class="modal-title">Willkommen bei Vestora Capital 🏠</div>
+    </div>
+    <div class="modal-body" style="padding:28px 24px">
+      <div id="ob-step-0">
+        <div style="font-size:36px;margin-bottom:12px;text-align:center">🏠</div>
+        <div style="font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--brand);margin-bottom:10px;text-align:center">Schritt 1 von 4 – Objektliste</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">In der <strong>Objektliste</strong> findest du alle verfügbaren Einheiten. Du kannst nach Stadt, Zimmeranzahl, Fläche und Preis filtern. Klicke auf eine Karte um Details, Grundrisse und Dokumente zu sehen.</p>
+      </div>
+      <div id="ob-step-1" style="display:none">
+        <div style="font-size:36px;margin-bottom:12px;text-align:center">📊</div>
+        <div style="font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--brand);margin-bottom:10px;text-align:center">Schritt 2 von 4 – Kalkulator</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">Erstelle für jeden Interessenten eine individuelle <strong>Berechnung</strong>. Der Kalkulator zeigt Cashflow, Rendite und Steuerersparnis. Speichere Berechnungen und verknüpfe sie mit Leads.</p>
+      </div>
+      <div id="ob-step-2" style="display:none">
+        <div style="font-size:36px;margin-bottom:12px;text-align:center">👥</div>
+        <div style="font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--brand);margin-bottom:10px;text-align:center">Schritt 3 von 4 – CRM / Leads</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">Im <strong>Leads-Bereich</strong> verwaltest du deine Interessenten. Setze Follow-up-Termine, tracke den Status (Erstkontakt → Qualifiziert → Kalkulator → Reservierung → Notar) und führe eine Gesprächshistorie.</p>
+      </div>
+      <div id="ob-step-3" style="display:none">
+        <div style="font-size:36px;margin-bottom:12px;text-align:center">📝</div>
+        <div style="font-family:var(--font-display);font-style:italic;font-size:17px;color:var(--brand);margin-bottom:10px;text-align:center">Schritt 4 von 4 – Reservierung</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">So läuft der Reservierungsprozess ab:<br>① <strong>Soft-Reservierung (72h)</strong> – sofort nach Kaufentscheidung<br>② <strong>Hard-Reservierung (21 Tage)</strong> – nach Finanzierungsbestätigung<br>③ <strong>KVE &amp; Notar</strong> – finaler Abschluss<br><br>Starte die Reservierung über „Reservieren" im Objekt-Detail.</p>
+      </div>
+      <div style="display:flex;justify-content:center;gap:7px;margin-top:20px">
+        <span id="ob-dot-0" class="ob-dot" style="background:var(--brand)"></span>
+        <span id="ob-dot-1" class="ob-dot" style="background:var(--stone)"></span>
+        <span id="ob-dot-2" class="ob-dot" style="background:var(--stone)"></span>
+        <span id="ob-dot-3" class="ob-dot" style="background:var(--stone)"></span>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="btn-sm btn-outline" id="ob-prev-btn" style="color:var(--ink);border-color:var(--stone);visibility:hidden" onclick="prevOnboardingStep()">← Zurück</button>
+      <button class="btn-sm btn-gold" id="ob-next-btn" onclick="nextOnboardingStep()">Weiter →</button>
+    </div>
+  </div>
+</div>
+
+<script src="faq-content.js"></script>
 <script>
 // ══════════════════════════════════════════════════════
 // CONFIG & SUPABASE INIT
 // ══════════════════════════════════════════════════════
+// SQL: CREATE TABLE IF NOT EXISTS lead_activities (id UUID DEFAULT gen_random_uuid() PRIMARY KEY, lead_id UUID REFERENCES leads(id) ON DELETE CASCADE, user_id UUID, entry TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT now())
+
+// ── Lazy Script Loader ──
+const _loadedScripts = {};
+function loadScript(url) {
+  if (_loadedScripts[url]) return _loadedScripts[url];
+  _loadedScripts[url] = new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${url}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return _loadedScripts[url];
+}
+
 let sb = null;
 let currentUser = null;
 let currentProfile = null;
@@ -2241,6 +2525,10 @@ async function onLogin(user) {
   show('appShell');
   setupAppShell();
   loadView(currentProfile.role === 'admin' ? 'objects' : 'vp-objects');
+  // VP-Onboarding prüfen
+  if (currentProfile.role !== 'admin') {
+    setTimeout(checkOnboarding, 800);
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -2326,37 +2614,42 @@ function setupAppShell() {
   const nav = document.getElementById('appNav');
   if (isAdmin) {
     nav.innerHTML = `
-      <button class="app-nav-btn" data-view="objects" onclick="loadView('objects')">Objekte</button>
-      <button class="app-nav-btn" data-view="reservations" onclick="loadView('reservations')">Reservierungen</button>
-      <button class="app-nav-btn" data-view="admin-leads" onclick="loadView('admin-leads')">Leads</button>
-      <button class="app-nav-btn" data-view="partners" onclick="loadView('partners')">Partner</button>
-      <button class="app-nav-btn" data-view="admin-calcs" onclick="loadView('admin-calcs')">Berechnungen</button>
-      <button class="app-nav-btn" onclick="openAdminKve()">KVE Anfragen</button>
+      <button class="app-nav-btn" data-view="dashboard" onclick="loadView('dashboard');closeMobileNav()">Dashboard</button>
+      <button class="app-nav-btn" data-view="objects" onclick="loadView('objects');closeMobileNav()">Objekte</button>
+      <button class="app-nav-btn" data-view="reservations" onclick="loadView('reservations');closeMobileNav()">Reservierungen <span id="res-expiry-badge" style="display:none;background:#dc3545;color:white;border-radius:50%!important;padding:1px 6px;font-size:9px;margin-left:4px"></span></button>
+      <button class="app-nav-btn" data-view="admin-leads" onclick="loadView('admin-leads');closeMobileNav()">Leads</button>
+      <button class="app-nav-btn" data-view="partners" onclick="loadView('partners');closeMobileNav()">Partner</button>
+      <button class="app-nav-btn" data-view="admin-calcs" onclick="loadView('admin-calcs');closeMobileNav()">Berechnungen</button>
+      <button class="app-nav-btn" data-view="admin-performance" onclick="loadView('admin-performance');closeMobileNav()">VP Performance</button>
+      <button class="app-nav-btn" onclick="openAdminKve();closeMobileNav()">KVE Anfragen</button>
     `;
   } else {
     nav.innerHTML = `
-      <button class="app-nav-btn" data-view="vp-objects" onclick="loadView('vp-objects')">Objektliste</button>
-      <button class="app-nav-btn" data-view="vp-reservations" onclick="loadView('vp-reservations')">Meine Reservierungen</button>
-      <button class="app-nav-btn" data-view="vp-leads" onclick="loadView('vp-leads')">Leads</button>
-      <button class="app-nav-btn" data-view="vp-calcs" onclick="loadView('vp-calcs')">Meine Berechnungen</button>
-      <button class="app-nav-btn" data-view="vp-selbstauskunft" onclick="loadView('vp-selbstauskunft')" style="color:var(--accent-soft)">Selbstauskunft</button>
-      ${currentProfile.faq_enabled ? '<button class="app-nav-btn" data-view="vp-faq" onclick="loadView(\'vp-faq\')">Handbuch</button>' : ''}
+      <button class="app-nav-btn" data-view="vp-objects" onclick="loadView('vp-objects');closeMobileNav()">Objektliste</button>
+      <button class="app-nav-btn" data-view="vp-reservations" onclick="loadView('vp-reservations');closeMobileNav()">Meine Reservierungen</button>
+      <button class="app-nav-btn" data-view="vp-leads" onclick="loadView('vp-leads');closeMobileNav()">Leads</button>
+      <button class="app-nav-btn" data-view="vp-calcs" onclick="loadView('vp-calcs');closeMobileNav()">Meine Berechnungen</button>
+      <button class="app-nav-btn" data-view="vp-selbstauskunft" onclick="loadView('vp-selbstauskunft');closeMobileNav()" style="color:var(--accent-soft)">Selbstauskunft</button>
+      ${currentProfile.faq_enabled ? '<button class="app-nav-btn" data-view="vp-faq" onclick="loadView(\'vp-faq\');closeMobileNav()">Handbuch</button>' : ''}
     `;
   }
+
+  // Hamburger-Button sichtbar machen
+  const hamburger = document.getElementById('hamburger-btn');
+  if (hamburger) hamburger.style.display = 'flex';
+
+  // Onboarding-Button für VP
+  const onboardingBtn = document.getElementById('btnOnboarding');
+  if (onboardingBtn) onboardingBtn.style.display = isAdmin ? 'none' : '';
 }
 
 // ══════════════════════════════════════════════════════
 // FAQ / VERTRIEBSHANDBUCH
 // ══════════════════════════════════════════════════════
-const FAQ_SECTIONS = [
-  {
-    title: "Grundlagen der Kapitalanlage", icon: "🏠",
-    items: [
-      { q: "Was ist eine Kapitalanlage-Wohnung?", a: `Eine Kapitalanlage-Wohnung ist eine Immobilie, die nicht selbst bewohnt, sondern vermietet wird – mit dem Ziel, Mieteinnahmen zu erzielen und langfristig Vermögen aufzubauen. Der Käufer ist Investor, nicht Selbstnutzer.<br><br>Im Gegensatz zur selbstgenutzten Wohnung entscheidet hier nicht der Geschmack, sondern die <strong>Rendite, Lage und Vermietbarkeit</strong>. Der Investor fragt: „Was bringt mir das?" – nicht „Gefällt mir die Küche?"` },
-      { q: "Warum kaufen Menschen Wohnungen als Kapitalanlage?", a: `Es gibt vier Hauptmotive – gute Vertriebspartner kennen alle vier und sprechen den passenden Motivtyp gezielt an:<br><br><strong>① Inflationsschutz</strong> – Sachwerte (Immobilien) behalten ihren Wert, wenn das Geld auf dem Konto real weniger wert wird.<br><strong>② Altersvorsorge</strong> – Mieteinnahmen als zweite Rente. „Statt 1.200€ gesetzliche Rente zusätzlich 600€ Mieteinnahmen netto."<br><strong>③ Steueroptimierung</strong> – Besonders für gut verdienende Angestellte (42% Steuersatz) ist die steuerliche Ersparnis ein starkes Argument.<br><strong>④ Vermögensaufbau mit Fremdkapital</strong> – Die Bank finanziert 80–90%, der Mieter zahlt die Rate. Hebelwirkung durch Fremdkapital (Leverage-Effekt).` },
-      { q: "Wer ist der typische Käufer einer Kapitalanlage-Wohnung?", a: `Der ideale Käufer hat folgendes Profil:<br><br>• <strong>Einkommen:</strong> Brutto über 50.000€/Jahr (besser 70.000€+) – damit die Steuerersparnis spürbar ist<br>• <strong>Eigenkapital:</strong> Mindestens 20.000–40.000€ für Kaufnebenkosten (Notar, Grunderwerbsteuer, Makler)<br>• <strong>Anlagehorizont:</strong> Mindestens 10 Jahre – Immobilien sind keine kurzfristige Anlage<br>• <strong>Risikoprofil:</strong> Sicherheitsorientiert – Immobilien gelten als „solide" Anlage<br><br><strong>Häufige Zielgruppen:</strong> Ingenieure, Ärzte, IT-Fachkräfte, Beamte, gut verdienende Angestellte zwischen 35–55 Jahren.` }
-    ]
-  },
+// FAQ_SECTIONS wird von faq-content.js geladen (vor diesem Script-Tag)
+// Inline-Definition entfernt – kein Duplikat mehr
+
+/* INLINE_FAQ_REMOVED – see faq-content.js
   {
     title: "Die wichtigsten Kennzahlen", icon: "📊",
     items: [
@@ -2412,10 +2705,10 @@ const FAQ_SECTIONS = [
   {
     title: "Wichtige Begriffe – Glossar", icon: "📖",
     items: [
-      { q: "Die wichtigsten Fachbegriffe kurz erklärt", a: `<div style="display:grid;gap:8px"><div><strong>AfA</strong> – Absetzung für Abnutzung. Jährliche steuerliche Abschreibung des Gebäudewertes.</div><div><strong>Beurkundung</strong> – Notariell beglaubigter Vertragsabschluss. Ab hier ist der Kauf rechtlich bindend.</div><div><strong>Bruttorendite</strong> – Jahresmiete ÷ Kaufpreis × 100. Ohne Kostenabzug.</div><div><strong>Cashflow</strong> – Monatlicher Überschuss oder Fehlbetrag nach allen Kosten und Einnahmen.</div><div><strong>Eigenkapital</strong> – Eigene Mittel des Käufers (nicht finanzierter Teil).</div><div><strong>Hausgeld</strong> – Monatliche Zahlung an die Eigentümergemeinschaft (Verwaltung, Rücklagen, Betriebskosten).</div><div><strong>Hard-Reservierung</strong> – 21-tägige feste Reservierung nach Finanzierungsbestätigung.</div><div><strong>Instandhaltungsrücklage</strong> – Rücklage für Reparaturen und Modernisierungen.</div><div><strong>KfW</strong> – Kreditanstalt für Wiederaufbau. Staatliche Bank mit Förderprogrammen für Energieeffizienz.</div><div><strong>Kaufpreisfaktor</strong> – Kaufpreis ÷ Jahresnettomiete. Gibt an, nach wie vielen Jahren sich die Investition amortisiert.</div><div><strong>KVE</strong> – Kaufvertragsentwurf. Notariell ausgearbeiteter Vertragsentwurf vor Beurkundung.</div><div><strong>Leverage-Effekt</strong> – Hebel: Mit wenig Eigenkapital eine große Investition steuern. Mietrendite auf das eingesetzte Eigenkapital kann sehr hoch sein.</div><div><strong>Lohnsteuerermäßigung</strong> – Antrag beim Finanzamt: Steuervorteil wird monatlich auf dem Gehaltszettel gutgeschrieben statt erst im Jahresausgleich.</div><div><strong>Nettorendite</strong> – Rendite nach Abzug aller Kosten. Realistischere Kennzahl als Bruttorendite.</div><div><strong>Soft-Reservierung</strong> – 72-stündige Reservierung nach Zahlung der 1.000€ Reservierungsgebühr.</div><div><strong>Vervielfältiger</strong> – Anderer Begriff für Kaufpreisfaktor.</div><div><strong>Werbungskosten</strong> – Alle Kosten im Zusammenhang mit Vermietung, steuerlich absetzbar.</div><div><strong>Zinsboutique</strong> – Unser Finanzierungspartner. Kümmert sich um Finanzierungsberatung und KfW-Anträge.</div></div>` }
+      { q: "Die wichtigsten Fachbegriffe kurz erklärt", a: `(siehe faq-content.js)` }
     ]
   }
-];
+// END INLINE_FAQ_REMOVED */
 
 function renderFAQ() {
   const container = document.getElementById('faq-container');
@@ -2430,13 +2723,13 @@ function renderFAQ() {
       </div>
       <div id="faq-sec-${si}" style="border:1px solid var(--g200);border-top:none">
         ${section.items.map((item, ii) => `
-          <div style="border-bottom:1px solid var(--g200)">
-            <div style="padding:12px 18px;font-weight:600;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;background:white;user-select:none"
+          <div class="faq-section" style="border-bottom:1px solid var(--g200)">
+            <div class="faq-question" style="padding:12px 18px;font-weight:600;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;background:white;user-select:none"
               onclick="toggleFaqItem(${si},${ii})">
               <span>${item.q}</span>
               <span id="faq-item-arrow-${si}-${ii}" style="flex-shrink:0;color:var(--g500);font-size:11px;transition:transform .2s">▶</span>
             </div>
-            <div id="faq-item-body-${si}-${ii}" style="display:none;padding:14px 18px 16px;font-size:13px;line-height:1.7;background:var(--g100);border-top:1px solid var(--g200)">
+            <div class="faq-answer" id="faq-item-body-${si}-${ii}" style="display:none;padding:14px 18px 16px;font-size:13px;line-height:1.7;background:var(--g100);border-top:1px solid var(--g200)">
               ${item.a}
             </div>
           </div>
@@ -2464,6 +2757,41 @@ function toggleFaqItem(si, ii) {
   if (arrow) arrow.style.transform = hidden ? 'rotate(90deg)' : '';
 }
 
+function filterFAQ(q) {
+  const term = q.trim().toLowerCase();
+  const sections = document.querySelectorAll('.faq-section');
+  if (!term) {
+    sections.forEach(s => {
+      s.style.display = '';
+      s.querySelectorAll('mark').forEach(m => {
+        const parent = m.parentNode;
+        parent.replaceChild(document.createTextNode(m.textContent), m);
+        parent.normalize();
+      });
+      s.querySelectorAll('.faq-answer').forEach(a => a.style.display = 'none');
+    });
+    const noRes = document.getElementById('faqNoResults');
+    if (noRes) noRes.style.display = 'none';
+    return;
+  }
+  let anyMatch = false;
+  sections.forEach(s => {
+    const title = s.querySelector('.faq-question');
+    const answer = s.querySelector('.faq-answer');
+    const titleText = title ? title.textContent.toLowerCase() : '';
+    const answerText = answer ? answer.textContent.toLowerCase() : '';
+    const matches = titleText.includes(term) || answerText.includes(term);
+    s.style.display = matches ? '' : 'none';
+    if (matches) {
+      anyMatch = true;
+      if (answer) answer.style.display = 'block';
+      if (title) title.innerHTML = title.textContent.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), m => `<mark style="background:#fff176;padding:0">${m}</mark>`);
+    }
+  });
+  const noRes = document.getElementById('faqNoResults');
+  if (noRes) noRes.style.display = anyMatch ? 'none' : 'block';
+}
+
 function loadView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.app-nav-btn').forEach(b => b.classList.remove('active'));
@@ -2473,7 +2801,8 @@ function loadView(name) {
   });
 
   // Load data
-  if (name === 'objects') loadAdminObjects();
+  if (name === 'dashboard') loadDashboard();
+  else if (name === 'objects') loadAdminObjects();
   else if (name === 'reservations') loadReservations();
   else if (name === 'partners') loadPartners();
   else if (name === 'vp-objects') { vpAllObjects = []; loadVPObjects(); }
@@ -2484,6 +2813,7 @@ function loadView(name) {
   else if (name === 'vp-selbstauskunft') {} // iFrame lädt automatisch
   else if (name === 'vp-faq') renderFAQ();
   else if (name === 'admin-calcs') loadAdminCalcs();
+  else if (name === 'admin-performance') loadVPPerformance();
 }
 
 // ══════════════════════════════════════════════════════
@@ -2497,8 +2827,32 @@ const clr = (v) => v >= 0 ? 'pos' : 'neg';
 
 function show(id) { document.getElementById(id).style.display = ''; }
 function hide(id) { document.getElementById(id).style.display = 'none'; }
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); resetDirty(); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); resetDirty(); }
+
+// ── DIRTY-CHECK & DELETE CONFIRM ──
+let formIsDirty = false;
+let dirtyDiscardCallback = null;
+function markDirty() { formIsDirty = true; }
+function resetDirty() { formIsDirty = false; }
+function closeDirtyModal() { document.getElementById('dirtyModal').style.display='none'; }
+function confirmDiscard() { closeDirtyModal(); resetDirty(); if(dirtyDiscardCallback) dirtyDiscardCallback(); }
+function checkDirtyAndClose(closeCallback) {
+  if (formIsDirty) {
+    dirtyDiscardCallback = closeCallback;
+    document.getElementById('dirtyModal').style.display='flex';
+  } else {
+    closeCallback();
+  }
+}
+function closeDeleteModal() { document.getElementById('deleteModal').style.display='none'; }
+function showDeleteModal(msg, onConfirm, showObjWarn) {
+  document.getElementById('deleteModalMsg').textContent = msg;
+  const warn = document.getElementById('deleteModalWarn');
+  if (warn) warn.style.display = showObjWarn ? 'block' : 'none';
+  document.getElementById('deleteModalConfirmBtn').onclick = () => { closeDeleteModal(); onConfirm(); };
+  document.getElementById('deleteModal').style.display = 'flex';
+}
 
 function notify(msg, type='', duration=4000) {
   const el = document.getElementById('notif');
@@ -2522,12 +2876,13 @@ async function loadAdminObjects() {
   const { data, error } = await sb.from('objects').select('*').order('address', { ascending: true }).order('name', { ascending: true });
   if (error) { notify('Fehler beim Laden der Objekte', 'error'); return; }
 
-  const stats = { available:0, reserved:0, sold:0, draft:0 };
+  const stats = { available:0, reserved:0, sold:0, draft:0, coming_soon:0 };
   data.forEach(o => stats[o.status] = (stats[o.status]||0)+1);
   document.getElementById('stat-available').textContent = stats.available;
   document.getElementById('stat-reserved').textContent = stats.reserved;
   document.getElementById('stat-sold').textContent = stats.sold;
   document.getElementById('stat-draft').textContent = stats.draft;
+  const csEl = document.getElementById('stat-coming-soon'); if (csEl) csEl.textContent = stats.coming_soon || 0;
 
   const grid = document.getElementById('adminObjGrid');
   if (!data.length) {
@@ -2586,6 +2941,7 @@ function objCard(o, isAdmin) {
         <span style="font-size:14px;font-weight:700;color:var(--pos)">${fmt((priceUnit+parkPrice)*currentProfile.commission_pct/100)}</span>
       </div>` : ''}
       ${isComingSoon && !isAdmin ? '<div style="text-align:center;padding:8px 0 2px;font-size:11px;color:var(--g500);font-weight:600;letter-spacing:.05em;text-transform:uppercase">Demnächst verfügbar</div>' : ''}
+      ${!isAdmin && !isComingSoon ? `<div class="compare-check-wrap"><input type="checkbox" class="compare-cb" id="compare-${o.id}" style="width:13px;height:13px;accent-color:var(--brand)" onclick="event.stopPropagation();toggleObjCompare('${o.id}',this)"><label for="compare-${o.id}" style="font-size:11px;color:var(--muted);cursor:pointer;user-select:none" onclick="event.stopPropagation()">Zum Vergleich hinzufügen</label></div>` : ''}
       ${isAdmin ? `<div style="border-top:1px solid var(--g200);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;background:var(--g100)">
         <span style="font-size:10px;color:var(--g500);display:flex;align-items:center;gap:6px">
           ${statusBadge(o.status)}
@@ -2601,13 +2957,22 @@ function objCard(o, isAdmin) {
             🗑 Löschen
           </button>
         </div>
+      </div>
+      <div style="border-top:1px dashed var(--stone);padding:6px 14px;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" class="bulk-obj-cb" value="${o.id}" style="width:14px;height:14px;accent-color:var(--brand)" onclick="event.stopPropagation();updateBulkToolbar()">
+        <label style="font-size:10px;color:var(--muted);cursor:pointer">Auswählen</label>
       </div>` : ''}
     </div>
   </div>`;
 }
 
 async function deleteObject(id, name) {
-  if (!confirm(`Objekt "${name}" wirklich löschen?\n\nAlle Bilder, Dokumente und Reservierungen werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+  showDeleteModal(`Objekt "${name}" wirklich löschen?`, async () => {
+    await _deleteObjectConfirmed(id, name);
+  }, true);
+  return;
+}
+async function _deleteObjectConfirmed(id, name) {
   // Bilder aus Storage löschen
   const { data: imgs } = await sb.storage.from('object-images').list(id);
   if (imgs && imgs.length) {
@@ -2623,6 +2988,33 @@ async function deleteObject(id, name) {
   const { error } = await sb.from('objects').delete().eq('id', id);
   if (error) { notify('Fehler beim Löschen: ' + error.message, 'error'); return; }
   notify(`✓ "${name}" wurde gelöscht.`, 'success', 4000);
+  loadAdminObjects();
+}
+
+function updateBulkToolbar() {
+  const checked = document.querySelectorAll('.bulk-obj-cb:checked');
+  const toolbar = document.getElementById('bulkToolbar');
+  if (!toolbar) return;
+  if (checked.length > 0) {
+    toolbar.style.display = 'flex';
+    document.getElementById('bulkCount').textContent = checked.length + ' ausgewählt';
+  } else {
+    toolbar.style.display = 'none';
+  }
+}
+function clearBulkSelection() {
+  document.querySelectorAll('.bulk-obj-cb:checked').forEach(cb => cb.checked = false);
+  const toolbar = document.getElementById('bulkToolbar');
+  if (toolbar) toolbar.style.display = 'none';
+}
+async function applyBulkStatus() {
+  const checked = Array.from(document.querySelectorAll('.bulk-obj-cb:checked')).map(cb => cb.value);
+  if (!checked.length) return;
+  const status = document.getElementById('bulkStatus').value;
+  const { error } = await sb.from('objects').update({ status }).in('id', checked);
+  if (error) { notify('Fehler: ' + error.message, 'error'); return; }
+  notify(`✓ ${checked.length} Objekte auf "${status}" gesetzt`, 'success');
+  clearBulkSelection();
   loadAdminObjects();
 }
 
@@ -3072,6 +3464,7 @@ async function handleObjFiles(files) {
     var f = files[fi];
     var ext = f.name.split('.').pop().toLowerCase();
     if (ext === 'zip') {
+      await loadScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
       var zip = await JSZip.loadAsync(f);
       var entries = Object.entries(zip.files);
       for (var ei = 0; ei < entries.length; ei++) {
@@ -3216,6 +3609,88 @@ async function deleteAdminDoc(docId, storagePath, objId) {
 }
 
 // ══════════════════════════════════════════════════════
+// FEATURE: OBJEKTUNTERLAGEN NACH KATEGORIEN
+// ══════════════════════════════════════════════════════
+const DOC_CATEGORIES = [
+  'Grundriss', 'Energieausweis', 'Wohngebäudeversicherung', 'Teilungserklärung',
+  'Protokoll der Eigentümerversammlung', 'Wirtschaftsplan', 'Exposé',
+  'Kaufvertrag (Entwurf)', 'Sonstiges'
+];
+
+async function loadCategorizedDocs(objectId) {
+  const el = document.getElementById('objDocsContent');
+  if (!el) return;
+  const { data: obj } = await sb.from('objects').select('documents_v2, documents').eq('id', objectId).single();
+  if (!obj) return;
+  let docs = [];
+  try { docs = obj.documents_v2 ? (Array.isArray(obj.documents_v2) ? obj.documents_v2 : JSON.parse(obj.documents_v2)) : []; } catch(e) { docs = []; }
+  let legacyDocs = [];
+  if (obj.documents) {
+    try {
+      const old = typeof obj.documents === 'string' ? JSON.parse(obj.documents) : obj.documents;
+      if (Array.isArray(old)) legacyDocs = old.map(d => ({...d, category:'Sonstiges', legacy:true}));
+    } catch(e) {}
+  }
+  el.innerHTML = DOC_CATEGORIES.map(cat => {
+    const catDocs = docs.filter(d => d.category === cat);
+    const legacyCatDocs = legacyDocs.filter(d => d.category === cat);
+    const allDocs = [...catDocs, ...legacyCatDocs];
+    const catId = cat.replace(/[^a-z0-9]/gi,'_');
+    return `<div style="border:1px solid var(--stone);margin-bottom:12px">
+      <div style="background:var(--brand);color:white;padding:8px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.1em;display:flex;justify-content:space-between;align-items:center">
+        <span>${cat.toUpperCase()}</span>
+        <label style="cursor:pointer;background:var(--accent);padding:3px 10px;font-size:10px">
+          + Hochladen
+          <input type="file" style="display:none" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            onchange="uploadCategoryDoc('${objectId}','${cat}',this)">
+        </label>
+      </div>
+      <div id="cat-docs-${catId}" style="padding:8px 14px;min-height:36px">
+        ${allDocs.length === 0 ? '<div style="font-size:11px;color:var(--muted);padding:4px 0">Keine Dokumente</div>' :
+          allDocs.map(d => `<div class="doc-item" style="padding:6px 0">
+            <div class="doc-icon" style="width:28px;height:28px;font-size:9px">${(d.name||'').split('.').pop().toUpperCase()}</div>
+            <div style="flex:1;min-width:0">
+              <div class="doc-name" style="font-size:12px">${d.name||'—'}</div>
+              <div class="doc-meta" style="font-size:10px">${d.uploaded_at ? new Date(d.uploaded_at).toLocaleDateString('de-DE') : ''}${d.legacy ? ' (alt)' : ''}</div>
+            </div>
+            <a href="${d.url}" target="_blank" style="padding:3px 10px;border:1px solid var(--stone);font-size:10px;color:var(--brand);text-decoration:none">↓</a>
+            ${!d.legacy ? `<button onclick="deleteCategoryDoc('${objectId}','${d.id}')" style="background:none;border:none;color:var(--gone);cursor:pointer;padding:3px 8px;font-size:14px">×</button>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function uploadCategoryDoc(objectId, category, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop();
+  const docId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString();
+  const filePath = `${objectId}/${category.replace(/[^a-z0-9]/gi,'_')}/${docId}.${ext}`;
+  const { error: upErr } = await sb.storage.from('object-documents').upload(filePath, file, { upsert: true });
+  if (upErr) { notify('Upload fehlgeschlagen: ' + upErr.message, 'error'); return; }
+  const { data: urlData } = sb.storage.from('object-documents').getPublicUrl(filePath);
+  const { data: obj } = await sb.from('objects').select('documents_v2').eq('id', objectId).single();
+  let docs = [];
+  try { docs = obj && obj.documents_v2 ? (Array.isArray(obj.documents_v2) ? obj.documents_v2 : JSON.parse(obj.documents_v2)) : []; } catch(e) { docs = []; }
+  docs.push({ id: docId, category, name: file.name, url: urlData.publicUrl, uploaded_at: new Date().toISOString(), uploaded_by: currentUser?.id });
+  await sb.from('objects').update({ documents_v2: docs }).eq('id', objectId);
+  notify('✓ Dokument hochgeladen', 'success');
+  loadCategorizedDocs(objectId);
+  input.value = '';
+}
+
+async function deleteCategoryDoc(objectId, docId) {
+  const { data: obj } = await sb.from('objects').select('documents_v2').eq('id', objectId).single();
+  let docs = [];
+  try { docs = obj && obj.documents_v2 ? (Array.isArray(obj.documents_v2) ? obj.documents_v2 : JSON.parse(obj.documents_v2)) : []; } catch(e) { docs = []; }
+  docs = docs.filter(d => d.id !== docId);
+  await sb.from('objects').update({ documents_v2: docs }).eq('id', objectId);
+  notify('✓ Dokument gelöscht', 'success');
+  loadCategorizedDocs(objectId);
+}
+
+// ══════════════════════════════════════════════════════
 // ADMIN: RESERVATIONS
 // ══════════════════════════════════════════════════════
 async function loadReservations() {
@@ -3233,16 +3708,25 @@ async function loadReservations() {
     return;
   }
 
-  tbody.innerHTML = data.map(r => `<tr>
+  // Ablauf-Alert prüfen
+  checkReservationExpiryAlerts(data);
+
+  tbody.innerHTML = data.map(r => {
+    const now2 = new Date();
+    const in12h = new Date(now2.getTime() + 12*60*60*1000);
+    const expAt = r.expires_at ? new Date(r.expires_at) : null;
+    const isExpiring = expAt && expAt > now2 && expAt <= in12h && ['soft','hard','pending'].includes(r.status);
+    return `<tr style="${isExpiring ? 'background:#fff3cd;' : ''}">
     <td>${fmtDate(r.created_at)}</td>
     <td><strong>${r.objects?.name||'—'}</strong><div style="font-size:11px;color:var(--g500)">${r.objects?.address||''}</div></td>
-    <td>${r.buyer_name}</td>
+    <td>${r.buyer_name}${isExpiring ? ' <span style="background:#dc3545;color:white;padding:2px 6px;font-size:9px;font-weight:700">⏱ BALD ABGELAUFEN</span>' : ''}</td>
     <td>${r.vp_name||r.vp_email||'—'}</td>
     <td class="r">${fmt(r.equity)}</td>
     <td>${statusBadge(r.status)}</td>
-    <td style="font-size:11px">${fmtDateTime(r.expires_at)}</td>
+    <td style="font-size:11px;${isExpiring?'color:#dc3545;font-weight:700':''}">${fmtDateTime(r.expires_at)}</td>
     <td><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="openResDetail('${r.id}')">Details</button></td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 
 async function openResDetail(id) {
@@ -3612,12 +4096,6 @@ async function regenerateResPdf(resId) {
   notify('✓ PDF heruntergeladen!', 'success');
 }
 
-async function downloadProtocolPdf(path) {
-  const { data, error } = await sb.storage.from('reservation-pdfs').createSignedUrl(path, 60);
-  if (error || !data || !data.signedUrl) { notify('Fehler beim Abrufen des Protokoll-PDFs', 'error'); return; }
-  window.open(data.signedUrl, '_blank');
-}
-
 async function downloadResPdf(path) {
   const { data } = await sb.storage.from('reservation-pdfs').createSignedUrl(path, 3600);
   if (data?.signedUrl) window.open(data.signedUrl, '_blank');
@@ -3866,6 +4344,16 @@ function openProfilModal() {
   } else {
     prev.innerHTML = '<span style="font-family:var(--font-display);font-weight:700;font-size:11px;color:var(--g500)">Logo</span>';
   }
+  // Kalkulator-Voreinstellungen laden
+  const p = loadCalcPresets();
+  const epEl = document.getElementById('preset-ek-pct');
+  const zpEl = document.getElementById('preset-zinssatz');
+  const tpEl = document.getElementById('preset-tilgung');
+  const spEl = document.getElementById('preset-steuer');
+  if (epEl) epEl.value = p.ekPct || '';
+  if (zpEl) zpEl.value = p.zinssatz || '';
+  if (tpEl) tpEl.value = p.tilgung || '';
+  if (spEl) spEl.value = p.steuer || '';
   openModal('profilModal');
 }
 
@@ -3883,13 +4371,52 @@ function onLogoSelect(e) {
 
 async function saveProfil() {
   const company = document.getElementById('prof-company').value.trim();
+  let logoUrl = vpLogoBase64 || null;
+
+  // Falls es ein neues File-Upload ist (data:image/...), in Storage hochladen
+  if (vpLogoBase64 && vpLogoBase64.startsWith('data:')) {
+    try {
+      const uid = currentUser.id;
+      const mimeMatch = vpLogoBase64.match(/data:([^;]+);base64,/);
+      const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+      const ext = mime.split('/')[1] || 'png';
+      const base64Data = vpLogoBase64.split(',')[1];
+      const byteArr = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+      const blob = new Blob([byteArr], { type: mime });
+      const filePath = `${uid}/logo.${ext}`;
+      const { error: upErr } = await sb.storage.from('company-logos').upload(filePath, blob, { contentType: mime, upsert: true });
+      if (!upErr) {
+        const { data: urlData } = sb.storage.from('company-logos').getPublicUrl(filePath);
+        logoUrl = urlData.publicUrl;
+      } else {
+        console.warn('Logo-Upload fehlgeschlagen, verwende Base64 als Fallback:', upErr.message);
+        logoUrl = vpLogoBase64; // Fallback
+      }
+    } catch(e) {
+      console.warn('Logo-Upload Fehler, Fallback auf Base64:', e);
+      logoUrl = vpLogoBase64;
+    }
+  }
+
   const { error } = await sb.from('profiles').update({
     company_name: company,
-    company_logo: vpLogoBase64 || null
+    company_logo: logoUrl
   }).eq('id', currentUser.id);
   if(error) { notify('Fehler: ' + error.message, 'error'); return; }
   currentProfile.company_name = company;
-  currentProfile.company_logo = vpLogoBase64;
+  currentProfile.company_logo = logoUrl;
+  // Kalkulator-Voreinstellungen speichern
+  const p = {
+    ekPct: document.getElementById('preset-ek-pct')?.value || '',
+    zinssatz: document.getElementById('preset-zinssatz')?.value || '',
+    tilgung: document.getElementById('preset-tilgung')?.value || '',
+    steuer: document.getElementById('preset-steuer')?.value || ''
+  };
+  if (currentUser) {
+    localStorage.setItem('calcPresets_' + currentUser.id, JSON.stringify(p));
+    // Auch in Supabase speichern
+    await sb.from('profiles').update({ calc_presets: p }).eq('id', currentUser.id);
+  }
   updateHeaderBranding(); // Portal-Header sofort aktualisieren
   closeModal('profilModal');
   notify('Profil gespeichert!', 'success');
@@ -4642,7 +5169,8 @@ function updateSteuerModal() {
   tbody.innerHTML = rows;
 }
 
-function exportSteuerPDF() {
+async function exportSteuerPDF() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const o = currentSteuerObj;
   if (!o || typeof jspdf === 'undefined') { alert('PDF-Export nicht verfügbar.'); return; }
   const { jsPDF } = jspdf;
@@ -4784,7 +5312,8 @@ function exportSteuerPDF() {
 }
 
 // exportSteuerPDF v2 — fixes column layout, adds VP-logo, clean ASCII-safe strings
-function exportSteuerPDF() {
+async function exportSteuerPDF() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const o = currentSteuerObj;
   if (!o || typeof jspdf === 'undefined') { alert('PDF-Export nicht verfuegbar.'); return; }
   const { jsPDF } = jspdf;
@@ -5035,6 +5564,7 @@ async function downloadAllFiles() {
   btn.textContent = 'ZIP wird erstellt…';
   btn.disabled = true;
 
+  await loadScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
   try {
     const zip = new JSZip();
 
@@ -5132,7 +5662,8 @@ function openExposeModal() {
 // ═══════════════════════════════════════════════════════════════
 // EXPOSE PDF EXPORT
 // ═══════════════════════════════════════════════════════════════
-function exportExposePDF() {
+async function exportExposePDF() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const o = currentSteuerObj;
   if (!o || typeof jspdf === 'undefined') { notify('PDF-Export nicht verfuegbar.', 'error'); return; }
   const { jsPDF } = jspdf;
@@ -5613,16 +6144,7 @@ function exportExposePDF() {
 // ══════════════════════════════════════════════════════
 let calcObj = null;
 
-async function openCalcForObject(id, presetLeadId) {
-  // If presetLeadId is explicitly provided (even null), skip lead-select modal
-  if (presetLeadId !== undefined) {
-    calcLinkedLeadId = (presetLeadId === null || presetLeadId === '__none') ? null : presetLeadId;
-  } else {
-    // Show lead selection modal first, then caller calls openCalcForObject again with presetLeadId
-    pendingCalcObjId = id;
-    await showLeadSelectModal(id);
-    return;
-  }
+async function openCalcForObject(id) {
   const { data: o } = await sb.from('objects').select('*').eq('id', id).single();
   if (!o) return;
   calcObj = o;
@@ -6221,42 +6743,6 @@ function showCalcTab(id, btn) {
   btn.classList.add('active');
 }
 
-// ── Lead Select Modal (vor Kalkulator öffnen) ──
-async function showLeadSelectModal(objId) {
-  pendingCalcObjId = objId;
-  const sel = document.getElementById('calc-lead-select');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— Lead auswählen —</option><option value="__none">Ohne Lead öffnen</option>';
-  const { data: leads } = await sb.from('leads')
-    .select('id, name, phone, status')
-    .eq('vp_id', currentUser.id)
-    .not('status','eq','lost')
-    .order('created_at', { ascending: false });
-  (leads || []).forEach(function(l) {
-    const opt = document.createElement('option');
-    opt.value = l.id;
-    opt.textContent = l.name + (l.phone ? ' · ' + l.phone : '') + ' [' + (l.status || '') + ']';
-    sel.appendChild(opt);
-  });
-  openModal('calcLeadSelectModal');
-}
-
-async function confirmCalcLead() {
-  const sel = document.getElementById('calc-lead-select');
-  if (!sel) return;
-  const val = sel.value;
-  if (!val) { notify('Bitte Lead auswählen oder "Ohne Lead öffnen" wählen.', 'error'); return; }
-  closeModal('calcLeadSelectModal');
-  const leadId = (val === '__none') ? null : val;
-  await openCalcForObject(pendingCalcObjId, leadId);
-}
-
-async function addNewLeadBeforeCalc() {
-  closeModal('calcLeadSelectModal');
-  await openAddLeadModal();
-  notify('Bitte Lead anlegen, dann erneut den Kalkulator öffnen.', '');
-}
-
 function openReservationFromCalc() {
   closeModal('calcModal');
   openReservationModal(currentObjId);
@@ -6296,18 +6782,6 @@ async function openReservationModal(id) {
       if (match) calcSel.value = match.id;
     }
   }
-  // Pre-fill from linked lead if available
-  if (calcLinkedLeadId) {
-    const lead = currentLeads.find(function(l){ return l.id === calcLinkedLeadId; });
-    if (lead) {
-      if (lead.name && !document.getElementById('res-buyer').value) {
-        document.getElementById('res-buyer').value = lead.name;
-      }
-      if ((lead.email || lead.phone) && !document.getElementById('res-contact').value) {
-        document.getElementById('res-contact').value = [lead.email, lead.phone].filter(Boolean).join(' / ');
-      }
-    }
-  }
   openModal('resModal');
 }
 
@@ -6340,7 +6814,7 @@ async function submitReservation() {
     }
   }
 
-  const { data: newRes, error } = await sb.from('reservations').insert({
+  const { error } = await sb.from('reservations').insert({
     object_id: currentObjId,
     vp_id: currentUser.id,
     vp_name: currentProfile.full_name,
@@ -6355,20 +6829,10 @@ async function submitReservation() {
     doc_path: docPath,
     doc_name: docName,
     expires_at: new Date(Date.now()+72*60*60*1000).toISOString()
-  }).select('id').single();
+  });
 
   btn.disabled = false; btn.textContent = 'Reservierung einreichen';
   if (error) { notify('Fehler beim Einreichen: ' + error.message, 'error'); return; }
-
-  // Save reservation_id back to lead if one was linked
-  if (calcLinkedLeadId && newRes && newRes.id) {
-    await sb.from('leads').update({ reservation_id: newRes.id }).eq('id', calcLinkedLeadId);
-    const lead = currentLeads.find(function(l){ return l.id === calcLinkedLeadId; });
-    if (lead) {
-      lead.reservation_id = newRes.id;
-      lead.reservations = { id: newRes.id, status: 'pending', expires_at: new Date(Date.now()+72*60*60*1000).toISOString(), buyer_name: buyer };
-    }
-  }
 
   closeModal('resModal');
   notify('✓ Reservierungsanfrage eingereicht! ' + portalBrand() + ' prüft Ihre Anfrage.', 'success', 6000);
@@ -6382,28 +6846,6 @@ function openSaveCalcModal() {
   if (!calcData || !calcData.o) { notify('Bitte zuerst einen Kalkulator öffnen', 'error'); return; }
   document.getElementById('sc-buyer').value = document.getElementById('c-recipient')?.value || '';
   document.getElementById('sc-notes').value = '';
-  // Show linked lead hint
-  const hintEl = document.getElementById('sc-lead-hint');
-  if (hintEl) {
-    if (calcLinkedLeadId) {
-      const lead = currentLeads.find(function(l){ return l.id === calcLinkedLeadId; });
-      if (lead) {
-        hintEl.textContent = '✓ Verknüpft mit Lead: ' + lead.name + (lead.phone ? ' · ' + lead.phone : '');
-        hintEl.style.color = 'var(--ok)';
-        hintEl.style.background = 'rgba(94,126,99,.08)';
-        hintEl.style.borderColor = 'var(--ok)';
-        hintEl.style.display = 'block';
-      } else {
-        hintEl.style.display = 'none';
-      }
-    } else {
-      hintEl.textContent = '⚠ Kein Lead verknüpft – Kalkulation wird ohne Lead-Bezug gespeichert.';
-      hintEl.style.color = 'var(--warn)';
-      hintEl.style.background = 'rgba(160,122,71,.08)';
-      hintEl.style.borderColor = 'var(--warn)';
-      hintEl.style.display = 'block';
-    }
-  }
   openModal('saveCalcModal');
 }
 
@@ -6419,7 +6861,6 @@ async function saveCalculation() {
     vp_name: currentProfile.full_name || currentProfile.email,
     object_id: o.id,
     object_name: o.name,
-    lead_id: calcLinkedLeadId || null,
     buyer_name: buyer,
     buyer_notes: notes,
     // Eingabewerte
@@ -6505,9 +6946,8 @@ async function loadCalculation(id) {
   const { data: calc } = await sb.from('calculations').select('*').eq('id', id).single();
   if (!calc) { notify('Berechnung nicht gefunden', 'error'); return; }
 
-  // Restore lead link and open calc without lead-select modal (pass null to skip modal)
-  calcLinkedLeadId = calc.lead_id || null;
-  await openCalcForObject(calc.object_id, calcLinkedLeadId);
+  // Kalkulator für das Objekt öffnen
+  await openCalcForObject(calc.object_id);
 
   // Gespeicherte Werte eintragen
   const set = (elId, val) => { const el = document.getElementById(elId); if(el && val !== null && val !== undefined) el.value = val; };
@@ -6667,7 +7107,8 @@ async function submitKve() {
   loadVPReservations();
 }
 
-function generateKvePdf(d, r, o) {
+async function generateKvePdf(d, r, o) {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210, M = 20;
@@ -7047,8 +7488,6 @@ const LEAD_STATUS_CLASS = {
 let currentLeads = [];
 let leadFilterStatus = '';
 let editingLeadId = null;
-let calcLinkedLeadId = null;   // lead linked to current calculator session
-let pendingCalcObjId = null;   // object id waiting for lead selection
 
 function showNotif(msg, type) { notify(msg, type === 'error' ? 'error' : 'success'); }
 
@@ -7103,6 +7542,95 @@ async function updateLeadStatusInline(leadId, newStatus, isAdmin, sel) {
   showNotif('Status aktualisiert.');
 }
 
+// ── LEAD PAGINATION ──
+let leadPage = 1;
+const LEADS_PER_PAGE = 50;
+
+function renderLeadPagination(totalCount, isAdmin) {
+  const totalPages = Math.ceil(totalCount / LEADS_PER_PAGE);
+  const containerId = isAdmin ? 'adminLeadPagination' : 'vpLeadPagination';
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:14px">
+    <button onclick="changeLeadPage(${leadPage-1},${isAdmin})" ${leadPage===1?'disabled':''}
+      style="padding:6px 14px;border:1px solid var(--stone);background:${leadPage===1?'var(--paper-2)':'var(--field)'};cursor:${leadPage===1?'default':'pointer'}">← Zurück</button>
+    <span style="font-size:12px;color:var(--muted)">Seite ${leadPage} von ${totalPages}</span>
+    <button onclick="changeLeadPage(${leadPage+1},${isAdmin})" ${leadPage===totalPages?'disabled':''}
+      style="padding:6px 14px;border:1px solid var(--stone);background:${leadPage===totalPages?'var(--paper-2)':'var(--field)'};cursor:${leadPage===totalPages?'default':'pointer'}">Weiter →</button>
+  </div>`;
+}
+function changeLeadPage(page, isAdmin) { leadPage = page; loadLeads(isAdmin); }
+
+// ── CSV IMPORT ──
+let csvParsedData = [];
+function handleCSVUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      csvParsedData = results.data;
+      showCSVPreview(results.data, results.meta.fields);
+    }
+  });
+}
+function findCSVField(fields, candidates) {
+  for (const c of candidates) {
+    const f = fields.find(f => f.toLowerCase().includes(c.toLowerCase()));
+    if (f) return f;
+  }
+  return null;
+}
+function showCSVPreview(data, fields) {
+  const nameField = findCSVField(fields, ['name','vorname','nachname']) || fields[0];
+  const emailField = findCSVField(fields, ['mail','email','e-mail']);
+  const phoneField = findCSVField(fields, ['tel','phone','mobil','handy']);
+  const sourceField = findCSVField(fields, ['quelle','source','herkunft']);
+  const preview = data.slice(0,5);
+  const table = `<table><thead><tr><th>Name</th><th>E-Mail</th><th>Telefon</th><th>Quelle</th></tr></thead><tbody>
+    ${preview.map(r => `<tr><td>${r[nameField]||'—'}</td><td>${r[emailField]||'—'}</td><td>${r[phoneField]||'—'}</td><td>${r[sourceField]||'—'}</td></tr>`).join('')}
+  </tbody></table>`;
+  document.getElementById('csvPreviewTable').innerHTML = table;
+  document.getElementById('csvPreviewInfo').textContent = `${data.length} Zeilen gefunden (Vorschau: 5)`;
+  document.getElementById('csvPreview').style.display = 'block';
+  document.getElementById('csvImportResult').style.display = 'none';
+}
+async function importCSVLeads() {
+  if (!csvParsedData.length) return;
+  const fields = Object.keys(csvParsedData[0]);
+  const nameField = findCSVField(fields, ['name','vorname','nachname']) || fields[0];
+  const emailField = findCSVField(fields, ['mail','email','e-mail']);
+  const phoneField = findCSVField(fields, ['tel','phone','mobil','handy']);
+  const sourceField = findCSVField(fields, ['quelle','source','herkunft']);
+  const { data: existingLeads } = await sb.from('leads').select('email').eq('vp_id', currentUser.id);
+  const existingEmails = new Set((existingLeads||[]).map(l => (l.email||'').toLowerCase()));
+  let imported = 0, skipped = 0;
+  const toInsert = [];
+  for (const row of csvParsedData) {
+    const email = (row[emailField]||'').trim().toLowerCase();
+    if (email && existingEmails.has(email)) { skipped++; continue; }
+    toInsert.push({
+      name: row[nameField] || 'Unbekannt',
+      email: row[emailField] || null,
+      phone: row[phoneField] || null,
+      source: row[sourceField] || 'CSV-Import',
+      status: 'contact',
+      vp_id: currentUser.id,
+    });
+  }
+  if (toInsert.length) {
+    const { error } = await sb.from('leads').insert(toInsert);
+    if (!error) imported = toInsert.length;
+  }
+  document.getElementById('csvImportResult').innerHTML = `<div style="background:#f0f7f0;border:1px solid var(--ok);padding:12px;color:var(--ok)">
+    ✓ ${imported} Leads importiert${skipped ? ', ' + skipped + ' übersprungen (Duplikate)' : ''}.
+  </div>`;
+  document.getElementById('csvImportResult').style.display = 'block';
+  if (imported > 0) { setTimeout(() => { loadLeads(false); document.getElementById('csvImportModal').style.display='none'; }, 1500); }
+}
+
 // ── Load Leads ──
 async function loadLeads(isAdmin) {
   const tbody = document.getElementById(isAdmin ? 'adminLeadsTableBody' : 'vpLeadsTableBody');
@@ -7111,29 +7639,24 @@ async function loadLeads(isAdmin) {
   tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>`;
 
   // Always load ALL leads (without status filter from server) so we can do client-side stats + search
-  let q = sb.from('leads').select('*, objects(name), profiles(full_name, company_name), reservations:reservation_id(id,status,expires_at,hard_expires_at,buyer_name)').order('created_at', { ascending: false });
+  let q = sb.from('leads').select('*, objects(name), profiles(full_name, company_name)').order('created_at', { ascending: false });
   if (!isAdmin) q = q.eq('vp_id', currentUser.id);
 
   const { data, error } = await q;
   if (error) { tbody.innerHTML = `<tr><td colspan="${cols}" style="color:var(--gone);padding:16px">${error.message}</td></tr>`; return; }
   currentLeads = data || [];
 
-  // Fetch advisory protocols for these leads
-  if (currentLeads.length) {
-    const leadIds = currentLeads.map(l => l.id);
-    const { data: protocols } = await sb.from('advisory_protocols')
-      .select('id, lead_id, pdf_path, signed_at')
-      .in('lead_id', leadIds);
-    const protoMap = {};
-    (protocols || []).forEach(p => { if (p.lead_id) protoMap[p.lead_id] = p; });
-    currentLeads.forEach(l => { l._protocol = protoMap[l.id] || null; });
-  }
-
   renderLeadStats(isAdmin);
   renderLeadsTable(isAdmin);
   // Also re-render kanban if visible
   const kbEl = document.getElementById(isAdmin ? 'admin-kanban-board' : 'vp-kanban-board');
   if (kbEl && kbEl.style.display !== 'none') renderKanbanBoard(isAdmin);
+
+  // VP-spezifische Features
+  if (!isAdmin) {
+    renderWiedervorlagen();
+    showTagesreport();
+  }
 }
 
 function getFilteredLeads(isAdmin) {
@@ -7159,12 +7682,17 @@ function renderLeadsTable(isAdmin) {
   const tbody = document.getElementById(isAdmin ? 'adminLeadsTableBody' : 'vpLeadsTableBody');
   if (!tbody) return;
   const cols = isAdmin ? 9 : 8;
-  const leads = getFilteredLeads(isAdmin);
+  const allLeads = getFilteredLeads(isAdmin);
 
   const badge = document.getElementById(isAdmin ? 'admin-lead-count-badge' : 'lead-count-badge');
-  if (badge) badge.textContent = leads.length;
+  if (badge) badge.textContent = allLeads.length;
 
-  if (!leads.length) {
+  // Pagination
+  renderLeadPagination(allLeads.length, isAdmin);
+  const start = (leadPage - 1) * LEADS_PER_PAGE;
+  const leads = allLeads.slice(start, start + LEADS_PER_PAGE);
+
+  if (!allLeads.length) {
     tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;padding:40px;color:var(--muted)">Keine Leads gefunden.</td></tr>`;
     return;
   }
@@ -7185,35 +7713,16 @@ function renderLeadsTable(isAdmin) {
     const srcBadge = l.source ? `<span class="source-badge">${l.source}</span>` : '<span style="font-size:11px;color:var(--stone)">—</span>';
 
     // Kalkulator button (only if object assigned)
-    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}','${l.id}')">Kalk.</button>` : '';
+    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}')">Kalk.</button>` : '';
 
     // Protocol link
-    let protoLink = '';
-    if (l._protocol && l._protocol.signed_at && l._protocol.pdf_path) {
-      protoLink = '<span style="font-size:9px;color:var(--ok);font-family:var(--font-mono);white-space:nowrap">Protokoll ✓</span>'
-        + ' <button class="btn-sm btn-outline" style="padding:2px 6px;font-size:9px;color:var(--ok);border-color:var(--ok)" onclick="downloadProtocolPdf(\'' + l._protocol.pdf_path.replace(/'/g,"\\'") + '\')">PDF</button>';
-    } else if (l.protocol_token) {
-      protoLink = '<a href="sign.html?protocol=' + l.protocol_token + '" target="_blank" class="btn-sm btn-outline" style="padding:3px 7px;font-size:9px;color:var(--ok);border-color:var(--ok);text-decoration:none;display:inline-block">Protokoll</a>';
-    }
+    const protoLink = l.protocol_token ? `<a href="sign.html?protocol=${l.protocol_token}" target="_blank" class="btn-sm btn-outline" style="padding:3px 7px;font-size:9px;color:var(--ok);border-color:var(--ok);text-decoration:none;display:inline-block">Protokoll</a>` : '';
 
     // Loss reason
     const lossInfo = l.loss_reason ? `<br><span style="font-size:9px;color:var(--stone);font-family:var(--font-mono)">${l.loss_reason}</span>` : '';
 
-    // Reservation badge
-    const resBadge = (() => {
-      const res = l.reservations;
-      if (!res) return '';
-      const exp = res.expires_at ? new Date(res.expires_at) : null;
-      const hardExp = res.hard_expires_at ? new Date(res.hard_expires_at) : null;
-      const isExpired = (['cancelled','rejected'].includes(res.status)) ||
-        (res.status === 'pending' && exp && exp < new Date()) ||
-        (res.status === 'approved' && hardExp && hardExp < new Date());
-      if (isExpired) return '<br><span style="font-size:8px;font-family:var(--font-mono);color:var(--gone);border:1px solid var(--gone);padding:1px 4px">RES. ABGELAUFEN</span>';
-      return '<br><span style="font-size:8px;font-family:var(--font-mono);color:var(--ok);border:1px solid var(--ok);padding:1px 4px;cursor:pointer" onclick="openResDetail(\'' + (res.id||'') + '\')" title="Reservierung öffnen">RES. AKTIV</span>';
-    })();
-
     return `<tr${rowCls}>
-      <td style="font-weight:600">${l.name||'—'}${lossInfo}${resBadge}</td>
+      <td style="font-weight:600">${l.name||'—'}${lossInfo}</td>
       <td style="font-size:11px">${contactCell}</td>
       ${vpCol}
       <td>${leadStatusSelect(l.id, l.status, isAdmin)}</td>
@@ -7234,6 +7743,7 @@ function renderLeadsTable(isAdmin) {
 }
 
 function filterLeadsTable(isAdmin) {
+  leadPage = 1; // Reset pagination on filter/search
   renderLeadsTable(isAdmin);
   const kbEl = document.getElementById(isAdmin ? 'admin-kanban-board' : 'vp-kanban-board');
   if (kbEl && kbEl.style.display !== 'none') renderKanbanBoard(isAdmin);
@@ -7302,7 +7812,7 @@ function filterOverdueLeads(isAdmin) {
     const phoneLink = l.phone ? `<a href="tel:${l.phone}" style="color:var(--accent);text-decoration:none;font-weight:600">${l.phone}</a>` : '';
     const contactCell = [emailLink, phoneLink].filter(Boolean).join('<br>') || '—';
     const srcBadge = l.source ? `<span class="source-badge">${l.source}</span>` : '—';
-    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}','${l.id}')">Kalk.</button>` : '';
+    const calcBtn = l.object_id ? `<button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openCalcForObject('${l.object_id}')">Kalk.</button>` : '';
     return `<tr>
       <td style="font-weight:600">${l.name||'—'}</td>
       <td style="font-size:11px">${contactCell}</td>
@@ -7322,6 +7832,7 @@ function filterOverdueLeads(isAdmin) {
 
 function setLeadFilter(status, isAdmin) {
   leadFilterStatus = status;
+  leadPage = 1; // Reset pagination on filter change
   const filterId = isAdmin ? 'admin-lead-status-filter' : 'lead-status-filter';
   document.querySelectorAll('#' + filterId + ' .lead-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.status === status));
   renderLeadStats(isAdmin);
@@ -7379,25 +7890,6 @@ function renderKanbanBoard(isAdmin) {
       const dateHtml = followup
         ? `<span class="${overdue?'kanban-card-overdue':'kanban-card-date'}">${overdue?'⚠ ':''}${followup}</span>`
         : `<span class="kanban-card-date">—</span>`;
-      // Protocol indicator
-      let protoIndicator = '';
-      if (l._protocol && l._protocol.signed_at && l._protocol.pdf_path) {
-        const safePath = l._protocol.pdf_path.replace(/'/g,"\\'");
-        protoIndicator = '<div style="font-size:8px;color:var(--ok);font-family:var(--font-mono);margin-top:2px">Protokoll ✓ <span style="cursor:pointer;text-decoration:underline" onclick="event.stopPropagation();downloadProtocolPdf(\'' + safePath + '\')">PDF</span></div>';
-      } else if (l.protocol_token) {
-        protoIndicator = '<div style="font-size:8px;color:var(--ok);font-family:var(--font-mono);margin-top:2px"><a href="sign.html?protocol=' + l.protocol_token + '" target="_blank" onclick="event.stopPropagation()" style="color:var(--ok)">Protokoll →</a></div>';
-      }
-      // Reservation indicator
-      let resIndicator = '';
-      if (l.reservations) {
-        const res = l.reservations;
-        const rExp = res.expires_at ? new Date(res.expires_at) : null;
-        const rHardExp = res.hard_expires_at ? new Date(res.hard_expires_at) : null;
-        const rExpired = (['cancelled','rejected'].includes(res.status)) ||
-          (res.status === 'pending' && rExp && rExp < now) ||
-          (res.status === 'approved' && rHardExp && rHardExp < now);
-        resIndicator = '<div style="font-size:8px;font-family:var(--font-mono);margin-top:2px;' + (rExpired ? 'color:var(--gone)' : 'color:var(--ok)') + '">' + (rExpired ? 'RES. ABGELAUFEN' : '● RES. AKTIV') + '</div>';
-      }
       return `<div class="kanban-card" draggable="true" data-lead-id="${l.id}"
         ondragstart="event.dataTransfer.setData('text/plain','${l.id}');event.currentTarget.classList.add('dragging')"
         ondragend="event.currentTarget.classList.remove('dragging')"
@@ -7405,11 +7897,9 @@ function renderKanbanBoard(isAdmin) {
         <div class="kanban-card-name">${l.name||'—'} ${src}</div>
         <div class="kanban-card-phone">${phoneLink||emailLink||''}</div>
         ${l.objects?.name ? `<div class="kanban-card-obj">📦 ${l.objects.name}</div>` : ''}
-        ${protoIndicator}
-        ${resIndicator}
         <div class="kanban-card-foot">
           ${dateHtml}
-          ${l.object_id ? `<button style="font-size:8px;padding:1px 5px;background:var(--brand);color:white;border:none;cursor:pointer;font-family:var(--font-mono)" onclick="event.stopPropagation();openCalcForObject('${l.object_id}','${l.id}')">Kalk</button>` : ''}
+          ${l.object_id ? `<button style="font-size:8px;padding:1px 5px;background:var(--brand);color:white;border:none;cursor:pointer;font-family:var(--font-mono)" onclick="event.stopPropagation();openCalcForObject('${l.object_id}')">Kalk</button>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -7470,6 +7960,8 @@ async function openAddLeadModal() {
   document.getElementById('lead-notes').value = '';
   document.getElementById('lead-loss-reason-fld').style.display = 'none';
   document.getElementById('lead-log-section').style.display = 'none';
+  const anFld2 = document.getElementById('admin-note-fld');
+  if (anFld2) anFld2.style.display = 'none';
   const { data: objs } = await sb.from('objects').select('id,name').in('status',['available','reserved']).order('name');
   const sel = document.getElementById('lead-object');
   sel.innerHTML = '<option value="">— kein Objekt —</option>' + (objs||[]).map(o=>`<option value="${o.id}">${o.name}</option>`).join('');
@@ -7491,6 +7983,32 @@ async function openEditLead(id) {
   document.getElementById('lead-loss-reason-fld').style.display = lead.status === 'lost' ? 'flex' : 'none';
   if (lead.status === 'lost' && lead.loss_reason) document.getElementById('lead-loss-reason').value = lead.loss_reason;
 
+  // Admin-Kommentar
+  const anFld = document.getElementById('admin-note-fld');
+  const anVpView = document.getElementById('admin-note-vp-view');
+  const anInput = document.getElementById('admin-note-input');
+  const anLbl = document.getElementById('admin-note-label');
+  const isAdminRole2 = currentProfile && currentProfile.role === 'admin';
+  if (anFld) {
+    anFld.style.display = '';
+    if (isAdminRole2) {
+      if (anLbl) anLbl.textContent = 'Interner Admin-Kommentar';
+      if (anVpView) anVpView.style.display = 'none';
+      if (anInput) { anInput.style.display = ''; anInput.value = lead.admin_note || ''; }
+    } else {
+      if (anLbl) anLbl.textContent = 'Hinweis vom Admin';
+      if (anInput) anInput.style.display = 'none';
+      if (anVpView) {
+        if (lead.admin_note) {
+          anVpView.style.display = '';
+          anVpView.textContent = lead.admin_note;
+        } else {
+          anFld.style.display = 'none';
+        }
+      }
+    }
+  }
+
   const { data: objs } = await sb.from('objects').select('id,name').in('status',['available','reserved']).order('name');
   const sel = document.getElementById('lead-object');
   sel.innerHTML = '<option value="">— kein Objekt —</option>' + (objs||[]).map(o=>`<option value="${o.id}"${o.id===lead.object_id?' selected':''}>${o.name}</option>`).join('');
@@ -7499,36 +8017,6 @@ async function openEditLead(id) {
   document.getElementById('lead-log-section').style.display = 'block';
   document.getElementById('lead-log-input').value = '';
   renderLeadLog(lead);
-
-  // Reservation section
-  const resSection = document.getElementById('lead-reservation-section');
-  if (resSection) {
-    if (lead.reservation_id && lead.reservations) {
-      const res = lead.reservations;
-      const exp = res.expires_at ? new Date(res.expires_at) : null;
-      const hardExp = res.hard_expires_at ? new Date(res.hard_expires_at) : null;
-      const isExpired = (['cancelled','rejected'].includes(res.status)) ||
-        (res.status === 'pending' && exp && exp < new Date()) ||
-        (res.status === 'approved' && hardExp && hardExp < new Date());
-      const expLabel = res.status === 'approved' && hardExp
-        ? 'Hard-Res. bis ' + hardExp.toLocaleDateString('de-DE')
-        : (exp ? 'Soft-Res. bis ' + exp.toLocaleDateString('de-DE') : '—');
-      resSection.innerHTML = '<div class="form-section" style="margin-top:4px">Reservierung</div>'
-        + '<div style="border:1px solid ' + (isExpired ? 'var(--gone)' : 'var(--ok)') + ';padding:12px 14px;background:' + (isExpired ? 'rgba(140,90,74,.05)' : 'rgba(94,126,99,.05)') + '">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-        + '<span style="font-size:11px;font-weight:700;color:' + (isExpired ? 'var(--gone)' : 'var(--ok)') + '">'
-        + (isExpired ? '✗ Reservierung abgelaufen' : '✓ Reservierung aktiv') + '</span>'
-        + '<button class="btn-sm btn-navy" style="font-size:9px;padding:2px 7px" onclick="closeModal(\'leadModal\');openResDetail(\'' + res.id + '\')">Details →</button>'
-        + '</div>'
-        + '<div style="font-size:11px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr;gap:4px">'
-        + '<span>Käufer: <strong>' + (res.buyer_name || '—') + '</strong></span>'
-        + '<span>Ablauf: <strong>' + expLabel + '</strong></span>'
-        + '</div></div>';
-      resSection.style.display = 'block';
-    } else {
-      resSection.style.display = 'none';
-    }
-  }
 
   // Kalkulationen-Abschnitt laden
   await loadLeadCalcSection(id);
@@ -7584,8 +8072,8 @@ function renderLeadCalcSection(calcs, leadId) {
         + '<div style="font-size:11px;color:var(--accent);margin-top:2px">CF n.St.: <strong>' + cf + '</strong></div>'
         + '</div>'
         + '<div style="display:flex;gap:4px;flex-shrink:0">'
-        + '<button class="btn-sm btn-navy" style="font-size:9px;padding:2px 8px" onclick="loadCalculation(\'' + c.id + '\')">↗ Öffnen</button>'
-        + '<button class="btn-sm btn-danger" style="font-size:9px;padding:2px 8px" onclick="deleteLeadCalc(\'' + c.id + '\',\'' + leadId + '\')">🗑 Löschen</button>'
+        + '<button class="btn-sm btn-navy" style="font-size:9px;padding:2px 8px" onclick="loadCalculation(\''+c.id+'\')">↗ Öffnen</button>'
+        + '<button class="btn-sm btn-danger" style="font-size:9px;padding:2px 8px" onclick="deleteLeadCalc(\''+c.id+'\',\''+leadId+'\')">🗑 Löschen</button>'
         + '</div>'
         + '</div>';
     });
@@ -7598,7 +8086,6 @@ async function deleteLeadCalc(calcId, leadId) {
   if (!confirm('Kalkulation wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.')) return;
   const { error } = await sb.from('calculations').delete().eq('id', calcId);
   if (error) { notify('Fehler beim Löschen der Kalkulation', 'error'); return; }
-  // Abschnitt lokal aktualisieren ohne Modal zu schließen
   const { data: calcs } = await sb.from('calculations')
     .select('id,created_at,object_name,cf_nach_steuer')
     .eq('lead_id', leadId)
@@ -7615,18 +8102,46 @@ async function addLeadLogEntry() {
   const lead = currentLeads.find(l => l.id === editingLeadId);
   if (!lead) return;
 
-  let logs = [];
-  try { logs = JSON.parse(lead.activity_log || '[]'); } catch(e) { logs = []; }
-  if (!Array.isArray(logs)) logs = [];
-  logs.push({ date: new Date().toISOString(), text });
+  // Versuche zuerst neue lead_activities Tabelle
+  const { error: actErr } = await sb.from('lead_activities').insert({
+    lead_id: editingLeadId,
+    user_id: currentUser.id,
+    entry: text
+  });
 
-  const { error } = await sb.from('leads').update({ activity_log: JSON.stringify(logs) }).eq('id', editingLeadId);
-  if (error) { showNotif('Fehler: ' + error.message, 'error'); return; }
+  if (actErr) {
+    // Fallback: altes JSON-Feld in leads
+    let logs = [];
+    try { logs = JSON.parse(lead.activity_log || '[]'); } catch(e) { logs = []; }
+    if (!Array.isArray(logs)) logs = [];
+    logs.push({ date: new Date().toISOString(), text });
+    const { error } = await sb.from('leads').update({ activity_log: JSON.stringify(logs) }).eq('id', editingLeadId);
+    if (error) { showNotif('Fehler: ' + error.message, 'error'); return; }
+    lead.activity_log = JSON.stringify(logs);
+  }
 
-  lead.activity_log = JSON.stringify(logs);
   document.getElementById('lead-log-input').value = '';
-  renderLeadLog(lead);
+  await renderLeadLogFromDB(editingLeadId, lead);
   showNotif('Eintrag gespeichert.');
+}
+
+async function renderLeadLogFromDB(leadId, lead) {
+  const listEl = document.getElementById('lead-log-list');
+  if (!listEl) return;
+  // Versuche lead_activities Tabelle
+  const { data: acts, error } = await sb.from('lead_activities')
+    .select('*').eq('lead_id', leadId).order('created_at', {ascending: false});
+  if (!error && acts && acts.length) {
+    listEl.innerHTML = acts.map(e =>
+      `<div class="act-log-item">
+        <span class="act-log-date">${new Date(e.created_at).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'})}</span>
+        <span class="act-log-text">${e.entry.replace(/</g,'&lt;')}</span>
+      </div>`
+    ).join('');
+    return;
+  }
+  // Fallback auf altes Format
+  renderLeadLog(lead);
 }
 
 async function saveLead() {
@@ -7646,6 +8161,13 @@ async function saveLead() {
   };
   if (status === 'lost') {
     payload.loss_reason = document.getElementById('lead-loss-reason').value || null;
+  }
+  // Admin-Kommentar nur speichern wenn Admin
+  if (currentProfile && currentProfile.role === 'admin') {
+    const anInputEl = document.getElementById('admin-note-input');
+    if (anInputEl && anInputEl.style.display !== 'none') {
+      payload.admin_note = anInputEl.value.trim() || null;
+    }
   }
 
   let error;
@@ -7667,6 +8189,474 @@ async function startProtocolFromLead(leadId) {
   const lead = currentLeads.find(l => l.id === leadId);
   if (!lead) return;
   openProtocolModal(null, lead.object_id || null, lead.name || '', lead.email || '', leadId);
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 1: WIEDERVORLAGEN-SYSTEM
+// ══════════════════════════════════════════════════════
+function renderWiedervorlagen() {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const due = currentLeads.filter(function(l) {
+    return l.next_followup && l.next_followup <= todayStr && !['notary','lost'].includes(l.status);
+  });
+  const banner = document.getElementById('wiedervorlage-banner');
+  if (!banner) return;
+  if (!due.length) { banner.style.display = 'none'; return; }
+  banner.style.display = '';
+  const titleEl = document.getElementById('wv-title');
+  if (titleEl) titleEl.textContent = due.length + ' Kontakt' + (due.length !== 1 ? 'e' : '') + ' stehen heute an';
+  const listEl = document.getElementById('wv-list');
+  if (listEl) {
+    listEl.innerHTML = due.map(function(l) {
+      return '<div class="wv-entry" onclick="openEditLead(\'' + l.id + '\')">' +
+        '<span style="font-weight:600;font-size:12px;color:var(--brand)">' + (l.name || '—') + '</span>' +
+        '<span class="lead-status-badge ls-' + l.status + '">' + l.status + '</span>' +
+        (l.phone ? '<a href="tel:' + l.phone + '" onclick="event.stopPropagation()" style="color:var(--accent);font-size:12px;text-decoration:none">📞 ' + l.phone + '</a>' : '') +
+        '<span style="font-size:10px;color:var(--muted);margin-left:auto">' + (l.next_followup ? new Date(l.next_followup + 'T00:00:00').toLocaleDateString('de-DE') : '') + '</span>' +
+        '</div>';
+    }).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 2: VP-TAGESREPORT
+// ══════════════════════════════════════════════════════
+async function showTagesreport() {
+  if (sessionStorage.getItem('tagesreportClosed') === '1') return;
+  const box = document.getElementById('tagesreport-box');
+  if (!box) return;
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const hour = now.getHours();
+  const greet = hour < 12 ? 'Guten Morgen' : (hour < 18 ? 'Guten Tag' : 'Guten Abend');
+  const nameStr = (currentProfile && currentProfile.full_name) ? ', ' + currentProfile.full_name.split(' ')[0] : '';
+  const greetEl = document.getElementById('tr-greeting');
+  if (greetEl) greetEl.textContent = greet + nameStr + ' 👋';
+  const openLeads = currentLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
+  const followupsToday = currentLeads.filter(function(l) { return l.next_followup && l.next_followup <= todayStr && !['notary','lost'].includes(l.status); }).length;
+  const openEl = document.getElementById('tr-open');
+  const fuEl = document.getElementById('tr-followups');
+  if (openEl) openEl.textContent = openLeads;
+  if (fuEl) fuEl.textContent = followupsToday;
+  // Reservierungen <48h
+  var resAlert = 0;
+  try {
+    var in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
+    var resResp = await sb.from('reservations').select('id,expires_at').eq('vp_id', currentUser.id).in('status', ['soft','hard','pending']).lte('expires_at', in48h).gte('expires_at', now.toISOString());
+    resAlert = (resResp.data || []).length;
+  } catch(e) {}
+  var raEl = document.getElementById('tr-res-alert');
+  if (raEl) {
+    raEl.textContent = resAlert;
+    if (resAlert > 0) raEl.style.color = '#ff9800';
+  }
+  box.style.display = '';
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 4: OBJEKT-VERGLEICH
+// ══════════════════════════════════════════════════════
+var compareSelection = [];
+
+function toggleObjCompare(objId, el) {
+  var idx = compareSelection.indexOf(objId);
+  if (idx > -1) {
+    compareSelection.splice(idx, 1);
+  } else {
+    if (compareSelection.length >= 2) { notify('Maximal 2 Objekte vergleichen', '', 3000); if (el) el.checked = false; return; }
+    compareSelection.push(objId);
+  }
+  updateCompareToolbar();
+}
+
+function updateCompareToolbar() {
+  var tb = document.getElementById('compare-toolbar');
+  var btn = document.getElementById('compare-open-btn');
+  var lbl = document.getElementById('compare-count-label');
+  if (!tb) return;
+  if (compareSelection.length === 0) { tb.style.display = 'none'; return; }
+  tb.style.display = 'flex';
+  if (lbl) lbl.textContent = compareSelection.length + ' ausgewählt';
+  if (btn) btn.disabled = compareSelection.length < 2;
+}
+
+function clearCompare() {
+  compareSelection = [];
+  document.querySelectorAll('.compare-cb').forEach(function(cb) { cb.checked = false; });
+  var tb = document.getElementById('compare-toolbar');
+  if (tb) tb.style.display = 'none';
+}
+
+function openCompareModal() {
+  if (compareSelection.length < 2) return;
+  var objs = compareSelection.map(function(id) { return vpAllObjects.find(function(o) { return o.id === id; }); }).filter(Boolean);
+  if (objs.length < 2) return;
+  var o0 = objs[0], o1 = objs[1];
+
+  function totalKP(o) { return (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0); }
+  function totalRent(o) { return (o.cold_rent||0)+(o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0); }
+  function brutto(o) { var kp=totalKP(o); return kp>0 ? fmtP(totalRent(o)*12/kp*100) : '—'; }
+  function cfMon(o) {
+    var kp=totalKP(o); var r=totalRent(o);
+    var rate=kp*((o.loan_rate||3.95)/100+(o.repay_rate||1.0)/100)/12;
+    return fmt(r-(o.hausgeld||0)-rate, 0)+'/Mo';
+  }
+
+  var fields = [
+    ['Kaufpreis gesamt', function(o) { return fmt(totalKP(o)); }],
+    ['Kaltmiete/Mo.', function(o) { return fmt(o.cold_rent||0); }],
+    ['Wohnfläche', function(o) { return (o.area||'—') + ' m²'; }],
+    ['Zimmer', function(o) { return o.rooms||'—'; }],
+    ['Bruttorendite', brutto],
+    ['Cashflow/Mo.', cfMon],
+    ['Stellplatz', function(o) { return o.parking_active ? '✓ ' + (o.parking_type||'Ja') : '—'; }],
+    ['KfW möglich', function(o) { return o.kfw_moeglich ? '✓ Ja' : '—'; }],
+    ['AfA', function(o) { return o.deg_afa>0 ? fmtP(o.deg_afa)+' deg.' : fmtP(o.lin_afa||2)+' lin.'; }],
+    ['Status', function(o) { return o.status||'—'; }],
+    ['Adresse', function(o) { return o.address||'—'; }],
+  ];
+
+  var hdr = '<div style="display:grid;grid-template-columns:160px 1fr 1fr;gap:1px;background:var(--stone)">' +
+    '<div style="background:var(--brand);padding:10px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-soft)">Merkmal</div>' +
+    '<div style="background:var(--brand);padding:10px 14px;font-size:13px;font-weight:700;color:white">' + o0.name + '</div>' +
+    '<div style="background:var(--brand);padding:10px 14px;font-size:13px;font-weight:700;color:white">' + o1.name + '</div>' +
+    '</div>';
+
+  var rows = fields.map(function(f, i) {
+    var v0 = f[1](o0), v1 = f[1](o1);
+    var bg = i % 2 === 0 ? 'var(--field)' : 'var(--paper)';
+    return '<div style="display:grid;grid-template-columns:160px 1fr 1fr;gap:1px;background:var(--stone)">' +
+      '<div style="background:var(--paper-2);padding:8px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">' + f[0] + '</div>' +
+      '<div style="background:' + bg + ';padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand)">' + v0 + '</div>' +
+      '<div style="background:' + bg + ';padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand)">' + v1 + '</div>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('compareBody').innerHTML = hdr + rows;
+  openModal('compareModal');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 5: KALKULATOR-VORLAGEN
+// ══════════════════════════════════════════════════════
+function loadCalcPresets() {
+  if (!currentUser) return {};
+  // Supabase-Presets bevorzugen, localStorage als Fallback
+  if (currentProfile && currentProfile.calc_presets && typeof currentProfile.calc_presets === 'object') {
+    return currentProfile.calc_presets;
+  }
+  try { return JSON.parse(localStorage.getItem('calcPresets_' + currentUser.id) || '{}'); } catch(e) { return {}; }
+}
+
+function applyCalcPresets() {
+  var p = loadCalcPresets();
+  if (p.zinssatz) { var el = document.getElementById('c-loanr'); if (el) el.value = p.zinssatz; }
+  if (p.tilgung) { var el2 = document.getElementById('c-repayr'); if (el2) el2.value = p.tilgung; }
+  if (p.steuer) { var el3 = document.getElementById('c-taxr'); if (el3) el3.value = p.steuer; }
+  if (typeof runCalc === 'function') runCalc();
+  notify('Voreinstellungen angewendet', 'success', 2500);
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 6: VP-PERFORMANCE-ÜBERSICHT (ADMIN)
+// ══════════════════════════════════════════════════════
+var vpPerfPeriod = 'all';
+
+function setVPPerfPeriod(p) {
+  vpPerfPeriod = p;
+  ['week','month','all'].forEach(function(x) {
+    var btn = document.getElementById('vpp-btn-' + x);
+    if (btn) {
+      btn.style.background = x === p ? 'var(--brand)' : 'var(--paper-2)';
+      btn.style.color = x === p ? 'var(--accent-soft)' : 'var(--muted)';
+      btn.style.border = x === p ? 'none' : '1px solid var(--stone)';
+    }
+  });
+  loadVPPerformance();
+}
+
+async function loadVPPerformance() {
+  var tbody = document.getElementById('vpPerfTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>';
+  var now = new Date();
+  var since = null;
+  if (vpPerfPeriod === 'week') {
+    var d = new Date(now); d.setDate(d.getDate() - d.getDay()); d.setHours(0,0,0,0); since = d.toISOString();
+  } else if (vpPerfPeriod === 'month') {
+    since = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  }
+  try {
+    var vpsResp = await sb.from('profiles').select('id,full_name,company_name').eq('role','vp').eq('active',true).order('full_name');
+    var vps = vpsResp.data || [];
+    var leadsQ = sb.from('leads').select('id,vp_id,status,created_at');
+    if (since) leadsQ = leadsQ.gte('created_at', since);
+    var leadsResp = await leadsQ;
+    var leads2 = leadsResp.data || [];
+    var calcsQ = sb.from('calculations').select('id,vp_id,created_at');
+    if (since) calcsQ = calcsQ.gte('created_at', since);
+    var calcsResp = await calcsQ;
+    var calcs2 = calcsResp.data || [];
+    var resQ = sb.from('reservations').select('id,vp_id,status,created_at');
+    if (since) resQ = resQ.gte('created_at', since);
+    var resResp2 = await resQ;
+    var ress2 = resResp2.data || [];
+    if (!vps.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--muted)">Keine Vertriebspartner gefunden.</td></tr>'; return; }
+    tbody.innerHTML = vps.map(function(vp) {
+      var vpLeads = leads2.filter(function(l) { return l.vp_id === vp.id; });
+      var activeLeads = vpLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
+      var vpCalcs2 = calcs2.filter(function(c) { return c.vp_id === vp.id; }).length;
+      var vpRes2 = ress2.filter(function(r) { return r.vp_id === vp.id && ['soft','hard'].includes(r.status); }).length;
+      var vpNotary = vpLeads.filter(function(l) { return l.status === 'notary'; }).length;
+      var leads = vpLeads.length, calcs = vpCalcs2, reservations = vpRes2, closings = vpNotary;
+      var conv1 = leads > 0 ? Math.round(calcs/leads*100) + '%' : '—';
+      var conv2 = calcs > 0 ? Math.round(reservations/calcs*100) + '%' : '—';
+      var conv3 = reservations > 0 ? Math.round(closings/reservations*100) + '%' : '—';
+      return '<tr>' +
+        '<td style="font-weight:600">' + (vp.full_name||'—') + '</td>' +
+        '<td style="font-size:12px;color:var(--muted)">' + (vp.company_name||'—') + '</td>' +
+        '<td class="r">' + vpLeads.length + '</td>' +
+        '<td class="r" style="color:var(--ok);font-weight:600">' + activeLeads + '</td>' +
+        '<td class="r">' + vpCalcs2 + '</td>' +
+        '<td class="r" style="color:var(--warn)">' + vpRes2 + '</td>' +
+        '<td class="r" style="color:var(--ok);font-weight:700">' + vpNotary + '</td>' +
+        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv1 + '</td>' +
+        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv2 + '</td>' +
+        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv3 + '</td>' +
+        '</tr>';
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="10" style="color:var(--gone);padding:16px">' + e.message + '</td></tr>';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE: PROVISION (COMMISSION)
+// ══════════════════════════════════════════════════════
+async function updateCommission(resId, paid, amount) {
+  const { error } = await sb.from('reservations').update({ commission_paid: paid, commission_amount: amount }).eq('id', resId);
+  if (error) notify('Fehler: ' + error.message, 'error');
+  else notify(paid ? '✓ Provision als ausgezahlt markiert' : 'Provision als offen markiert', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE: ADMIN DASHBOARD
+// ══════════════════════════════════════════════════════
+async function loadDashboard() {
+  const now = new Date();
+  const weekAgo = new Date(now - 7*24*60*60*1000).toISOString();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const in48h = new Date(now.getTime() + 48*60*60*1000).toISOString();
+
+  try {
+    const [{ count: avail }, { count: activeRes }, { count: leadsWeek }, { count: closingsMonth }] = await Promise.all([
+      sb.from('objects').select('*', {count:'exact',head:true}).eq('status','available'),
+      sb.from('reservations').select('*', {count:'exact',head:true}).eq('status','active'),
+      sb.from('leads').select('*', {count:'exact',head:true}).gte('created_at', weekAgo),
+      sb.from('leads').select('*', {count:'exact',head:true}).eq('status','notary').gte('updated_at', monthStart),
+    ]);
+    document.getElementById('dash-available').textContent = avail || 0;
+    document.getElementById('dash-reservations').textContent = activeRes || 0;
+    document.getElementById('dash-leads-week').textContent = leadsWeek || 0;
+    document.getElementById('dash-closings').textContent = closingsMonth || 0;
+  } catch(e) {}
+
+  // Ablaufende Reservierungen
+  try {
+    const { data: expiringRes } = await sb.from('reservations')
+      .select('buyer_name, expires_at, hard_expires_at, objects(name), profiles(full_name)')
+      .lt('expires_at', in48h).gt('expires_at', now.toISOString()).eq('status','active');
+    const expiringEl = document.getElementById('dashExpiringRes');
+    if (expiringEl) {
+      if (expiringRes && expiringRes.length) {
+        expiringEl.innerHTML = expiringRes.map(r => `<tr>
+          <td>${r.profiles?.full_name || '—'}</td>
+          <td>${r.objects?.name || '—'}</td>
+          <td>${r.buyer_name || '—'}</td>
+          <td style="color:var(--gone);font-weight:700">${new Date(r.expires_at).toLocaleString('de-DE')}</td>
+        </tr>`).join('');
+      } else {
+        expiringEl.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine ablaufenden Reservierungen</td></tr>';
+      }
+    }
+  } catch(e) {}
+
+  // Letzte Aktivitäten
+  try {
+    const { data: recentLeads } = await sb.from('leads').select('name, status, created_at, profiles(full_name)').gte('created_at', weekAgo).order('created_at', {ascending:false}).limit(10);
+    const { data: recentRes } = await sb.from('reservations').select('buyer_name, created_at, profiles(full_name)').gte('created_at', weekAgo).order('created_at', {ascending:false}).limit(5);
+    const activities = [
+      ...(recentLeads||[]).map(l => ({date: l.created_at, type:'Lead', detail: l.name + ' ('+l.status+')', vp: l.profiles?.full_name})),
+      ...(recentRes||[]).map(r => ({date: r.created_at, type:'Reservierung', detail: r.buyer_name, vp: r.profiles?.full_name})),
+    ].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
+    const actEl = document.getElementById('dashActivities');
+    if (actEl) {
+      actEl.innerHTML = activities.length ? activities.map(a => `<tr>
+        <td style="font-size:11px;color:var(--muted)">${new Date(a.date).toLocaleDateString('de-DE')}</td>
+        <td><span class="badge badge-gold">${a.type}</span></td>
+        <td>${a.detail}</td>
+        <td style="font-size:11px">${a.vp||'—'}</td>
+      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine Aktivitäten</td></tr>';
+    }
+  } catch(e) {}
+
+  // VP Aktivität
+  try {
+    const { data: vpActivity } = await sb.from('leads').select('vp_id, profiles!leads_vp_id_fkey(full_name)').gte('created_at', weekAgo);
+    const vpMap = {};
+    (vpActivity||[]).forEach(l => {
+      const n = l.profiles?.full_name || l.vp_id;
+      vpMap[n] = (vpMap[n]||0) + 1;
+    });
+    const vpEl = document.getElementById('dashVPActivity');
+    if (vpEl) {
+      const sorted = Object.entries(vpMap).sort((a,b) => b[1]-a[1]);
+      vpEl.innerHTML = sorted.length ? sorted.map(([name, cnt]) => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-size:12px;width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+          <div style="flex:1;background:var(--paper-2);height:18px;position:relative">
+            <div style="position:absolute;left:0;top:0;height:100%;background:var(--brand);width:${Math.round(cnt/Math.max(...Object.values(vpMap))*100)}%"></div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);width:30px;text-align:right">${cnt}</div>
+        </div>`).join('') : '<p style="color:var(--muted);font-size:13px">Keine Aktivitäten in den letzten 7 Tagen.</p>';
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 7: RESERVIERUNGS-ABLAUF-ALERT
+// ══════════════════════════════════════════════════════
+function checkReservationExpiryAlerts(reservations) {
+  var now = new Date();
+  var in12h = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+  var expiring = reservations.filter(function(r) {
+    if (!r.expires_at || !['soft','hard','pending'].includes(r.status)) return false;
+    var exp = new Date(r.expires_at);
+    return exp > now && exp <= in12h;
+  });
+  var alertDiv = document.getElementById('res-expiry-alert');
+  var listDiv = document.getElementById('res-expiry-list');
+  var badge = document.getElementById('res-expiry-badge');
+  if (!expiring.length) {
+    if (alertDiv) alertDiv.style.display = 'none';
+    if (badge) badge.style.display = 'none';
+    return;
+  }
+  if (badge) { badge.textContent = expiring.length; badge.style.display = 'inline'; }
+  if (!alertDiv || !listDiv) return;
+  alertDiv.style.display = '';
+  listDiv.innerHTML = expiring.map(function(r) {
+    var exp = new Date(r.expires_at);
+    var diffMin = Math.round((exp - now) / 60000);
+    var diffStr = diffMin < 60 ? diffMin + ' Min.' : Math.round(diffMin/60) + ' Std.';
+    return '<div class="res-expiry-row">' +
+      '<span style="font-weight:600;font-size:12px;color:#721c24">' + (r.buyer_name||'—') + '</span>' +
+      '<span style="font-size:11px;color:var(--muted)">' + (r.objects?.name||'—') + '</span>' +
+      '<span style="background:#dc3545;color:white;padding:2px 8px;font-size:10px;font-weight:700">⏱ noch ' + diffStr + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 8: EXCEL-EXPORT OBJEKTE
+// ══════════════════════════════════════════════════════
+async function exportObjectsXlsx() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+  if (typeof XLSX === 'undefined') { notify('SheetJS nicht geladen – bitte Seite neu laden', 'error'); return; }
+  notify('Excel wird erstellt…', '', 2000);
+  var resp = await sb.from('objects').select('*').order('name');
+  if (resp.error) { notify('Fehler: ' + resp.error.message, 'error'); return; }
+  var data2 = resp.data || [];
+  var rows = data2.map(function(o) {
+    return {
+      'Name': o.name || '',
+      'Adresse': o.address || '',
+      'Fläche (m²)': o.area || '',
+      'Zimmer': o.rooms || '',
+      'Kaufpreis (€)': (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0),
+      'Kaltmiete/Mo (€)': o.cold_rent || 0,
+      'Status': o.status || '',
+      'Branding': o.branding || '',
+      'Stellplatz': o.parking_active ? 'Ja' : 'Nein',
+      'KfW möglich': o.kfw_moeglich ? 'Ja' : 'Nein',
+      'Veröffentlicht': o.published ? 'Ja' : 'Nein',
+      'Letzte Änderung': o.updated_at ? new Date(o.updated_at).toLocaleDateString('de-DE') : ''
+    };
+  });
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Objekte');
+  XLSX.writeFile(wb, 'Vestora_Objekte_' + new Date().toISOString().split('T')[0] + '.xlsx');
+  notify('✓ Excel exportiert', 'success');
+}
+
+// ══════════════════════════════════════════════════════
+// FEATURE 9: MOBILE NAV (HAMBURGER)
+// ══════════════════════════════════════════════════════
+function toggleMobileNav() {
+  var nav = document.getElementById('appNav');
+  if (nav) nav.classList.toggle('mobile-open');
+}
+
+function closeMobileNav() {
+  var nav = document.getElementById('appNav');
+  if (nav) nav.classList.remove('mobile-open');
+}
+
+// Nav bei Klick außerhalb schließen
+document.addEventListener('click', function(e) {
+  var nav = document.getElementById('appNav');
+  var btn = document.getElementById('hamburger-btn');
+  if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
+    nav.classList.remove('mobile-open');
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// FEATURE 10: ONBOARDING
+// ══════════════════════════════════════════════════════
+var obStep = 0;
+var OB_TOTAL = 4;
+
+function showOnboarding() {
+  obStep = 0;
+  updateOnboardingStep();
+  openModal('onboardingModal');
+}
+
+function updateOnboardingStep() {
+  for (var i = 0; i < OB_TOTAL; i++) {
+    var s = document.getElementById('ob-step-' + i);
+    var d = document.getElementById('ob-dot-' + i);
+    if (s) s.style.display = i === obStep ? '' : 'none';
+    if (d) d.style.background = i === obStep ? 'var(--brand)' : 'var(--stone)';
+  }
+  var prevBtn = document.getElementById('ob-prev-btn');
+  var nextBtn = document.getElementById('ob-next-btn');
+  if (prevBtn) prevBtn.style.visibility = obStep > 0 ? 'visible' : 'hidden';
+  if (nextBtn) nextBtn.textContent = obStep === OB_TOTAL - 1 ? 'Los geht\'s 🚀' : 'Weiter →';
+}
+
+function nextOnboardingStep() {
+  if (obStep < OB_TOTAL - 1) {
+    obStep++;
+    updateOnboardingStep();
+  } else {
+    if (currentUser) localStorage.setItem('onboardingDone_' + currentUser.id, '1');
+    closeModal('onboardingModal');
+    notify('Willkommen! Tutorial jederzeit über den ? Button neu starten.', 'success', 5000);
+  }
+}
+
+function prevOnboardingStep() {
+  if (obStep > 0) { obStep--; updateOnboardingStep(); }
+}
+
+function checkOnboarding() {
+  if (!currentUser || !currentProfile || currentProfile.role !== 'vp') return;
+  if (localStorage.getItem('onboardingDone_' + currentUser.id) !== '1') {
+    showOnboarding();
+  }
 }
 
 // ══════════════════════════════════════════════════════

@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dokument unterzeichnen</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- DSGVO-konform: Fonts via fonts.bunny.net -->
+<link href="https://fonts.bunny.net/css?family=dm-sans:300,400,500,600,700|inter:300,400,500,600,700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -119,6 +120,18 @@ async function load() {
   }
 
   resData = r;
+
+  // Token-Ablauf prüfen
+  const now = new Date();
+  if (r.expires_at && new Date(r.expires_at) < now) {
+    document.getElementById('main').innerHTML = '<div class="error-box">Dieser Link ist abgelaufen. Bitte kontaktieren Sie Ihren Ansprechpartner für einen neuen Link.</div>';
+    return;
+  }
+  if (r.hard_expires_at && new Date(r.hard_expires_at) < now) {
+    document.getElementById('main').innerHTML = '<div class="error-box">Die Reservierungsfrist ist abgelaufen. Bitte kontaktieren Sie Ihren Ansprechpartner.</div>';
+    return;
+  }
+
   const o = r.objects || {};
   const totalKP = (o.price_unit||0) + (o.parking_active ? (o.parking_price||0) : 0);
   const hardExpiry = r.hard_expires_at ? new Date(r.hard_expires_at) : null;
@@ -456,7 +469,7 @@ function showSuccess(r) {
       <div class="success-text">
         Vielen Dank, <strong>${r.buyer_name}</strong>.<br>
         Ihre Reservierungsvereinbarung wurde am <strong>${fmtDate(r.signed_at||new Date().toISOString())}</strong> digital unterzeichnet.<br><br>
-        ${r.buyer_email ? `Eine Kopie wurde an <strong>${r.buyer_email}</strong> gesendet.<br><br>` : 'Das PDF wurde auf Ihr Gerät heruntergeladen.<br><br>'}
+        Bitte laden Sie das unterzeichnete Dokument über den Button unten herunter und speichern Sie es für Ihre Unterlagen.<br><br>
         Bitte überweisen Sie die Reservierungsgebühr von <strong>€ 1.000,00</strong> innerhalb von 5 Werktagen.<br>
         Sie erhalten eine Bestätigung von Ihrem Ansprechpartner.
       </div>
