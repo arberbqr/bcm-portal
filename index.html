@@ -976,6 +976,22 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
       </div>
     </div>
   </div>
+
+  <!-- ── ADMIN NOTARTERMINE VIEW ── -->
+  <div id="view-admin-notartermine" class="view">
+    <div class="view-inner">
+      <div class="flex" style="justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="page-title">Notartermine</div>
+          <div class="page-sub">Übersicht aller geplanten und vergangenen Notartermine</div>
+        </div>
+        <button class="btn-sm btn-gold" style="font-size:12px;padding:8px 18px" onclick="openNotarModal()">+ Termin eintragen</button>
+      </div>
+      <div id="notartermine-container">
+        <div style="text-align:center;padding:40px;color:var(--muted)"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- VP Profil Modal -->
@@ -1313,6 +1329,10 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           </select>
         </div>
         <div class="form-fld full"><label>Anmerkungen für Notar</label><textarea id="kve-notes" rows="2" style="width:100%;padding:8px;border:1px solid var(--g300);font-family:inherit;font-size:12px"></textarea></div>
+        <div class="form-fld"><label>Geplantes Notardatum</label><input id="kve-notary-date" type="date"></div>
+        <div class="form-fld"><label>Geplante Uhrzeit</label><input id="kve-notary-time" type="time" placeholder="10:00"></div>
+        <div class="form-fld"><label>Notar-Name</label><input id="kve-notary-name" type="text" placeholder="Dr. Max Mustermann"></div>
+        <div class="form-fld full"><label>Kanzlei / Ort</label><input id="kve-notary-location" type="text" placeholder="Notariat München, Maximilianstraße 1"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1332,6 +1352,31 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
     <div class="modal-body" id="kveListBody" style="padding:16px"></div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline" style="color:var(--text);border-color:var(--g300)" onclick="closeModal('kveListModal')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notartermin Modal -->
+<div class="modal-bg" id="notarModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title" id="notarModalTitle">Notartermin eintragen</div>
+      <button class="modal-close" onclick="closeModal('notarModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-fld"><label>Reservierung *</label>
+          <select id="notar-res-id" style="width:100%"><option value="">— bitte wählen —</option></select>
+        </div>
+        <div class="form-fld"><label>Datum *</label><input id="notar-date" type="date"></div>
+        <div class="form-fld"><label>Uhrzeit</label><input id="notar-time" type="time" placeholder="10:00"></div>
+        <div class="form-fld"><label>Notar-Name</label><input id="notar-name" type="text" placeholder="Dr. Max Mustermann"></div>
+        <div class="form-fld full"><label>Kanzlei / Ort</label><input id="notar-location" type="text" placeholder="Notariat München, Maximilianstraße 1"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" style="color:var(--ink);border-color:var(--stone)" onclick="closeModal('notarModal')">Abbrechen</button>
+      <button class="btn-sm btn-gold" onclick="saveNotartermin()">Termin speichern</button>
     </div>
   </div>
 </div>
@@ -1670,7 +1715,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
     <!-- Progress bar -->
     <div style="background:var(--brand-2);padding:10px 20px 12px;position:sticky;top:62px;z-index:19;flex-shrink:0">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
-        <span style="font-size:10px;font-family:var(--font-mono);color:rgba(255,255,255,.6);letter-spacing:.1em;text-transform:uppercase">Schritt <span id="sa-step-num">1</span> von 8</span>
+        <span style="font-size:10px;font-family:var(--font-mono);color:rgba(255,255,255,.6);letter-spacing:.1em;text-transform:uppercase">Schritt <span id="sa-step-num">1</span> von <span id="sa-total-steps">8</span></span>
         <span id="sa-step-label" style="font-size:11px;color:var(--accent-soft);font-weight:600"></span>
       </div>
       <div style="height:4px;background:rgba(255,255,255,.12);position:relative">
@@ -1687,6 +1732,20 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <select id="sa-lead-id" onchange="saDraftLoad()">
             <option value="">— Bitte Lead auswählen —</option>
           </select>
+        </div>
+      </div>
+
+      <!-- ── STEP 0: Anzahl Antragsteller ── -->
+      <div class="sa-step" data-step="0">
+        <div class="form-section" style="margin-top:0">Anzahl Antragsteller</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Bitte wählen Sie die Anzahl der Antragsteller für diese Selbstauskunft.</p>
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600;padding:14px 20px;border:2px solid var(--accent);background:rgba(160,122,71,.06)">
+            <input type="radio" name="sa-num-appl" id="sa-appl-1" value="1" checked style="accent-color:var(--accent);width:16px;height:16px"> 1 Antragsteller
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600;padding:14px 20px;border:2px solid var(--stone);background:transparent" id="sa-appl-2-label">
+            <input type="radio" name="sa-num-appl" id="sa-appl-2" value="2" style="accent-color:var(--accent);width:16px;height:16px"> 2 Antragsteller
+          </label>
         </div>
       </div>
 
@@ -2295,6 +2354,8 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
         </div>
         <!-- Selbstauskunft – nur im Edit-Modus -->
         <div class="form-fld full" id="lead-sa-section" style="display:none"></div>
+        <!-- Protokoll – nur im Edit-Modus -->
+        <div class="form-fld full" id="lead-proto-section" style="display:none"></div>
         <!-- Kalkulationen – nur im Edit-Modus -->
         <div class="form-fld full" id="lead-calc-section" style="display:none"></div>
         <!-- Activity Log – nur im Edit-Modus -->
@@ -2917,6 +2978,7 @@ function setupAppShell() {
       <button class="app-nav-btn" data-view="partners" onclick="loadView('partners');closeMobileNav()">Partner</button>
       <button class="app-nav-btn" data-view="admin-calcs" onclick="loadView('admin-calcs');closeMobileNav()">Berechnungen</button>
       <button class="app-nav-btn" data-view="admin-performance" onclick="loadView('admin-performance');closeMobileNav()">VP Performance</button>
+      <button class="app-nav-btn" data-view="admin-notartermine" onclick="loadView('admin-notartermine');closeMobileNav()">Notartermine</button>
       <button class="app-nav-btn" onclick="openAdminKve();closeMobileNav()">KVE Anfragen</button>
     `;
   } else {
@@ -3110,6 +3172,7 @@ function loadView(name) {
   else if (name === 'vp-faq') renderFAQ();
   else if (name === 'admin-calcs') loadAdminCalcs();
   else if (name === 'admin-performance') loadVPPerformance();
+  else if (name === 'admin-notartermine') loadAdminNotartermine();
 }
 
 // ══════════════════════════════════════════════════════
@@ -7305,6 +7368,126 @@ async function openAdminKve() {
   await loadAdminKve();
 }
 
+async function loadAdminNotartermine() {
+  const container = document.getElementById('notartermine-container');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner"></div></div>';
+
+  const today = new Date().toISOString().split('T')[0];
+  const past30 = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString().split('T')[0];
+
+  const { data: upcoming, error: e1 } = await sb.from('reservations')
+    .select('id,notary_date,notary_time,notary_name,notary_location,buyer_name,objects(name),profiles(full_name,company_name)')
+    .gte('notary_date', today)
+    .order('notary_date', {ascending: true});
+
+  const { data: past, error: e2 } = await sb.from('reservations')
+    .select('id,notary_date,notary_time,notary_name,notary_location,buyer_name,objects(name),profiles(full_name,company_name)')
+    .gte('notary_date', past30)
+    .lt('notary_date', today)
+    .order('notary_date', {ascending: false});
+
+  if (e1 && e1.message && e1.message.includes('column')) {
+    container.innerHTML = '<div class="card" style="padding:20px;color:var(--gone)">Fehler: Die Notartermin-Spalten fehlen in der Datenbank. Bitte SQL-Migration ausführen: <code>ALTER TABLE reservations ADD COLUMN IF NOT EXISTS notary_date DATE; ALTER TABLE reservations ADD COLUMN IF NOT EXISTS notary_time TEXT; ALTER TABLE reservations ADD COLUMN IF NOT EXISTS notary_name TEXT; ALTER TABLE reservations ADD COLUMN IF NOT EXISTS notary_location TEXT;</code></div>';
+    return;
+  }
+
+  const renderTermin = (r, isPast) => {
+    const datum = r.notary_date ? new Date(r.notary_date + 'T12:00:00').toLocaleDateString('de-DE', {weekday:'long',year:'numeric',month:'long',day:'numeric'}) : '—';
+    const uhrzeit = r.notary_time || '—';
+    const notar = r.notary_name || '—';
+    const ort = r.notary_location || '—';
+    const obj = r.objects?.name || '—';
+    const kaeufer = r.buyer_name || '—';
+    const vp = r.profiles?.company_name || r.profiles?.full_name || '—';
+    return `<div style="border:1px solid ${isPast ? 'var(--stone)' : 'var(--accent)'};padding:16px 20px;margin-bottom:10px;${isPast ? 'opacity:.6;background:var(--g100)' : 'background:rgba(160,122,71,.04)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:${isPast ? 'var(--muted)' : 'var(--brand)'}">🏛 ${datum}${r.notary_time ? ' · ' + uhrzeit + ' Uhr' : ''}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">${ort}</div>
+          <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">
+            <span style="font-size:11px"><strong>Notar:</strong> ${notar}</span>
+            <span style="font-size:11px"><strong>Objekt:</strong> ${obj}</span>
+            <span style="font-size:11px"><strong>Käufer:</strong> ${kaeufer}</span>
+            <span style="font-size:11px"><strong>VP:</strong> ${vp}</span>
+          </div>
+        </div>
+        <button class="btn-sm btn-outline" style="font-size:10px;padding:3px 10px;color:var(--ink);border-color:var(--stone)" onclick="openNotarModal('${r.id}')">Bearbeiten</button>
+      </div>
+    </div>`;
+  };
+
+  let html = '';
+  const upcomingWithDate = (upcoming||[]).filter(r => r.notary_date);
+  const pastWithDate = (past||[]).filter(r => r.notary_date);
+
+  if (!upcomingWithDate.length && !pastWithDate.length) {
+    html = '<div class="card" style="text-align:center;padding:40px;color:var(--muted)">Noch keine Notartermine eingetragen.<br><small style="margin-top:8px;display:block">Klicken Sie auf "+ Termin eintragen" um einen Termin anzulegen.</small></div>';
+  } else {
+    if (upcomingWithDate.length) {
+      html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Bevorstehende Termine (' + upcomingWithDate.length + ')</div>';
+      html += upcomingWithDate.map(r => renderTermin(r, false)).join('');
+    }
+    if (pastWithDate.length) {
+      html += '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;margin-top:24px">Vergangene Termine – letzte 30 Tage (' + pastWithDate.length + ')</div>';
+      html += pastWithDate.map(r => renderTermin(r, true)).join('');
+    }
+  }
+  container.innerHTML = html;
+}
+
+async function openNotarModal(resId) {
+  const sel = document.getElementById('notar-res-id');
+  if (sel) {
+    sel.innerHTML = '<option value="">— bitte wählen —</option>';
+    const { data: res } = await sb.from('reservations')
+      .select('id,buyer_name,objects(name)')
+      .in('status', ['soft','hard','notarized'])
+      .order('created_at', {ascending:false});
+    (res||[]).forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = (r.buyer_name||'—') + (r.objects?.name ? ' – ' + r.objects.name : '');
+      if (r.id === resId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+  if (resId) {
+    const { data: r } = await sb.from('reservations').select('notary_date,notary_time,notary_name,notary_location').eq('id', resId).single();
+    if (r) {
+      document.getElementById('notar-date').value = r.notary_date || '';
+      document.getElementById('notar-time').value = r.notary_time || '';
+      document.getElementById('notar-name').value = r.notary_name || '';
+      document.getElementById('notar-location').value = r.notary_location || '';
+    }
+    document.getElementById('notarModalTitle').textContent = 'Notartermin bearbeiten';
+  } else {
+    document.getElementById('notar-date').value = '';
+    document.getElementById('notar-time').value = '';
+    document.getElementById('notar-name').value = '';
+    document.getElementById('notar-location').value = '';
+    document.getElementById('notarModalTitle').textContent = 'Notartermin eintragen';
+  }
+  openModal('notarModal');
+}
+
+async function saveNotartermin() {
+  const resId = document.getElementById('notar-res-id').value;
+  if (!resId) { notify('Bitte eine Reservierung auswählen', 'error'); return; }
+  const date = document.getElementById('notar-date').value;
+  if (!date) { notify('Bitte ein Datum angeben', 'error'); return; }
+  const { error } = await sb.from('reservations').update({
+    notary_date: date,
+    notary_time: document.getElementById('notar-time').value || null,
+    notary_name: document.getElementById('notar-name').value || null,
+    notary_location: document.getElementById('notar-location').value || null
+  }).eq('id', resId);
+  if (error) { notify('Fehler: ' + error.message, 'error'); return; }
+  notify('✓ Notartermin gespeichert!', 'success', 3000);
+  closeModal('notarModal');
+  loadAdminNotartermine();
+}
+
 async function loadAdminCalcs() {
   const { data } = await sb.from('calculations').select('*').order('created_at', {ascending:false});
   document.getElementById('adminCalcsWrap').innerHTML = calcTableHTML(data||[], true);
@@ -7468,6 +7651,17 @@ async function submitKve() {
   } else {
     d.object_id = o.id;
     await sb.from('kve_requests').insert(d);
+  }
+
+  // Notardaten speichern falls angegeben
+  const notaryDate = document.getElementById('kve-notary-date')?.value;
+  if (notaryDate && kveResId) {
+    await sb.from('reservations').update({
+      notary_date: notaryDate,
+      notary_time: document.getElementById('kve-notary-time')?.value || null,
+      notary_name: document.getElementById('kve-notary-name')?.value || null,
+      notary_location: document.getElementById('kve-notary-location')?.value || null
+    }).eq('id', kveResId);
   }
 
   // PDF generieren
@@ -8102,6 +8296,11 @@ function renderLeadsTable(isAdmin) {
     // Protocol – single consolidated button
     const protoBtn = renderProtocolBtn(l);
 
+    // Selbstauskunft badge
+    const saBadge = l.selbstauskunft_pdf
+      ? `<button class="btn-sm btn-pos" style="padding:2px 6px;font-size:9px" title="Selbstauskunft vorhanden" onclick="downloadSelbstauskunftPdf('${l.selbstauskunft_pdf}')">📋 SA</button>`
+      : '';
+
     // Loss reason
     const lossInfo = l.loss_reason ? `<br><span style="font-size:9px;color:var(--stone);font-family:var(--font-mono)">${l.loss_reason}</span>` : '';
 
@@ -8119,6 +8318,7 @@ function renderLeadsTable(isAdmin) {
           <button class="btn-sm btn-navy" style="padding:3px 7px;font-size:9px" onclick="openEditLead('${l.id}')">Bearbeiten</button>
           ${calcBtn}
           ${protoBtn}
+          ${saBadge}
         </div>
       </td>
     </tr>`;
@@ -8420,6 +8620,33 @@ async function openEditLead(id) {
     }
   }
 
+  // Beratungsprotokoll-Abschnitt
+  const protoSec = document.getElementById('lead-proto-section');
+  if (protoSec) {
+    if (!lead.protocol_token) {
+      protoSec.innerHTML = '';
+      protoSec.style.display = 'none';
+    } else {
+      const ps = lead.protocol_token ? _protoStatusCache[lead.protocol_token] : null;
+      protoSec.style.display = 'block';
+      if (ps && ps.signed_at) {
+        protoSec.innerHTML = '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:6px;margin-top:8px">Beratungsprotokoll</div>'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--ok);padding:10px 12px;background:rgba(34,139,34,.04)">'
+          + '<span style="font-size:12px;font-weight:700;color:var(--ok)">✓ Unterzeichnet am ' + fmtDate(ps.signed_at) + '</span>'
+          + (ps.pdf_path
+            ? '<button class="btn-sm btn-pos" style="font-size:10px;padding:3px 10px" onclick="downloadProtocolPdf(\'' + ps.pdf_path + '\')">Beratungsprotokoll herunterladen</button>'
+            : '<span style="font-size:11px;color:var(--muted);font-style:italic">PDF nicht verfügbar (wurde möglicherweise nicht gespeichert)</span>')
+          + '</div>';
+      } else {
+        protoSec.innerHTML = '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);border-bottom:1px solid var(--g200);padding-bottom:4px;margin-bottom:6px;margin-top:8px">Beratungsprotokoll</div>'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0">'
+          + '<span style="font-size:11px;color:var(--muted)">Protokoll erstellt, noch nicht unterzeichnet</span>'
+          + '<button class="btn-sm btn-navy" style="font-size:10px;padding:3px 10px" onclick="copyProtocolLink(\'' + lead.protocol_token + '\')">Link kopieren</button>'
+          + '</div>';
+      }
+    }
+  }
+
   // Kalkulationen-Abschnitt laden
   await loadLeadCalcSection(id);
 
@@ -8605,6 +8832,8 @@ function renderProtocolBtn(l) {
       + `<span style="font-size:9px;font-weight:700;color:var(--ok)">✓ Unterzeichnet am ${fmtDate(ps.signed_at)}</span>`;
     if (ps.pdf_path) {
       html += `<button class="btn-sm btn-pos" style="padding:2px 7px;font-size:9px" onclick="downloadProtocolPdf('${ps.pdf_path}')">PDF herunterladen</button>`;
+    } else {
+      html += `<span style="font-size:9px;color:var(--muted);font-style:italic">PDF nicht verfügbar</span>`;
     }
     html += `</div>`;
     return html;
@@ -9108,6 +9337,10 @@ function checkOnboarding() {
 // ══════════════════════════════════════════════════════
 let _saSignCanvas = null, _saSignCtx = null, _saSignDrawing = false;
 let _saCurrentStep = 1;
+let _saNumApplicants = 1;
+let _saCurrentApplicant = 1;
+let _saApplicant1Data = null;
+let _saApplicant1Sig = null;
 const SA_STEP_LABELS = ['Persönliche Angaben','Wohnanschrift','Beschäftigung','Einkommensverhältnisse','Vermögensverhältnisse','Verbindlichkeiten','Anlageziele & Erfahrungen','Finanzierung & Unterschrift'];
 const SA_TOTAL_STEPS = 8;
 
@@ -9116,24 +9349,63 @@ function saUpdateStepUI() {
     el.style.display = parseInt(el.dataset.step) === _saCurrentStep ? '' : 'none';
   });
   const numEl   = document.getElementById('sa-step-num');
+  const totalEl = document.getElementById('sa-total-steps');
   const lblEl   = document.getElementById('sa-step-label');
   const fillEl  = document.getElementById('sa-progress-fill');
   const prevBtn = document.getElementById('sa-prev-btn');
   const nextBtn = document.getElementById('sa-next-btn');
   const subBtn  = document.getElementById('sa-submit-btn');
-  if (numEl)   numEl.textContent   = _saCurrentStep;
-  if (lblEl)   lblEl.textContent   = SA_STEP_LABELS[_saCurrentStep - 1] || '';
-  if (fillEl)  fillEl.style.width  = Math.round((_saCurrentStep / SA_TOTAL_STEPS) * 100) + '%';
-  if (prevBtn) prevBtn.style.display = _saCurrentStep > 1 ? '' : 'none';
-  if (nextBtn) nextBtn.style.display = _saCurrentStep < SA_TOTAL_STEPS ? '' : 'none';
-  if (subBtn)  subBtn.style.display  = _saCurrentStep === SA_TOTAL_STEPS ? '' : 'none';
-  if (_saCurrentStep === SA_TOTAL_STEPS) setTimeout(() => saInitSignature(), 80);
+  const totalSteps = _saNumApplicants * 8;
+  const effectiveStep = _saCurrentStep === 0 ? 0
+    : (_saCurrentApplicant === 1 ? _saCurrentStep : 8 + _saCurrentStep);
+  if (numEl)   numEl.textContent   = _saCurrentStep === 0 ? '—' : effectiveStep;
+  if (totalEl) totalEl.textContent = _saCurrentStep === 0 ? (_saNumApplicants * 8) : totalSteps;
+  const stepLabels = ['Anzahl Antragsteller','Persönliche Angaben','Wohnanschrift','Beschäftigung','Einkommensverhältnisse','Vermögensverhältnisse','Verbindlichkeiten','Anlageziele & Erfahrungen','Finanzierung & Unterschrift'];
+  if (lblEl) {
+    let lbl = stepLabels[_saCurrentStep] || '';
+    if (_saNumApplicants === 2 && _saCurrentStep > 0) lbl = 'Antragsteller ' + _saCurrentApplicant + ' – ' + lbl;
+    lblEl.textContent = lbl;
+  }
+  if (fillEl) fillEl.style.width = _saCurrentStep === 0 ? '0%' : Math.round((effectiveStep / totalSteps) * 100) + '%';
+  if (prevBtn) prevBtn.style.display = (_saCurrentStep > 0 && !(_saCurrentStep === 1 && _saCurrentApplicant === 2)) ? '' : 'none';
+  if (nextBtn) nextBtn.style.display = _saCurrentStep < 8 ? '' : 'none';
+  if (subBtn)  subBtn.style.display  = _saCurrentStep === 8 ? '' : 'none';
+  if (_saCurrentStep === 8) setTimeout(() => saInitSignature(), 80);
 }
 
 function saStepNav(dir) {
+  // Going forward from step 8 of applicant 1 with 2 applicants = transition
+  if (dir > 0 && _saCurrentStep === 8 && _saNumApplicants === 2 && _saCurrentApplicant === 1) {
+    _saApplicant1Data = saCollectDraft();
+    _saApplicant1Sig = _saSignCanvas ? _saSignCanvas.toDataURL('image/png') : null;
+    // Reset form for applicant 2
+    document.querySelectorAll('#selbstauskunftFormModal input[type=text], #selbstauskunftFormModal input[type=date], #selbstauskunftFormModal input[type=number], #selbstauskunftFormModal textarea').forEach(el => { el.value = ''; });
+    document.querySelectorAll('#selbstauskunftFormModal select').forEach(el => { el.selectedIndex = 0; });
+    document.querySelectorAll('.sa-motiv').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('.sa-erfahrung-sonst').forEach(cb => { cb.checked = false; });
+    const staatEl2 = document.getElementById('sa-staat'); if (staatEl2) staatEl2.value = 'Deutsch';
+    const geborlandEl2 = document.getElementById('sa-geborland'); if (geborlandEl2) geborlandEl2.value = 'Deutschland';
+    const landEl2 = document.getElementById('sa-land'); if (landEl2) landEl2.value = 'Deutschland';
+    document.querySelectorAll('#selbstauskunftFormModal input[type=checkbox]').forEach(cb => { cb.checked = false; });
+    saClearSignature();
+    _saCurrentApplicant = 2;
+    _saCurrentStep = 1;
+    saUpdateStepUI();
+    const mb = document.querySelector('#selbstauskunftFormModal .modal-body');
+    if (mb) mb.scrollTop = 0;
+    notify('Bitte jetzt die Angaben für Antragsteller 2 eingeben.', 'info', 4000);
+    return;
+  }
   const next = _saCurrentStep + dir;
-  if (next < 1 || next > SA_TOTAL_STEPS) return;
+  if (next < 0 || next > 8) return;
+  // Going back from step 1 of applicant 2 is not allowed (would need to restore applicant 1 data)
+  if (dir < 0 && _saCurrentStep === 1 && _saCurrentApplicant === 2) return;
   _saCurrentStep = next;
+  // Read num applicants from radio on step 0
+  if (_saCurrentStep === 1 && _saCurrentApplicant === 1) {
+    const r = document.querySelector('input[name="sa-num-appl"]:checked');
+    if (r) _saNumApplicants = parseInt(r.value) || 1;
+  }
   saUpdateStepUI();
   const mb = document.querySelector('#selbstauskunftFormModal .modal-body');
   if (mb) mb.scrollTop = 0;
@@ -9208,7 +9480,7 @@ function saCollectDraft() {
     ratenkredit_restschuld: gV('sa-ratenkredit-restschuld'), kred_rate: gV('sa-kred-rate'),
     immo_restschuld: gV('sa-immo-restschuld'), hypo_rate: gV('sa-hypo-rate'),
     leasing_rate: gV('sa-leasing-rate'), sonst_verbindl: gV('sa-sonst-verbindl'),
-    motiv: gCB('sa-motiv'), horizont: gV('sa-horizont'), risiko: gV('sa-risiko'),
+    motiv: gCB('sa-motiv'), motivs: gCB('sa-motiv'), horizont: gV('sa-horizont'), risiko: gV('sa-risiko'),
     erfahrung: gV('sa-erfahrung'), erfahrung_sonst: gCB('sa-erfahrung-sonst'),
     ek_einsetzen: gV('sa-ek-einsetzen'), finanzierungsbedarf: gV('sa-finanzierungsbedarf'),
     laufzeit: gV('sa-laufzeit'), finanzierung_angefragt: gV('sa-finanzierung-angefragt'),
@@ -9281,7 +9553,14 @@ async function saDraftLoad() {
 }
 
 function openNewSelbstauskunft() {
-  _saCurrentStep = 1;
+  _saCurrentStep = 0;
+  _saNumApplicants = 1;
+  _saCurrentApplicant = 1;
+  _saApplicant1Data = null;
+  _saApplicant1Sig = null;
+  // Reset radio
+  const r1 = document.getElementById('sa-appl-1');
+  if (r1) r1.checked = true;
   const sel = document.getElementById('sa-lead-id');
   if (sel) {
     sel.innerHTML = '<option value="">— Bitte Lead auswählen —</option>';
@@ -9510,6 +9789,77 @@ async function submitSelbstauskunft() {
   doc.text((gV('sa-anrede') ? gV('sa-anrede') + ' ' : '') + vorname + ' ' + nachname + '  (digitale Unterschrift)', margin, y+4);
   doc.setFontSize(7); doc.setTextColor(160,160,160);
   doc.text('Vestora Capital · Vertraulich · Nur für interne Zwecke', margin, 289);
+
+  // Wenn 2 Antragsteller: Ant. 1 auf neuer Seite anhängen
+  if (_saNumApplicants === 2 && _saApplicant1Data) {
+    doc.addPage();
+    y = 20;
+    doc.setFillColor(31,42,36); doc.rect(0,0,210,26,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(200,164,114);
+    doc.text('Vestora Capital', margin, 11);
+    doc.setFontSize(8); doc.setTextColor(180,180,160); doc.setFont('helvetica','normal');
+    doc.text('FINANZIELLE SELBSTAUSKUNFT – ANTRAGSTELLER 1 · VERTRAULICH', margin, 19);
+    y = 34;
+    const a1 = _saApplicant1Data;
+    const gA1 = k => a1[k] || '';
+    const gA1N = k => parseFloat(a1[k]) || 0;
+    const a1Fmt = n => n ? '€ ' + Number(n).toLocaleString('de-DE') : '—';
+    const a1Date = k => { const v = gA1(k); return v ? new Date(v).toLocaleDateString('de-DE') : '—'; };
+    const a1Sec = (title) => {
+      if (y > 262) { doc.addPage(); y = 20; }
+      doc.setFillColor(245,243,238); doc.rect(margin,y,210-2*margin,5.5,'F');
+      doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(100,90,70);
+      doc.text(title.toUpperCase(), margin+2, y+3.8); y += 9;
+    };
+    const a1Row = (label, value) => {
+      if (y > 275) { doc.addPage(); y = 20; }
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+      doc.text(label + ':', margin, y);
+      doc.setFont('helvetica','bold'); doc.setTextColor(31,42,36);
+      doc.text(String(value||'—'), 82, y);
+      doc.setDrawColor(225,220,210); doc.line(margin, y+1.2, 210-margin, y+1.2);
+      y += 6.5;
+    };
+    a1Sec('Persönliche Angaben – Antragsteller 1');
+    a1Row('Name', (gA1('anrede') ? gA1('anrede') + ' ' : '') + gA1('vorname') + ' ' + gA1('nachname'));
+    a1Row('Geburtsdatum', a1Date('gebdat'));
+    a1Row('Geburtsort / -land', [gA1('geboro'), gA1('geborland')].filter(Boolean).join(', ')||'—');
+    a1Row('Staatsangehörigkeit', gA1('staat'));
+    a1Row('Familienstand', gA1('famstand'));
+    a1Sec('Wohnanschrift');
+    a1Row('Adresse', [gA1('strasse'), (gA1('plz') + ' ' + gA1('ort')).trim(), gA1('land')].filter(s=>s.trim()).join(', ')||'—');
+    a1Row('Telefon', gA1('telefon')); a1Row('E-Mail', gA1('email'));
+    a1Sec('Beschäftigung');
+    a1Row('Berufsgruppe', gA1('berufsgruppe')); a1Row('Beruf / Position', gA1('beruf_position'));
+    a1Row('Arbeitgeber', gA1('arbeitgeber')); a1Row('Beschäftigt seit', a1Date('besch_seit'));
+    a1Sec('Einkommensverhältnisse (monatlich netto)');
+    a1Row('Gehalt / Lohn', a1Fmt(gA1N('eink_haupt')));
+    a1Row('Mieteinnahmen', a1Fmt(gA1N('mieteinnahmen')));
+    a1Row('Gesamteinkommen Haushalt', a1Fmt(gA1N('eink_gesamt')));
+    a1Sec('Vermögensverhältnisse');
+    a1Row('Barvermögen / Bankguthaben', a1Fmt(gA1N('bankguth')));
+    a1Row('Wertpapiere / Depot', a1Fmt(gA1N('depot')));
+    a1Row('Eigenkapital für diese Investition', a1Fmt(gA1N('eigenkapital')));
+    a1Sec('Verbindlichkeiten');
+    a1Row('Ratenkredit monatl. Rate', a1Fmt(gA1N('kred_rate')));
+    a1Row('Immobiliendarlehen monatl. Rate', a1Fmt(gA1N('hypo_rate')));
+    a1Sec('Anlageziele & Unterschrift');
+    a1Row('Anlageziele', (a1.motivs||a1.motiv||[]).join(', ')||'—');
+    a1Row('Anlagehorizont', gA1('horizont'));
+    a1Row('Risikobereitschaft', gA1('risiko'));
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+    doc.text('Ich bestätige die Vollständigkeit und Richtigkeit meiner Angaben.', margin, y); y += 8;
+    if (_saApplicant1Sig) {
+      try { doc.addImage(_saApplicant1Sig, 'PNG', margin, y, 70, 22); } catch(e) {}
+      y += 26;
+    }
+    doc.setDrawColor(31,42,36); doc.line(margin, y, margin+70, y);
+    doc.setFontSize(7.5); doc.setTextColor(120,120,120);
+    doc.text((gA1('anrede') ? gA1('anrede') + ' ' : '') + gA1('vorname') + ' ' + gA1('nachname') + '  (Antragsteller 1 – digitale Unterschrift)', margin, y+4);
+    doc.setFontSize(7); doc.setTextColor(160,160,160);
+    doc.text('Vestora Capital · Vertraulich · Nur für interne Zwecke', margin, 289);
+  }
 
   const pdfBlob = doc.output('blob');
   const ts = Date.now();
