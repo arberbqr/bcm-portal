@@ -577,13 +577,23 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
 
   <div id="view-reservations" class="view">
     <div class="view-inner">
-      <div class="page-title">Reservierungen</div>
-      <div class="page-sub">Alle eingegangenen Reservierungsanfragen</div>
+      <div class="flex" style="justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="page-title">Reservierungen</div>
+          <div class="page-sub">Alle eingegangenen Reservierungsanfragen</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button id="res-pipe-btn" class="btn-sm btn-gold" style="font-size:11px;padding:7px 16px" onclick="setResView('kanban')">Pipeline</button>
+          <button id="res-tbl-btn" class="btn-sm btn-outline" style="font-size:11px;padding:7px 16px" onclick="setResView('table')">Tabelle</button>
+        </div>
+      </div>
       <!-- Ablauf-Alert -->
       <div id="res-expiry-alert" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-left:4px solid #dc3545;padding:12px 18px;margin-bottom:14px">
         <div style="font-weight:700;color:#721c24;margin-bottom:8px;font-size:13px">🔴 Reservierungen laufen in &lt;12h ab</div>
         <div id="res-expiry-list"></div>
       </div>
+      <div id="resKanbanWrap"></div>
+      <div id="resTableWrap" style="display:none">
       <div class="card">
         <div class="card-header">
           <div class="card-header-title">Offene Anfragen</div>
@@ -598,6 +608,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
             <tbody id="resTableBody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--g500)"><div class="spinner"></div></td></tr></tbody>
           </table>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -2787,14 +2798,11 @@ async function doSignup() {
 
   const role = 'vp';
 
-  // VP: Token validieren
+  // VP: Token validieren (über SECURITY-DEFINER RPC – invitations ist nicht mehr anonym lesbar)
   if (token) {
-    const { data: inv, error: invErr } = await sb
-      .from('invitations')
-      .select('*')
-      .eq('token', token)
-      .eq('used', false)
-      .maybeSingle();
+    const { data: invData, error: invErr } = await sb
+      .rpc('validate_invitation', { p_token: token });
+    const inv = Array.isArray(invData) ? invData[0] : invData;
 
     if (invErr || !inv) {
       errEl.style.display = 'block';
@@ -2821,11 +2829,9 @@ async function doSignup() {
     return;
   }
 
-  // Token als verwendet markieren
+  // Token als verwendet markieren (über SECURITY-DEFINER RPC)
   if (token) {
-    await sb.from('invitations')
-      .update({ used: true, used_at: new Date().toISOString() })
-      .eq('token', token);
+    await sb.rpc('consume_invitation', { p_token: token });
   }
 
   notify('Account erstellt! Bitte jetzt einloggen.', 'success');
@@ -4052,11 +4058,28 @@ async function deleteCategoryDoc(objectId, docId) {
 // ══════════════════════════════════════════════════════
 // ADMIN: RESERVATIONS
 // ══════════════════════════════════════════════════════
+var currentReservations = [];
+var resView = 'kanban';
+
+function setResView(view) {
+  resView = view;
+  document.getElementById('resKanbanWrap').style.display = view === 'kanban' ? 'block' : 'none';
+  document.getElementById('resTableWrap').style.display = view === 'table' ? 'block' : 'none';
+  var pb = document.getElementById('res-pipe-btn'), tb = document.getElementById('res-tbl-btn');
+  if (pb && tb) {
+    pb.className = 'btn-sm ' + (view === 'kanban' ? 'btn-gold' : 'btn-outline');
+    tb.className = 'btn-sm ' + (view === 'table' ? 'btn-gold' : 'btn-outline');
+  }
+  if (view === 'kanban') renderResKanban();
+}
+
 async function loadReservations() {
   const { data, error } = await sb.from('reservations')
     .select('*, objects(name,address)')
     .order('created_at', { ascending: false });
   if (error) return;
+  currentReservations = data || [];
+  renderResKanban();
 
   const open = data.filter(r => r.status === 'pending').length;
   document.getElementById('res-count-badge').textContent = open + ' offen';
@@ -4074,7 +4097,7 @@ async function loadReservations() {
     const now2 = new Date();
     const in12h = new Date(now2.getTime() + 12*60*60*1000);
     const expAt = r.expires_at ? new Date(r.expires_at) : null;
-    const isExpiring = expAt && expAt > now2 && expAt <= in12h && ['soft','hard','pending'].includes(r.status);
+    const isExpiring = expAt && expAt > now2 && expAt <= in12h && ['pending','approved'].includes(r.status);
     return `<tr style="${isExpiring ? 'background:#fff3cd;' : ''}">
     <td>${fmtDate(r.created_at)}</td>
     <td><strong>${r.objects?.name||'—'}</strong><div style="font-size:11px;color:var(--g500)">${r.objects?.address||''}</div></td>
@@ -4086,6 +4109,116 @@ async function loadReservations() {
     <td><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="openResDetail('${r.id}')">Details</button></td>
   </tr>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// RESERVIERUNGS-PIPELINE (KANBAN)
+// ══════════════════════════════════════════════════════
+const RES_STAGES = [
+  {key:'soft',             label:'Soft-Reservierung', color:'#c79a2e'},
+  {key:'hard',             label:'Hard-Reservierung', color:'#2f6db5'},
+  {key:'kve_submitted',    label:'KVE',               color:'#5a52a8'},
+  {key:'notary_scheduled', label:'Notartermin',       color:'#1d8f6b'},
+  {key:'notarized',        label:'Beurkundet',        color:'#5a8a1f'},
+  {key:'dropped',          label:'Abgesprungen',      color:'#a33636'},
+];
+function resEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function resStageOf(r){
+  var s = r.pipeline_stage;
+  if (s && RES_STAGES.some(function(x){return x.key===s;})) return s;
+  if (r.status==='notarized') return 'notarized';
+  if (r.status==='rejected' || r.status==='expired') return 'dropped';
+  if (r.status==='approved') return 'hard';
+  return 'soft';
+}
+function resNotes(r){ return Array.isArray(r.crm_notes) ? r.crm_notes : []; }
+function resDaysSince(d){ return d ? Math.floor((Date.now()-new Date(d).getTime())/86400000) : null; }
+
+function renderResKanban(){
+  var el = document.getElementById('resKanbanWrap');
+  if (!el) return;
+  var now = new Date();
+  var html = '<div class="kanban-board" style="grid-template-columns:repeat('+RES_STAGES.length+',minmax(175px,1fr))">';
+  html += RES_STAGES.map(function(st){
+    var cards = currentReservations.filter(function(r){ return resStageOf(r)===st.key; });
+    var cardsHtml = cards.map(function(r){
+      var d = resDaysSince(r.stage_updated_at || r.created_at);
+      var dStr = d===null ? '—' : (d===0 ? 'heute' : d+' Tg');
+      var nc = resNotes(r).length;
+      var foot = '<span class="kanban-card-date">'+dStr+' in Phase</span>';
+      if ((st.key==='soft' || st.key==='hard') && r.expires_at){
+        var hrs = Math.round((new Date(r.expires_at)-now)/3600000);
+        if (hrs<=0) foot = '<span class="kanban-card-overdue">⏱ abgelaufen</span>';
+        else if (hrs<=24) foot = '<span class="kanban-card-overdue">⏱ '+(hrs<1?'<1h':hrs+'h')+'</span>';
+      }
+      if (st.key==='notary_scheduled' && r.notary_date){
+        foot = '<span style="font-size:9px;color:#1d8f6b;font-weight:700">📅 '+new Date(r.notary_date).toLocaleDateString('de-DE')+'</span>';
+      }
+      return '<div class="kanban-card" draggable="true"'
+        + ' ondragstart="event.dataTransfer.setData(\'text/plain\',\''+r.id+'\');event.currentTarget.classList.add(\'dragging\')"'
+        + ' ondragend="event.currentTarget.classList.remove(\'dragging\')"'
+        + ' onclick="openResDetail(\''+r.id+'\')">'
+        + '<div class="kanban-card-name">'+resEsc(r.buyer_name||'—')+'</div>'
+        + '<div class="kanban-card-obj">📦 '+resEsc(r.objects&&r.objects.name||'—')+'</div>'
+        + '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+resEsc(r.vp_name||r.vp_email||'—')+(r.equity?' · EK '+fmt(r.equity):'')+'</div>'
+        + '<div class="kanban-card-foot">'+foot+'<span style="font-size:9px;color:'+(nc?'var(--accent)':'var(--stone)')+'">💬 '+nc+'</span></div>'
+        + '</div>';
+    }).join('');
+    return '<div class="kanban-col" data-stage="'+st.key+'"'
+      + ' ondragover="event.preventDefault();event.currentTarget.classList.add(\'drag-over\')"'
+      + ' ondragleave="event.currentTarget.classList.remove(\'drag-over\')"'
+      + ' ondrop="event.currentTarget.classList.remove(\'drag-over\');onResKanbanDrop(event,\''+st.key+'\')">'
+      + '<div class="kanban-col-header" style="background:'+st.color+'">'+st.label+' <span class="kcnt">'+cards.length+'</span></div>'
+      + '<div class="kanban-col-body">'+(cardsHtml || '<div style="font-size:10px;color:var(--stone);padding:8px;text-align:center">leer</div>')+'</div>'
+      + '</div>';
+  }).join('') + '</div>';
+  el.innerHTML = html;
+}
+
+async function applyResStage(id, newStage, fromDrag){
+  var r = currentReservations.find(function(x){ return x.id===id; });
+  if (!r) return;
+  if (fromDrag && resStageOf(r)===newStage) return;
+  var patch = { pipeline_stage:newStage, stage_updated_at:new Date().toISOString() };
+  if (newStage==='hard' && r.status==='pending'){ patch.status='approved'; patch.approved_at=new Date().toISOString(); }
+  if (newStage==='notarized'){ patch.status='notarized'; patch.notarized_at=new Date().toISOString(); }
+  var resp = await sb.from('reservations').update(patch).eq('id', id);
+  if (resp.error){ notify('Fehler: '+resp.error.message, 'error'); return; }
+  if (newStage==='notarized' && r.object_id){ await sb.from('objects').update({status:'sold'}).eq('id', r.object_id); }
+  Object.assign(r, patch);
+  renderResKanban();
+  notify('✓ Phase aktualisiert', 'success');
+}
+function onResKanbanDrop(event, newStage){
+  var id = event.dataTransfer.getData('text/plain');
+  if (id) applyResStage(id, newStage, true);
+}
+function changeResStage(id, newStage){ applyResStage(id, newStage, false); }
+
+function renderResNotesList(notes){
+  if (!notes || !notes.length) return '<div style="font-size:11px;color:var(--g500)">Noch keine Notizen.</div>';
+  return notes.slice().reverse().map(function(n){
+    var who = n.author || n.by || '';
+    var when = (n.created_at || n.at) ? new Date(n.created_at||n.at).toLocaleString('de-DE') : (n.ts || '');
+    var meta = [resEsc(who), resEsc(when)].filter(Boolean).join(' · ');
+    return '<div style="background:var(--g100);padding:6px 9px"><div style="font-size:12px;line-height:1.5">'+resEsc(n.text)+'</div>'
+      + (meta ? '<div style="font-size:9px;color:var(--g500);margin-top:2px">'+meta+'</div>' : '')+'</div>';
+  }).join('');
+}
+async function addResNote(id){
+  var inp = document.getElementById('resNoteInput');
+  var txt = (inp && inp.value || '').trim();
+  if (!txt) return;
+  var r = currentReservations.find(function(x){ return x.id===id; });
+  var notes = (r && Array.isArray(r.crm_notes)) ? r.crm_notes.slice() : [];
+  notes.push({ text:txt, author:(currentProfile && (currentProfile.full_name||currentProfile.email)) || 'Admin', created_at:new Date().toISOString() });
+  var resp = await sb.from('reservations').update({ crm_notes:notes }).eq('id', id);
+  if (resp.error){ notify('Fehler: '+resp.error.message, 'error'); return; }
+  if (r) r.crm_notes = notes;
+  inp.value = '';
+  var listEl = document.getElementById('resNotesList');
+  if (listEl) listEl.innerHTML = renderResNotesList(notes);
+  renderResKanban();
 }
 
 async function openResDetail(id) {
@@ -4133,6 +4266,23 @@ async function openResDetail(id) {
             ${r.status==='approved'&&!r.fee_paid?`<button class="btn-sm btn-pos" style="font-size:10px;padding:3px 8px" onclick="markFeePaid('${id}')">Als bezahlt markieren</button>`:''}
           </div>
           ${r.fee_paid_at?`<div style="font-size:11px;color:var(--g500);margin-top:2px">am ${fmtDate(r.fee_paid_at)}</div>`:''}
+        </div>
+      </div>
+
+      <!-- Pipeline & Notizen -->
+      <div style="border:1px solid var(--g200);padding:10px 14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="font-size:10px;color:var(--g500);text-transform:uppercase;letter-spacing:.07em;font-weight:700">Pipeline-Phase</div>
+          <select id="resStageSelect" onchange="changeResStage('${id}', this.value)" style="font-size:12px;padding:4px 8px">
+            ${RES_STAGES.map(s=>`<option value="${s.key}" ${resStageOf(r)===s.key?'selected':''}>${s.label}</option>`).join('')}
+          </select>
+        </div>
+        <div style="font-size:11px;color:var(--g500);margin-bottom:8px">Seit ${fmtDateTime(r.stage_updated_at||r.created_at)} in dieser Phase</div>
+        <div style="font-size:10px;color:var(--g500);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:6px;border-top:1px solid var(--g200);padding-top:8px">Notizen</div>
+        <div id="resNotesList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">${renderResNotesList(resNotes(r))}</div>
+        <div style="display:flex;gap:6px">
+          <input id="resNoteInput" type="text" placeholder="Notiz hinzufügen…" onkeydown="if(event.key==='Enter')addResNote('${id}')" style="flex:1;font-size:12px;padding:6px 8px;border:1px solid var(--g300)">
+          <button class="btn-sm btn-navy" style="font-size:11px;padding:6px 12px" onclick="addResNote('${id}')">+ Notiz</button>
         </div>
       </div>
 
@@ -5530,147 +5680,6 @@ function updateSteuerModal() {
   tbody.innerHTML = rows;
 }
 
-async function exportSteuerPDF() {
-  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-  const o = currentSteuerObj;
-  if (!o || typeof jspdf === 'undefined') { alert('PDF-Export nicht verfügbar.'); return; }
-  const { jsPDF } = jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const W = 210, M = 16;
-
-  // Header
-  doc.setFillColor(26,39,68); doc.rect(0,0,W,28,'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(14);
-  doc.text('STEUERLICHE ANALYSE', M, 12);
-  doc.setFontSize(10); doc.setFont('helvetica','normal');
-  const objName = (o.name||o.address||'Objekt') + (o.city?', '+o.city:'');
-  doc.text(objName, M, 21);
-  doc.setTextColor(184,151,42); doc.text('Vestora Portal', W-M, 21, {align:'right'});
-
-  let y = 34;
-  const bruttoPA = parseInt(document.getElementById('sm-slider')?.value||60000);
-  doc.setTextColor(80,80,80); doc.setFontSize(9); doc.setFont('helvetica','normal');
-  doc.text(`Bruttoeinkommen: € ${bruttoPA.toLocaleString('de-DE')} p.a.  ·  Berechnung nach EStG Grundtabelle 2024`, M, y);
-  y += 8;
-
-  const isDeg = o.deg_afa > 0;
-  const afaPct = isDeg ? (o.deg_afa/100) : ((o.lin_afa||2)/100);
-  const kpAfA = (o.price_unit||0)+(o.price_furniture||0);
-  const gesamtKP = kpAfA+(o.parking_active?(o.parking_price||0):0);
-  const fkBasis = gesamtKP*0.70;
-  const zinsenPA = fkBasis*0.038;
-  const hausgeldPA = (o.hausgeld||0)*12;
-  const instandPA = (o.instandhaltung||0)*12;
-  const rentPA = ((o.cold_rent||0)+(o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0))*12;
-  const finRateMon = (fkBasis*0.058)/12;
-  const afaPA = kpAfA*afaPct;
-  const taxableAfter = Math.max(0, bruttoPA+rentPA-afaPA-zinsenPA-hausgeldPA-instandPA);
-  const taxBefore = calcESt2024(bruttoPA);
-  const taxAfter = calcESt2024(taxableAfter);
-  const soliBefore = calcSoli(taxBefore);
-  const soliAfter = calcSoli(taxAfter);
-  const totalBefore = taxBefore+soliBefore;
-  const totalAfter = taxAfter+soliAfter;
-  const totalSaving = Math.max(0, totalBefore-totalAfter);
-  const savingMon = totalSaving/12;
-  const cfMon = rentPA/12-finRateMon-(o.hausgeld||0)-(o.instandhaltung||0)+savingMon;
-  const fmtE = n=>'€ '+Math.abs(Math.round(n)).toLocaleString('de-DE');
-
-  function pSecHeader(title, yp) {
-    doc.setFillColor(26,39,68); doc.rect(M,yp,W-M*2,7,'F');
-    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
-    doc.text(title, M+3, yp+5);
-    doc.setTextColor(60,60,60);
-    return yp+11;
-  }
-  function pRow(label, val, yp, shade, rgb) {
-    if (shade) { doc.setFillColor(248,248,248); doc.rect(M,yp-4,W-M*2,7,'F'); }
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(100,100,100);
-    doc.text(label, M+3, yp);
-    if (rgb) doc.setTextColor(...rgb); else doc.setTextColor(26,39,68);
-    doc.setFont('helvetica','bold');
-    doc.text(val, W-M-3, yp, {align:'right'});
-    return yp+7;
-  }
-
-  y = pSecHeader('STEUERLICHE GEGENÜBERSTELLUNG — OHNE Immobilie', y);
-  y = pRow('Bruttoeinkommen', fmtE(bruttoPA), y, false);
-  y = pRow('Einkommensteuer', '− '+fmtE(taxBefore), y, true, [192,57,43]);
-  y = pRow('Solidaritätszuschlag', '− '+fmtE(soliBefore), y, false, [192,57,43]);
-  y = pRow('Netto p.a.', fmtE(bruttoPA-totalBefore), y, true); y+=4;
-
-  y = pSecHeader('MIT Immobilie', y);
-  const afaLabel = isDeg?`Deg. AfA (${o.deg_afa}%)`:`Lin. AfA (${o.lin_afa||2}%)`;
-  y = pRow('Bruttoeinkommen', fmtE(bruttoPA), y, false);
-  y = pRow(afaLabel, '− '+fmtE(afaPA), y, true, [46,125,82]);
-  y = pRow('Finanzierungszinsen', '− '+fmtE(zinsenPA), y, false, [46,125,82]);
-  y = pRow('Hausgeld & Instandhaltung', '− '+fmtE(hausgeldPA+instandPA), y, true, [46,125,82]);
-  y = pRow('Mieteinnahmen', '+ '+fmtE(rentPA), y, false, [26,82,118]);
-  y = pRow('z.v.E. nach Immobilie', fmtE(taxableAfter), y, true);
-  y = pRow('Einkommensteuer', '− '+fmtE(taxAfter), y, false, taxAfter<taxBefore?[46,125,82]:[192,57,43]);
-  y = pRow('Solidaritätszuschlag', '− '+fmtE(soliAfter), y, true, [100,100,100]);
-  y = pRow('Netto p.a. mit Immobilie', fmtE(bruttoPA-totalAfter), y, false); y+=4;
-
-  // Summary bar
-  doc.setFillColor(26,39,68); doc.rect(M,y,W-M*2,14,'F');
-  doc.setTextColor(111,207,151); doc.setFont('helvetica','bold'); doc.setFontSize(9);
-  doc.text(`Steuerersparnis: +€ ${Math.round(totalSaving).toLocaleString('de-DE')} p.a.  ·  Cashflow: ${cfMon>=0?'+':'−'}€ ${Math.abs(Math.round(cfMon)).toLocaleString('de-DE')}/Mo.`, M+4, y+9);
-  y+=20;
-
-  // 10-year table
-  y = pSecHeader('10-JAHRES-PROJEKTION', y);
-  const cx = [M+3, M+30, M+60, M+93, M+124, M+154];
-  doc.setFillColor(240,240,240); doc.rect(M,y-4,W-M*2,7,'F');
-  doc.setTextColor(80,80,80); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
-  ['Jahr','AfA-Basis','Ersparnis p.a.','Kumuliert','CF/Mo.','Kum. Cashflow'].forEach((h,i)=>{
-    doc.text(h, i===0?cx[i]:cx[i]+(i<4?22:18), y, i===0?{}:{align:'right'});
-  });
-  y+=5;
-
-  let cumS=0, cumC=0, bv=kpAfA;
-  for (let yr=1;yr<=10;yr++) {
-    let afaYr;
-    if (isDeg){afaYr=bv*afaPct;bv=Math.max(0,bv-afaYr);}else afaYr=kpAfA*afaPct;
-    const txbl=Math.max(0,bruttoPA+rentPA-afaYr-zinsenPA-hausgeldPA-instandPA);
-    const txYr=calcESt2024(txbl), slYr=calcSoli(txYr);
-    const svYr=Math.max(0,totalBefore-(txYr+slYr));
-    const cfYr=rentPA/12-finRateMon-(o.hausgeld||0)-(o.instandhaltung||0)+svYr/12;
-    cumS+=svYr; cumC+=cfYr*12;
-    if (yr%2===0){doc.setFillColor(248,248,248);doc.rect(M,y-3,W-M*2,6.5,'F');}
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(60,60,60);
-    doc.text(`Jahr ${yr}`, cx[0], y);
-    doc.setTextColor(120,120,120); doc.text(`€ ${Math.round(isDeg?bv+afaYr:kpAfA).toLocaleString('de-DE')}`, cx[1]+22, y, {align:'right'});
-    doc.setTextColor(46,125,82); doc.setFont('helvetica','bold');
-    doc.text(`€ ${Math.round(svYr).toLocaleString('de-DE')}`, cx[2]+22, y, {align:'right'});
-    doc.setTextColor(26,39,68);
-    doc.text(`€ ${Math.round(cumS).toLocaleString('de-DE')}`, cx[3]+22, y, {align:'right'});
-    doc.setTextColor(...(cfYr>=0?[46,125,82]:[192,57,43]));
-    doc.text(`${cfYr>=0?'+':'−'}€ ${Math.abs(Math.round(cfYr)).toLocaleString('de-DE')}`, cx[4]+18, y, {align:'right'});
-    doc.setTextColor(...(cumC>=0?[46,125,82]:[192,57,43]));
-    doc.text(`${cumC>=0?'+':'−'}€ ${Math.abs(Math.round(cumC)).toLocaleString('de-DE')}`, cx[5]+18, y, {align:'right'});
-    y+=7;
-  }
-  doc.setFillColor(26,39,68); doc.rect(M,y-3,W-M*2,8,'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8);
-  doc.text('Gesamt 10 Jahre', cx[0], y+2);
-  doc.setTextColor(111,207,151);
-  doc.text(`Steuerersparnis gesamt: € ${Math.round(cumS).toLocaleString('de-DE')}`, W/2, y+2, {align:'center'});
-  doc.text(`Kum. Cashflow: ${cumC>=0?'+':'−'}€ ${Math.abs(Math.round(cumC)).toLocaleString('de-DE')}`, W-M-3, y+2, {align:'right'});
-  y+=14;
-
-  // Disclaimer
-  doc.setTextColor(160,160,160); doc.setFont('helvetica','normal'); doc.setFontSize(7);
-  doc.text('Grundtabelle 2024 · Finanzierung: 70% FK zu 3,8% Zinsen / 5,8% eff. Annuität · AfA-Basis = Gebäudewert ohne Grundstück · Individuelle Steuerberatung empfohlen.', M, y, {maxWidth:W-M*2});
-
-  // Footer
-  doc.setFillColor(26,39,68); doc.rect(0,284,W,13,'F');
-  doc.setTextColor(255,255,255); doc.setFontSize(8);
-  doc.text('Vestora – Steuerliche Analyse', M, 292);
-  const today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
-  doc.text(today, W-M, 292, {align:'right'});
-
-  doc.save(`Steueranalyse_${(o.name||o.address||'Objekt').replace(/\s+/g,'_')}.pdf`);
-}
 
 // exportSteuerPDF v2 — fixes column layout, adds VP-logo, clean ASCII-safe strings
 async function exportSteuerPDF() {
@@ -7442,7 +7451,7 @@ async function openNotarModal(resId) {
     sel.innerHTML = '<option value="">— bitte wählen —</option>';
     const { data: res } = await sb.from('reservations')
       .select('id,buyer_name,objects(name)')
-      .in('status', ['soft','hard','notarized'])
+      .in('status', ['approved','notarized'])
       .order('created_at', {ascending:false});
     (res||[]).forEach(r => {
       const opt = document.createElement('option');
@@ -8863,473 +8872,6 @@ async function copyProtocolLink(token) {
   }
 }
 
-// ══════════════════════════════════════════════════════
-// FEATURE 1: WIEDERVORLAGEN-SYSTEM
-// ══════════════════════════════════════════════════════
-function renderWiedervorlagen() {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const due = currentLeads.filter(function(l) {
-    return l.next_followup && l.next_followup <= todayStr && !['notary','lost'].includes(l.status);
-  });
-  const banner = document.getElementById('wiedervorlage-banner');
-  if (!banner) return;
-  if (!due.length) { banner.style.display = 'none'; return; }
-  banner.style.display = '';
-  const titleEl = document.getElementById('wv-title');
-  if (titleEl) titleEl.textContent = due.length + ' Kontakt' + (due.length !== 1 ? 'e' : '') + ' stehen heute an';
-  const listEl = document.getElementById('wv-list');
-  if (listEl) {
-    listEl.innerHTML = due.map(function(l) {
-      return '<div class="wv-entry" onclick="openEditLead(\'' + l.id + '\')">' +
-        '<span style="font-weight:600;font-size:12px;color:var(--brand)">' + (l.name || '—') + '</span>' +
-        '<span class="lead-status-badge ls-' + l.status + '">' + l.status + '</span>' +
-        (l.phone ? '<a href="tel:' + l.phone + '" onclick="event.stopPropagation()" style="color:var(--accent);font-size:12px;text-decoration:none">📞 ' + l.phone + '</a>' : '') +
-        '<span style="font-size:10px;color:var(--muted);margin-left:auto">' + (l.next_followup ? new Date(l.next_followup + 'T00:00:00').toLocaleDateString('de-DE') : '') + '</span>' +
-        '</div>';
-    }).join('');
-  }
-}
-
-// ══════════════════════════════════════════════════════
-// FEATURE 2: VP-TAGESREPORT
-// ══════════════════════════════════════════════════════
-async function showTagesreport() {
-  if (sessionStorage.getItem('tagesreportClosed') === '1') return;
-  const box = document.getElementById('tagesreport-box');
-  if (!box) return;
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
-  const hour = now.getHours();
-  const greet = hour < 12 ? 'Guten Morgen' : (hour < 18 ? 'Guten Tag' : 'Guten Abend');
-  const nameStr = (currentProfile && currentProfile.full_name) ? ', ' + currentProfile.full_name.split(' ')[0] : '';
-  const greetEl = document.getElementById('tr-greeting');
-  if (greetEl) greetEl.textContent = greet + nameStr + ' 👋';
-  const openLeads = currentLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
-  const followupsToday = currentLeads.filter(function(l) { return l.next_followup && l.next_followup <= todayStr && !['notary','lost'].includes(l.status); }).length;
-  const openEl = document.getElementById('tr-open');
-  const fuEl = document.getElementById('tr-followups');
-  if (openEl) openEl.textContent = openLeads;
-  if (fuEl) fuEl.textContent = followupsToday;
-  // Reservierungen <48h
-  var resAlert = 0;
-  try {
-    var in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
-    var resResp = await sb.from('reservations').select('id,expires_at').eq('vp_id', currentUser.id).in('status', ['soft','hard','pending']).lte('expires_at', in48h).gte('expires_at', now.toISOString());
-    resAlert = (resResp.data || []).length;
-  } catch(e) {}
-  var raEl = document.getElementById('tr-res-alert');
-  if (raEl) {
-    raEl.textContent = resAlert;
-    if (resAlert > 0) raEl.style.color = '#ff9800';
-  }
-  box.style.display = '';
-}
-
-// ══════════════════════════════════════════════════════
-// FEATURE 4: OBJEKT-VERGLEICH
-// ══════════════════════════════════════════════════════
-var compareSelection = [];
-
-function toggleObjCompare(objId, el) {
-  var idx = compareSelection.indexOf(objId);
-  if (idx > -1) {
-    compareSelection.splice(idx, 1);
-  } else {
-    if (compareSelection.length >= 2) { notify('Maximal 2 Objekte vergleichen', '', 3000); if (el) el.checked = false; return; }
-    compareSelection.push(objId);
-  }
-  updateCompareToolbar();
-}
-
-function updateCompareToolbar() {
-  var tb = document.getElementById('compare-toolbar');
-  var btn = document.getElementById('compare-open-btn');
-  var lbl = document.getElementById('compare-count-label');
-  if (!tb) return;
-  if (compareSelection.length === 0) { tb.style.display = 'none'; return; }
-  tb.style.display = 'flex';
-  if (lbl) lbl.textContent = compareSelection.length + ' ausgewählt';
-  if (btn) btn.disabled = compareSelection.length < 2;
-}
-
-function clearCompare() {
-  compareSelection = [];
-  document.querySelectorAll('.compare-cb').forEach(function(cb) { cb.checked = false; });
-  var tb = document.getElementById('compare-toolbar');
-  if (tb) tb.style.display = 'none';
-}
-
-function openCompareModal() {
-  if (compareSelection.length < 2) return;
-  var objs = compareSelection.map(function(id) { return vpAllObjects.find(function(o) { return o.id === id; }); }).filter(Boolean);
-  if (objs.length < 2) return;
-  var o0 = objs[0], o1 = objs[1];
-
-  function totalKP(o) { return (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0); }
-  function totalRent(o) { return (o.cold_rent||0)+(o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0); }
-  function brutto(o) { var kp=totalKP(o); return kp>0 ? fmtP(totalRent(o)*12/kp*100) : '—'; }
-  function cfMon(o) {
-    var kp=totalKP(o); var r=totalRent(o);
-    var rate=kp*((o.loan_rate||3.95)/100+(o.repay_rate||1.0)/100)/12;
-    return fmt(r-(o.hausgeld||0)-rate, 0)+'/Mo';
-  }
-
-  var fields = [
-    ['Kaufpreis gesamt', function(o) { return fmt(totalKP(o)); }],
-    ['Kaltmiete/Mo.', function(o) { return fmt(o.cold_rent||0); }],
-    ['Wohnfläche', function(o) { return (o.area||'—') + ' m²'; }],
-    ['Zimmer', function(o) { return o.rooms||'—'; }],
-    ['Bruttorendite', brutto],
-    ['Cashflow/Mo.', cfMon],
-    ['Stellplatz', function(o) { return o.parking_active ? '✓ ' + (o.parking_type||'Ja') : '—'; }],
-    ['KfW möglich', function(o) { return o.kfw_moeglich ? '✓ Ja' : '—'; }],
-    ['AfA', function(o) { return o.deg_afa>0 ? fmtP(o.deg_afa)+' deg.' : fmtP(o.lin_afa||2)+' lin.'; }],
-    ['Status', function(o) { return o.status||'—'; }],
-    ['Adresse', function(o) { return o.address||'—'; }],
-  ];
-
-  var hdr = '<div style="display:grid;grid-template-columns:160px 1fr 1fr;gap:1px;background:var(--stone)">' +
-    '<div style="background:var(--brand);padding:10px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-soft)">Merkmal</div>' +
-    '<div style="background:var(--brand);padding:10px 14px;font-size:13px;font-weight:700;color:white">' + o0.name + '</div>' +
-    '<div style="background:var(--brand);padding:10px 14px;font-size:13px;font-weight:700;color:white">' + o1.name + '</div>' +
-    '</div>';
-
-  var rows = fields.map(function(f, i) {
-    var v0 = f[1](o0), v1 = f[1](o1);
-    var bg = i % 2 === 0 ? 'var(--field)' : 'var(--paper)';
-    return '<div style="display:grid;grid-template-columns:160px 1fr 1fr;gap:1px;background:var(--stone)">' +
-      '<div style="background:var(--paper-2);padding:8px 14px;font-size:10px;font-family:var(--font-mono);font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">' + f[0] + '</div>' +
-      '<div style="background:' + bg + ';padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand)">' + v0 + '</div>' +
-      '<div style="background:' + bg + ';padding:8px 14px;font-size:13px;font-weight:600;color:var(--brand)">' + v1 + '</div>' +
-      '</div>';
-  }).join('');
-
-  document.getElementById('compareBody').innerHTML = hdr + rows;
-  openModal('compareModal');
-}
-
-// ══════════════════════════════════════════════════════
-// FEATURE 5: KALKULATOR-VORLAGEN
-// ══════════════════════════════════════════════════════
-function loadCalcPresets() {
-  if (!currentUser) return {};
-  // Supabase-Presets bevorzugen, localStorage als Fallback
-  if (currentProfile && currentProfile.calc_presets && typeof currentProfile.calc_presets === 'object') {
-    return currentProfile.calc_presets;
-  }
-  try { return JSON.parse(localStorage.getItem('calcPresets_' + currentUser.id) || '{}'); } catch(e) { return {}; }
-}
-
-function applyCalcPresets() {
-  var p = loadCalcPresets();
-  if (p.zinssatz) { var el = document.getElementById('c-loanr'); if (el) el.value = p.zinssatz; }
-  if (p.tilgung) { var el2 = document.getElementById('c-repayr'); if (el2) el2.value = p.tilgung; }
-  if (p.steuer) { var el3 = document.getElementById('c-taxr'); if (el3) el3.value = p.steuer; }
-  if (typeof runCalc === 'function') runCalc();
-  notify('Voreinstellungen angewendet', 'success', 2500);
-}
-
-// ══════════════════════════════════════════════════════
-// FEATURE 6: VP-PERFORMANCE-ÜBERSICHT (ADMIN)
-// ══════════════════════════════════════════════════════
-var vpPerfPeriod = 'all';
-
-function setVPPerfPeriod(p) {
-  vpPerfPeriod = p;
-  ['week','month','all'].forEach(function(x) {
-    var btn = document.getElementById('vpp-btn-' + x);
-    if (btn) {
-      btn.style.background = x === p ? 'var(--brand)' : 'var(--paper-2)';
-      btn.style.color = x === p ? 'var(--accent-soft)' : 'var(--muted)';
-      btn.style.border = x === p ? 'none' : '1px solid var(--stone)';
-    }
-  });
-  loadVPPerformance();
-}
-
-async function loadVPPerformance() {
-  var tbody = document.getElementById('vpPerfTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>';
-  var now = new Date();
-  var since = null;
-  if (vpPerfPeriod === 'week') {
-    var d = new Date(now); d.setDate(d.getDate() - d.getDay()); d.setHours(0,0,0,0); since = d.toISOString();
-  } else if (vpPerfPeriod === 'month') {
-    since = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  }
-  try {
-    var vpsResp = await sb.from('profiles').select('id,full_name,company_name').eq('role','vp').eq('active',true).order('full_name');
-    var vps = vpsResp.data || [];
-    var leadsQ = sb.from('leads').select('id,vp_id,status,created_at');
-    if (since) leadsQ = leadsQ.gte('created_at', since);
-    var leadsResp = await leadsQ;
-    var leads2 = leadsResp.data || [];
-    var calcsQ = sb.from('calculations').select('id,vp_id,created_at');
-    if (since) calcsQ = calcsQ.gte('created_at', since);
-    var calcsResp = await calcsQ;
-    var calcs2 = calcsResp.data || [];
-    var resQ = sb.from('reservations').select('id,vp_id,status,created_at');
-    if (since) resQ = resQ.gte('created_at', since);
-    var resResp2 = await resQ;
-    var ress2 = resResp2.data || [];
-    if (!vps.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--muted)">Keine Vertriebspartner gefunden.</td></tr>'; return; }
-    tbody.innerHTML = vps.map(function(vp) {
-      var vpLeads = leads2.filter(function(l) { return l.vp_id === vp.id; });
-      var activeLeads = vpLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
-      var vpCalcs2 = calcs2.filter(function(c) { return c.vp_id === vp.id; }).length;
-      var vpRes2 = ress2.filter(function(r) { return r.vp_id === vp.id && ['soft','hard'].includes(r.status); }).length;
-      var vpNotary = vpLeads.filter(function(l) { return l.status === 'notary'; }).length;
-      var leads = vpLeads.length, calcs = vpCalcs2, reservations = vpRes2, closings = vpNotary;
-      var conv1 = leads > 0 ? Math.round(calcs/leads*100) + '%' : '—';
-      var conv2 = calcs > 0 ? Math.round(reservations/calcs*100) + '%' : '—';
-      var conv3 = reservations > 0 ? Math.round(closings/reservations*100) + '%' : '—';
-      return '<tr>' +
-        '<td style="font-weight:600">' + (vp.full_name||'—') + '</td>' +
-        '<td style="font-size:12px;color:var(--muted)">' + (vp.company_name||'—') + '</td>' +
-        '<td class="r">' + vpLeads.length + '</td>' +
-        '<td class="r" style="color:var(--ok);font-weight:600">' + activeLeads + '</td>' +
-        '<td class="r">' + vpCalcs2 + '</td>' +
-        '<td class="r" style="color:var(--warn)">' + vpRes2 + '</td>' +
-        '<td class="r" style="color:var(--ok);font-weight:700">' + vpNotary + '</td>' +
-        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv1 + '</td>' +
-        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv2 + '</td>' +
-        '<td class="r" style="font-size:11px;color:var(--muted)">' + conv3 + '</td>' +
-        '</tr>';
-    }).join('');
-  } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="10" style="color:var(--gone);padding:16px">' + e.message + '</td></tr>';
-  }
-}
-
-// ══════════════════════════════════════════════════════
-// FEATURE: PROVISION (COMMISSION)
-// ══════════════════════════════════════════════════════
-async function updateCommission(resId, paid, amount) {
-  const { error } = await sb.from('reservations').update({ commission_paid: paid, commission_amount: amount }).eq('id', resId);
-  if (error) notify('Fehler: ' + error.message, 'error');
-  else notify(paid ? '✓ Provision als ausgezahlt markiert' : 'Provision als offen markiert', 'success');
-}
-
-// ══════════════════════════════════════════════════════
-// FEATURE: ADMIN DASHBOARD
-// ══════════════════════════════════════════════════════
-async function loadDashboard() {
-  const now = new Date();
-  const weekAgo = new Date(now - 7*24*60*60*1000).toISOString();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  const in48h = new Date(now.getTime() + 48*60*60*1000).toISOString();
-
-  try {
-    const [{ count: avail }, { count: activeRes }, { count: leadsWeek }, { count: closingsMonth }] = await Promise.all([
-      sb.from('objects').select('*', {count:'exact',head:true}).eq('status','available'),
-      sb.from('reservations').select('*', {count:'exact',head:true}).eq('status','active'),
-      sb.from('leads').select('*', {count:'exact',head:true}).gte('created_at', weekAgo),
-      sb.from('leads').select('*', {count:'exact',head:true}).eq('status','notary').gte('updated_at', monthStart),
-    ]);
-    document.getElementById('dash-available').textContent = avail || 0;
-    document.getElementById('dash-reservations').textContent = activeRes || 0;
-    document.getElementById('dash-leads-week').textContent = leadsWeek || 0;
-    document.getElementById('dash-closings').textContent = closingsMonth || 0;
-  } catch(e) {}
-
-  // Ablaufende Reservierungen
-  try {
-    const { data: expiringRes } = await sb.from('reservations')
-      .select('buyer_name, expires_at, hard_expires_at, objects(name), profiles(full_name)')
-      .lt('expires_at', in48h).gt('expires_at', now.toISOString()).eq('status','active');
-    const expiringEl = document.getElementById('dashExpiringRes');
-    if (expiringEl) {
-      if (expiringRes && expiringRes.length) {
-        expiringEl.innerHTML = expiringRes.map(r => `<tr>
-          <td>${r.profiles?.full_name || '—'}</td>
-          <td>${r.objects?.name || '—'}</td>
-          <td>${r.buyer_name || '—'}</td>
-          <td style="color:var(--gone);font-weight:700">${new Date(r.expires_at).toLocaleString('de-DE')}</td>
-        </tr>`).join('');
-      } else {
-        expiringEl.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine ablaufenden Reservierungen</td></tr>';
-      }
-    }
-  } catch(e) {}
-
-  // Letzte Aktivitäten
-  try {
-    const { data: recentLeads } = await sb.from('leads').select('name, status, created_at, profiles(full_name)').gte('created_at', weekAgo).order('created_at', {ascending:false}).limit(10);
-    const { data: recentRes } = await sb.from('reservations').select('buyer_name, created_at, profiles(full_name)').gte('created_at', weekAgo).order('created_at', {ascending:false}).limit(5);
-    const activities = [
-      ...(recentLeads||[]).map(l => ({date: l.created_at, type:'Lead', detail: l.name + ' ('+l.status+')', vp: l.profiles?.full_name})),
-      ...(recentRes||[]).map(r => ({date: r.created_at, type:'Reservierung', detail: r.buyer_name, vp: r.profiles?.full_name})),
-    ].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
-    const actEl = document.getElementById('dashActivities');
-    if (actEl) {
-      actEl.innerHTML = activities.length ? activities.map(a => `<tr>
-        <td style="font-size:11px;color:var(--muted)">${new Date(a.date).toLocaleDateString('de-DE')}</td>
-        <td><span class="badge badge-gold">${a.type}</span></td>
-        <td>${a.detail}</td>
-        <td style="font-size:11px">${a.vp||'—'}</td>
-      </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine Aktivitäten</td></tr>';
-    }
-  } catch(e) {}
-
-  // VP Aktivität
-  try {
-    const { data: vpActivity } = await sb.from('leads').select('vp_id, profiles!leads_vp_id_fkey(full_name)').gte('created_at', weekAgo);
-    const vpMap = {};
-    (vpActivity||[]).forEach(l => {
-      const n = l.profiles?.full_name || l.vp_id;
-      vpMap[n] = (vpMap[n]||0) + 1;
-    });
-    const vpEl = document.getElementById('dashVPActivity');
-    if (vpEl) {
-      const sorted = Object.entries(vpMap).sort((a,b) => b[1]-a[1]);
-      vpEl.innerHTML = sorted.length ? sorted.map(([name, cnt]) => `
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <div style="font-size:12px;width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
-          <div style="flex:1;background:var(--paper-2);height:18px;position:relative">
-            <div style="position:absolute;left:0;top:0;height:100%;background:var(--brand);width:${Math.round(cnt/Math.max(...Object.values(vpMap))*100)}%"></div>
-          </div>
-          <div style="font-size:12px;color:var(--muted);width:30px;text-align:right">${cnt}</div>
-        </div>`).join('') : '<p style="color:var(--muted);font-size:13px">Keine Aktivitäten in den letzten 7 Tagen.</p>';
-    }
-  } catch(e) {}
-}
-
-// ══════════════════════════════════════════════════════
-// FEATURE 7: RESERVIERUNGS-ABLAUF-ALERT
-// ══════════════════════════════════════════════════════
-function checkReservationExpiryAlerts(reservations) {
-  var now = new Date();
-  var in12h = new Date(now.getTime() + 12 * 60 * 60 * 1000);
-  var expiring = reservations.filter(function(r) {
-    if (!r.expires_at || !['soft','hard','pending'].includes(r.status)) return false;
-    var exp = new Date(r.expires_at);
-    return exp > now && exp <= in12h;
-  });
-  var alertDiv = document.getElementById('res-expiry-alert');
-  var listDiv = document.getElementById('res-expiry-list');
-  var badge = document.getElementById('res-expiry-badge');
-  if (!expiring.length) {
-    if (alertDiv) alertDiv.style.display = 'none';
-    if (badge) badge.style.display = 'none';
-    return;
-  }
-  if (badge) { badge.textContent = expiring.length; badge.style.display = 'inline'; }
-  if (!alertDiv || !listDiv) return;
-  alertDiv.style.display = '';
-  listDiv.innerHTML = expiring.map(function(r) {
-    var exp = new Date(r.expires_at);
-    var diffMin = Math.round((exp - now) / 60000);
-    var diffStr = diffMin < 60 ? diffMin + ' Min.' : Math.round(diffMin/60) + ' Std.';
-    return '<div class="res-expiry-row">' +
-      '<span style="font-weight:600;font-size:12px;color:#721c24">' + (r.buyer_name||'—') + '</span>' +
-      '<span style="font-size:11px;color:var(--muted)">' + (r.objects?.name||'—') + '</span>' +
-      '<span style="background:#dc3545;color:white;padding:2px 8px;font-size:10px;font-weight:700">⏱ noch ' + diffStr + '</span>' +
-      '</div>';
-  }).join('');
-}
-
-// ══════════════════════════════════════════════════════
-// FEATURE 8: EXCEL-EXPORT OBJEKTE
-// ══════════════════════════════════════════════════════
-async function exportObjectsXlsx() {
-  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
-  if (typeof XLSX === 'undefined') { notify('SheetJS nicht geladen – bitte Seite neu laden', 'error'); return; }
-  notify('Excel wird erstellt…', '', 2000);
-  var resp = await sb.from('objects').select('*').order('name');
-  if (resp.error) { notify('Fehler: ' + resp.error.message, 'error'); return; }
-  var data2 = resp.data || [];
-  var rows = data2.map(function(o) {
-    return {
-      'Name': o.name || '',
-      'Adresse': o.address || '',
-      'Fläche (m²)': o.area || '',
-      'Zimmer': o.rooms || '',
-      'Kaufpreis (€)': (o.price_unit||0)+(o.price_furniture||0)+(o.parking_active?(o.parking_price||0):0),
-      'Kaltmiete/Mo (€)': o.cold_rent || 0,
-      'Status': o.status || '',
-      'Branding': o.branding || '',
-      'Stellplatz': o.parking_active ? 'Ja' : 'Nein',
-      'KfW möglich': o.kfw_moeglich ? 'Ja' : 'Nein',
-      'Veröffentlicht': o.published ? 'Ja' : 'Nein',
-      'Letzte Änderung': o.updated_at ? new Date(o.updated_at).toLocaleDateString('de-DE') : ''
-    };
-  });
-  var ws = XLSX.utils.json_to_sheet(rows);
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Objekte');
-  XLSX.writeFile(wb, 'Vestora_Objekte_' + new Date().toISOString().split('T')[0] + '.xlsx');
-  notify('✓ Excel exportiert', 'success');
-}
-
-// ══════════════════════════════════════════════════════
-// FEATURE 9: MOBILE NAV (HAMBURGER)
-// ══════════════════════════════════════════════════════
-function toggleMobileNav() {
-  var nav = document.getElementById('appNav');
-  if (nav) nav.classList.toggle('mobile-open');
-}
-
-function closeMobileNav() {
-  var nav = document.getElementById('appNav');
-  if (nav) nav.classList.remove('mobile-open');
-}
-
-// Nav bei Klick außerhalb schließen
-document.addEventListener('click', function(e) {
-  var nav = document.getElementById('appNav');
-  var btn = document.getElementById('hamburger-btn');
-  if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
-    nav.classList.remove('mobile-open');
-  }
-});
-
-// ══════════════════════════════════════════════════════
-// FEATURE 10: ONBOARDING
-// ══════════════════════════════════════════════════════
-var obStep = 0;
-var OB_TOTAL = 4;
-
-function showOnboarding() {
-  obStep = 0;
-  updateOnboardingStep();
-  openModal('onboardingModal');
-}
-
-function updateOnboardingStep() {
-  for (var i = 0; i < OB_TOTAL; i++) {
-    var s = document.getElementById('ob-step-' + i);
-    var d = document.getElementById('ob-dot-' + i);
-    if (s) s.style.display = i === obStep ? '' : 'none';
-    if (d) d.style.background = i === obStep ? 'var(--brand)' : 'var(--stone)';
-  }
-  var prevBtn = document.getElementById('ob-prev-btn');
-  var nextBtn = document.getElementById('ob-next-btn');
-  if (prevBtn) prevBtn.style.visibility = obStep > 0 ? 'visible' : 'hidden';
-  if (nextBtn) nextBtn.textContent = obStep === OB_TOTAL - 1 ? 'Los geht\'s 🚀' : 'Weiter →';
-}
-
-function nextOnboardingStep() {
-  if (obStep < OB_TOTAL - 1) {
-    obStep++;
-    updateOnboardingStep();
-  } else {
-    if (currentUser) localStorage.setItem('onboardingDone_' + currentUser.id, '1');
-    closeModal('onboardingModal');
-    notify('Willkommen! Tutorial jederzeit über den ? Button neu starten.', 'success', 5000);
-  }
-}
-
-function prevOnboardingStep() {
-  if (obStep > 0) { obStep--; updateOnboardingStep(); }
-}
-
-function checkOnboarding() {
-  if (!currentUser || !currentProfile || currentProfile.role !== 'vp') return;
-  if (localStorage.getItem('onboardingDone_' + currentUser.id) !== '1') {
-    showOnboarding();
-  }
-}
 
 // ══════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════
@@ -9936,7 +9478,7 @@ async function showTagesreport() {
   var resAlert = 0;
   try {
     var in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
-    var resResp = await sb.from('reservations').select('id,expires_at').eq('vp_id', currentUser.id).in('status', ['soft','hard','pending']).lte('expires_at', in48h).gte('expires_at', now.toISOString());
+    var resResp = await sb.from('reservations').select('id,expires_at').eq('vp_id', currentUser.id).in('status', ['pending','approved']).lte('expires_at', in48h).gte('expires_at', now.toISOString());
     resAlert = (resResp.data || []).length;
   } catch(e) {}
   var raEl = document.getElementById('tr-res-alert');
@@ -10100,7 +9642,7 @@ async function loadVPPerformance() {
       var vpLeads = leads2.filter(function(l) { return l.vp_id === vp.id; });
       var activeLeads = vpLeads.filter(function(l) { return !['notary','lost'].includes(l.status); }).length;
       var vpCalcs2 = calcs2.filter(function(c) { return c.vp_id === vp.id; }).length;
-      var vpRes2 = ress2.filter(function(r) { return r.vp_id === vp.id && ['soft','hard'].includes(r.status); }).length;
+      var vpRes2 = ress2.filter(function(r) { return r.vp_id === vp.id && ['pending','approved','notarized'].includes(r.status); }).length;
       var vpNotary = vpLeads.filter(function(l) { return l.status === 'notary'; }).length;
       var leads = vpLeads.length, calcs = vpCalcs2, reservations = vpRes2, closings = vpNotary;
       var conv1 = leads > 0 ? Math.round(calcs/leads*100) + '%' : '—';
@@ -10145,9 +9687,9 @@ async function loadDashboard() {
   try {
     const [{ count: avail }, { count: activeRes }, { count: leadsWeek }, { count: closingsMonth }] = await Promise.all([
       sb.from('objects').select('*', {count:'exact',head:true}).eq('status','available'),
-      sb.from('reservations').select('*', {count:'exact',head:true}).eq('status','active'),
+      sb.from('reservations').select('*', {count:'exact',head:true}).in('status',['pending','approved']),
       sb.from('leads').select('*', {count:'exact',head:true}).gte('created_at', weekAgo),
-      sb.from('leads').select('*', {count:'exact',head:true}).eq('status','notary').gte('updated_at', monthStart),
+      sb.from('reservations').select('*', {count:'exact',head:true}).eq('status','notarized').gte('notarized_at', monthStart),
     ]);
     document.getElementById('dash-available').textContent = avail || 0;
     document.getElementById('dash-reservations').textContent = activeRes || 0;
@@ -10159,7 +9701,7 @@ async function loadDashboard() {
   try {
     const { data: expiringRes } = await sb.from('reservations')
       .select('buyer_name, expires_at, hard_expires_at, objects(name), profiles(full_name)')
-      .lt('expires_at', in48h).gt('expires_at', now.toISOString()).eq('status','active');
+      .lt('expires_at', in48h).gt('expires_at', now.toISOString()).in('status',['pending','approved']);
     const expiringEl = document.getElementById('dashExpiringRes');
     if (expiringEl) {
       if (expiringRes && expiringRes.length) {
@@ -10224,7 +9766,7 @@ function checkReservationExpiryAlerts(reservations) {
   var now = new Date();
   var in12h = new Date(now.getTime() + 12 * 60 * 60 * 1000);
   var expiring = reservations.filter(function(r) {
-    if (!r.expires_at || !['soft','hard','pending'].includes(r.status)) return false;
+    if (!r.expires_at || !['pending','approved'].includes(r.status)) return false;
     var exp = new Date(r.expires_at);
     return exp > now && exp <= in12h;
   });
