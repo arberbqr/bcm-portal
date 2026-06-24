@@ -7910,8 +7910,9 @@ async function printCalc() {
       + '</div></div>';
   }
 
-  function footer() {
-    return '<div style="margin-top:10px;padding-top:5px;border-top:1px solid #C9C2B5;font-size:6pt;color:#6B6A60;line-height:1.4">' + disc + '</div>';
+  function footer(full) {
+    var inner = full ? disc : ('\u00a9 ' + branding + ' \u00b7 Investmentkalkulation');
+    return '<div style="margin-top:10px;padding-top:5px;border-top:1px solid #C9C2B5;font-size:6pt;color:#6B6A60;line-height:1.4">' + inner + '</div>';
   }
 
   function r2(l, v, indent) {
@@ -7981,7 +7982,7 @@ async function printCalc() {
     + r2('Wertsteigerung p.a.', d.vgR>0?fmtP(d.vgR*100):'0% (deaktiviert)')
     + r2('Grenzsteuersatz', fmtP(d.taxR*100))
     + (d.erhAmount>0?r2('Erhaltungsaufwand',fmt(d.erhAmount)+' ü '+d.erhYears+'J.'):'')
-    + '</div></div>' + footer() + '</div>';
+    + '</div></div>' + footer(false) + '</div>';
 
   // ── Seite 2: Diagramme
   var pg2 = '<div style="' + S.page + '">' + ph()
@@ -7992,7 +7993,7 @@ async function printCalc() {
     + (imgCF?'<div style="border:1px solid #C9C2B5;padding:8px"><div style="font-size:8pt;font-weight:700;color:#1F2A24;text-align:center;margin-bottom:6px">Cashflow-Zusammensetzung*</div><img src="'+imgCF+'" style="width:100%;max-height:165px;object-fit:contain;display:block"></div>':'')
     + '</div>'
     + '<div style="font-size:7pt;color:#6B6A60;margin-top:8px">* Erwartete Werte basierend auf Ihren Annahmen | Alle Werte in \u20ac</div>'
-    + footer() + '</div>';
+    + footer(false) + '</div>';
 
   // ── Seite 3: Cashflow + AfA
   var cfRows = d.years.slice(0,10).map(function(y,i) {
@@ -8027,7 +8028,7 @@ async function printCalc() {
     + '<table style="width:100%;border-collapse:collapse"><thead><tr>'
     + th('Jahr') + th('AfA Geb\u00e4ude',true) + th('AfA M\u00f6bel',true) + th('Steuerl. Ergebnis',true) + th('Steuerersparnis(+)',true) + th('CF n.St. p.M.',true)
     + '</tr></thead><tbody>' + afaRows + '</tbody></table>'
-    + footer() + '</div>';
+    + footer(photoImgs.length===0) + '</div>';
 
   // ── Foto-Seiten
   var photoPages = '';
@@ -8037,7 +8038,7 @@ async function printCalc() {
       + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:12px">Objektfotos</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
       + chunk.map(function(src){return '<img src="'+src+'" style="width:100%;height:185px;object-fit:cover;display:block">';}).join('')
-      + '</div>' + footer() + '</div>';
+      + '</div>' + footer(pi+4 >= photoImgs.length) + '</div>';
   }
 
   // Print-Bereich
