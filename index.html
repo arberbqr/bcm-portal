@@ -6843,11 +6843,15 @@ function runCalc() {
   if (kfwBonus > 0) kfwBal = Math.max(0, kfwBal - kfwBonus);
   const laufend = hausgeld*12;
 
+  // Echte Annuität: Jahresrate konstant (Jahr 1 = angezeigte Rate), Tilgung steigt mit sinkenden Zinsen
+  const annuityL = loanBase * (loanR + repayR);
+  const annuityK = kfwBal * (kfwR + kfwRep);
+
   for (let i = 0; i < 20; i++) {
     if (i > 0) rentCur *= (1+rgR);
     const rentEff = rentCur*(1-vacR);
-    const int1 = loanBal*loanR, tl1 = loanBal*repayR; loanBal -= tl1;
-    const intK = kfwBal*kfwR, tlK = kfwBal*kfwRep; kfwBal -= tlK;
+    const int1 = loanBal*loanR; const tl1 = Math.min(Math.max(0, annuityL - int1), loanBal); loanBal -= tl1;
+    const intK = kfwBal*kfwR; const tlK = Math.min(Math.max(0, annuityK - intK), kfwBal); kfwBal -= tlK;
     const totalInt = int1+intK, totalTl = tl1+tlK, totalDS = totalInt+totalTl;
     const afaG = (afaArr[i]||0)+furAfA;
     const erh  = (i < erhYears) ? erhPerYear : 0; // Erhaltungsaufwand für die ersten N Jahre
