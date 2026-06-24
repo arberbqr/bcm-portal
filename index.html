@@ -7878,37 +7878,44 @@ async function printCalc() {
   const branding  = vpCompany || (o.branding === 'dwi' ? 'Deutsche Wert Invest' : 'Vestora Capital');
   const logoTxt   = vpLogo ? null : (o.branding === 'dwi' ? 'DW' : 'V');
   const recipient = document.getElementById('c-recipient') ? document.getElementById('c-recipient').value : '';
-  const disc = 'Die aufgeführten Informationen dienen ausschließlich Informationszwecken und stellen keine individuelle Anlageempfehlung dar. Zukünftige Wert- und Mietsteigerungen sind nicht garantiert. \u00a9 ' + branding;
+  const disc = 'Unverbindliche Beispielrechnung – kein Angebot. Diese Modellrechnung dient ausschließlich der unverbindlichen Information und stellt keine Anlage-, Steuer- oder Rechtsberatung dar; sie ersetzt nicht die individuelle Beratung durch Steuerberater, Rechtsanwalt oder Finanzierungsberater. Alle Werte beruhen auf den eingegebenen Annahmen (u. a. Zins, Tilgung, Miet- und Wertentwicklung, Leerstand, persönlicher Steuersatz) und können von der tatsächlichen Entwicklung abweichen. Steuerliche Auswirkungen hängen von den persönlichen Verhältnissen ab (vereinfachte Berechnung mit angenommenem Grenzsteuersatz, ohne Kirchensteuer/Soli, sofern nicht angegeben) und sind nicht zugesichert. Zukünftige Wert- und Mietsteigerungen sowie Mieteinnahmen sind nicht garantiert. Finanzierungskonditionen sind freibleibend und vorbehaltlich der Bank-/Bonitätsprüfung. Maßgeblich sind allein die notariellen Kaufvertrags- und Objektunterlagen. Für Richtigkeit und Vollständigkeit wird keine Gewähr übernommen. Stand: ' + new Date().toLocaleDateString('de-DE') + '. \u00a9 ' + branding;
 
   const S = {
-    page:   'page-break-after:always;padding:14mm 16mm 12mm;font-family:Arial,sans-serif;font-size:9pt;line-height:1.4;max-width:210mm;box-sizing:border-box',
-    navy:   'background:#141c2a;color:white',
-    gold:   'color:#d4af4a',
-    row:    'display:flex;justify-content:space-between;padding:3.5px 0;border-bottom:1px solid #e4ddd0;font-size:8pt',
-    thCell: 'background:#141c2a;color:white;padding:5px 6px;text-align:right;font-size:7pt;white-space:nowrap',
-    tdCell: 'padding:4px 6px;text-align:right;border-bottom:1px solid #e4ddd0;font-size:7.5pt',
+    page:   'page-break-after:always;padding:14mm 16mm 12mm;font-family:\'Geist\',system-ui,sans-serif;font-size:9pt;line-height:1.4;max-width:210mm;box-sizing:border-box',
+    navy:   'background:#1F2A24;color:white',
+    gold:   'color:#C8A472',
+    row:    'display:flex;justify-content:space-between;padding:3.5px 0;border-bottom:1px solid #E7E0D2;font-size:8pt',
+    thCell: 'background:#1F2A24;color:white;padding:5px 6px;text-align:right;font-size:7pt;white-space:nowrap',
+    tdCell: 'padding:4px 6px;text-align:right;border-bottom:1px solid #E7E0D2;font-size:7.5pt',
   };
 
   function ph() {
-    var logoHtml = vpLogo
-      ? '<img src="'+vpLogo+'" style="height:26px;max-width:80px;object-fit:contain">'
-      : '<div style="width:26px;height:26px;background:#b8972a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#141c2a">' + logoTxt + '</div>';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:2pt solid #141c2a">'
-      + '<div style="display:flex;align-items:center;gap:9px">'
-      + logoHtml
-      + '<div><div style="font-size:11pt;font-weight:700;color:#141c2a">' + branding + '</div>'
-      + '<div style="font-size:7pt;color:#b8972a;letter-spacing:.1em;text-transform:uppercase">Investmentkalkulation</div></div></div>'
-      + '<div style="text-align:right;font-size:7.5pt;color:#888075">'
-      + (recipient ? '<div style="font-weight:700;color:#141c2a;font-size:8.5pt">' + recipient + '</div><div style="margin-top:1px">Investmentkalkulation</div>' : '<div>Investmentkalkulation</div>')
+    var leftHtml;
+    if (vpLogo) {
+      // White-Label: hochgeladenes VP-Logo + Firmenname
+      leftHtml = '<img src="'+vpLogo+'" style="height:30px;max-width:120px;object-fit:contain">'
+        + '<div><div style="font-family:\'Instrument Serif\',serif;font-style:italic;font-size:13pt;font-weight:400;color:#1F2A24">' + branding + '</div>'
+        + '<div style="font-size:7pt;color:#A07A47;letter-spacing:.1em;text-transform:uppercase">Investmentkalkulation</div></div>';
+    } else {
+      // Echte Wortmarke: Vestora (mit Messing-Punkt) bzw. Deutsche Wert Invest
+      var markName = (o.branding === 'dwi') ? 'Deutsche Wert Invest' : 'Vestora';
+      var dot = (o.branding === 'dwi') ? '' : '<span style="display:inline-block;width:5px;height:5px;border-radius:50%!important;background:#A07A47;vertical-align:.55em;margin-left:2px"></span>';
+      leftHtml = '<div><div style="font-family:\'Instrument Serif\',serif;font-style:italic;font-size:20pt;line-height:1;color:#1F2A24">' + markName + dot + '</div>'
+        + '<div style="font-size:7pt;color:#A07A47;letter-spacing:.12em;text-transform:uppercase;margin-top:2px">Investmentkalkulation</div></div>';
+    }
+    return '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;padding-bottom:8px;border-bottom:2pt solid #1F2A24">'
+      + '<div style="display:flex;align-items:center;gap:9px">' + leftHtml + '</div>'
+      + '<div style="text-align:right;font-size:7.5pt;color:#6B6A60">'
+      + (recipient ? '<div style="font-weight:700;color:#1F2A24;font-size:8.5pt">' + recipient + '</div><div style="margin-top:1px">Investmentkalkulation</div>' : '<div>Investmentkalkulation</div>')
       + '</div></div>';
   }
 
   function footer() {
-    return '<div style="margin-top:10px;padding-top:5px;border-top:1px solid #ccc6b8;font-size:6pt;color:#888075;line-height:1.4">' + disc + '</div>';
+    return '<div style="margin-top:10px;padding-top:5px;border-top:1px solid #C9C2B5;font-size:6pt;color:#6B6A60;line-height:1.4">' + disc + '</div>';
   }
 
   function r2(l, v, indent) {
-    return '<div style="' + S.row + (indent?';padding-left:10px':'') + '"><span style="color:#888075">' + l + '</span><span style="font-weight:700;color:#141c2a">' + v + '</span></div>';
+    return '<div style="' + S.row + (indent?';padding-left:10px':'') + '"><span style="color:#6B6A60">' + l + '</span><span style="font-weight:700;color:#1F2A24">' + v + '</span></div>';
   }
 
   function th(t, right) {
@@ -7924,24 +7931,24 @@ async function printCalc() {
     + '<div style="' + S.navy + ';padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
     + '<div><div style="font-size:14pt;font-weight:700">' + o.name + '</div><div style="font-size:8pt;opacity:.65;margin-top:2px">' + (o.address||'') + '</div></div>'
     + '<div style="text-align:right">'
-    + '<div style="font-size:17pt;font-weight:700;' + S.gold + '">' + fmt(d.priceUnit + d.priceFurni + (o.parking_active ? d.parkingPrice : 0)) + '</div>'
+    + '<div style="font-family:\'Instrument Serif\',serif;font-size:22pt;font-weight:400;' + S.gold + '">' + fmt(d.priceUnit + d.priceFurni + (o.parking_active ? d.parkingPrice : 0)) + '</div>'
     + ((d.priceFurni>0 || o.parking_active) ? '<div style="font-size:7.5pt;opacity:.6;margin-top:2px">'
       + [d.priceFurni>0 ? 'Möbel ' + fmt(d.priceFurni) : '', o.parking_active ? 'Stellplatz ' + fmt(d.parkingPrice) : ''].filter(Boolean).join(' · ')
       + '</div>' : '')
     + '</div></div>'
-    + (d.priceFurni>0||o.parking_active ? '<div style="background:#f2ede4;border:1px solid #e4ddd0;padding:6px 12px;margin-bottom:10px;font-size:8pt;display:flex;gap:16px;color:#4a4540">'
+    + (d.priceFurni>0||o.parking_active ? '<div style="background:#F1ECE2;border:1px solid #E7E0D2;padding:6px 12px;margin-bottom:10px;font-size:8pt;display:flex;gap:16px;color:#4a4540">'
       + (d.priceFurni>0 ? '<span><strong>Möbel:</strong> ' + fmt(d.priceFurni) + ' inkl.</span>' : '')
       + (o.parking_active ? '<span><strong>' + (o.parking_count||1) + '\u00d7 ' + o.parking_type + ':</strong> ' + fmt(d.parkingPrice) + ' KP \u00b7 ' + fmt(d.parkingRentMon) + '/Monat</span>' : '')
       + '</div>' : '')
     // KPIs
     + '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:10px">'
-    + [['Bruttorendite',fmtP(d.brutto),'#2e7d52'],['Nettorendite',fmtP(d.netto),'#141c2a'],['Kaltmiete p.M.',fmt(d.coldRent),'#141c2a'],['CF p.M. v.St.',fmt(d.cf1M,2),'#141c2a'],['CF p.M. n.St.',fmt(d.cf1MSt,2),'#141c2a'],['EK-Verzinsung 10J.',fmtP(d.irr),'#2e7d52']]
-      .map(function(x){return '<div style="background:#f0f2f7;border:1px solid #ccc6b8;padding:7px 9px"><div style="font-size:6pt;color:#888075;text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+x[0]+'</div><div style="font-size:13pt;font-weight:700;color:'+x[2]+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
+    + [['Bruttorendite',fmtP(d.brutto),'#5E7E63'],['Nettorendite',fmtP(d.netto),'#1F2A24'],['Kaltmiete p.M.',fmt(d.coldRent),'#1F2A24'],['CF p.M. v.St.',fmt(d.cf1M,2),'#1F2A24'],['CF p.M. n.St.',fmt(d.cf1MSt,2),'#1F2A24'],['EK-Verzinsung 10J.',fmtP(d.irr),'#5E7E63']]
+      .map(function(x){return '<div style="background:#E7E0D2;border:1px solid #C9C2B5;padding:7px 9px"><div style="font-size:6pt;color:#6B6A60;text-transform:uppercase;letter-spacing:.06em;font-weight:700">'+x[0]+'</div><div style="font-size:13pt;font-weight:700;color:'+x[2]+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
     + '</div>'
     // Monatliche Rate Box
-    + '<div style="background:#141c2a;color:white;padding:8px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
+    + '<div style="background:#1F2A24;color:white;padding:8px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
     + '<div style="font-size:7pt;letter-spacing:.08em;text-transform:uppercase;opacity:.6">Monatliche Kreditrate gesamt</div>'
-    + '<div style="font-family:Arial,sans-serif;font-size:14pt;font-weight:700;color:#d4af4a">'
+    + '<div style="font-family:\'Geist\',system-ui,sans-serif;font-size:14pt;font-weight:700;color:#C8A472">'
     + fmt(d.monRateTotal,2)
     + (d.monRateKfw > 0 ? '<span style="font-size:7.5pt;opacity:.7;margin-left:8px">Kredit ' + fmt(d.monRate1,2) + ' + KfW ' + fmt(d.monRateKfw,2) + '</span>' : '')
     + '</div></div>'
@@ -7952,7 +7959,7 @@ async function printCalc() {
     + '</div>'
     // Details
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
-    + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:7px">Kaufpreisdetails</div>'
+    + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:7px">Kaufpreisdetails</div>'
     + r2('Kaufpreis Wohnung', fmt(d.priceUnit))
     + (d.priceFurni>0?r2('Kaufpreis M\u00f6bel',fmt(d.priceFurni)):'')
     + (o.parking_active?r2((o.parking_count||1)+'\u00d7 '+o.parking_type,fmt(d.parkingPrice)):'')
@@ -7960,15 +7967,15 @@ async function printCalc() {
     + r2('GrESt '+(o.gst_pct||3.5)+'%', fmt(d.gstV), true)
     + r2('Grundbuch '+(o.gb_kauf_pct||0.5)+'%', fmt(d.gbKV), true)
     + r2('Notar '+(o.notar_pct||1.0)+'%', fmt(d.notV), true)
-    + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #141c2a;margin-top:4px;font-weight:700;font-size:9pt;color:#141c2a"><span>Gesamtkosten</span><span>'+fmt(d.gesamtkosten)+'</span></div></div>'
-    + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:7px">Finanzierung &amp; Annahmen</div>'
+    + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #1F2A24;margin-top:4px;font-weight:700;font-size:9pt;color:#1F2A24"><span>Gesamtkosten</span><span>'+fmt(d.gesamtkosten)+'</span></div></div>'
+    + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:7px">Finanzierung &amp; Annahmen</div>'
     + r2('Kredit 1', fmt(d.loanBase))
     + r2('Kreditzins', fmtP(d.loanR*100))
     + r2('Tilgung p.a.', fmtP(d.repayR*100))
     + (d.kfwUsed > 0 ?r2('KfW brutto',fmt(d.kfwUsed)):'')
     + (d.kfwBonus > 0 ? r2('Tilgungszuschuss',fmt(d.kfwBonus)) : '')
-    + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #141c2a;margin-top:4px;font-weight:700;font-size:9pt;color:#141c2a"><span>Eingesetztes EK</span><span style="color:#2e7d52">'+fmt(d.ekIn)+'</span></div>'
-    + '<div style="font-size:7pt;color:#888075;margin-top:1px">'+(d.gesamtkosten>0?(d.ekIn/d.gesamtkosten*100).toFixed(1):'0')+'% der Gesamtkosten</div>'
+    + '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #1F2A24;margin-top:4px;font-weight:700;font-size:9pt;color:#1F2A24"><span>Eingesetztes EK</span><span style="color:#5E7E63">'+fmt(d.ekIn)+'</span></div>'
+    + '<div style="font-size:7pt;color:#6B6A60;margin-top:1px">'+(d.gesamtkosten>0?(d.ekIn/d.gesamtkosten*100).toFixed(1):'0')+'% der Gesamtkosten</div>'
     + r2('Kaltmiete p.M.', fmt(d.coldRent))
     + r2('Jahresmiete', fmt(d.coldRent*12))
     + r2('Wertsteigerung p.a.', d.vgR>0?fmtP(d.vgR*100):'0% (deaktiviert)')
@@ -7978,45 +7985,45 @@ async function printCalc() {
 
   // ── Seite 2: Diagramme
   var pg2 = '<div style="' + S.page + '">' + ph()
-    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:10px">Diagramme</div>'
-    + (imgVerm?'<div style="border:1px solid #ccc6b8;padding:8px;margin-bottom:10px"><div style="font-size:8pt;font-weight:700;color:#141c2a;text-align:center;margin-bottom:6px">Verm\u00f6gensentwicklung (kumuliert)*</div><img src="'+imgVerm+'" style="width:100%;max-height:190px;object-fit:contain;display:block"></div>':'')
+    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:10px">Diagramme</div>'
+    + (imgVerm?'<div style="border:1px solid #C9C2B5;padding:8px;margin-bottom:10px"><div style="font-size:8pt;font-weight:700;color:#1F2A24;text-align:center;margin-bottom:6px">Verm\u00f6gensentwicklung (kumuliert)*</div><img src="'+imgVerm+'" style="width:100%;max-height:190px;object-fit:contain;display:block"></div>':'')
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
-    + (imgEK?'<div style="border:1px solid #ccc6b8;padding:8px"><div style="font-size:8pt;font-weight:700;color:#141c2a;text-align:center;margin-bottom:6px">Eigenkapital-Aufbau*</div><img src="'+imgEK+'" style="width:100%;max-height:165px;object-fit:contain;display:block"></div>':'')
-    + (imgCF?'<div style="border:1px solid #ccc6b8;padding:8px"><div style="font-size:8pt;font-weight:700;color:#141c2a;text-align:center;margin-bottom:6px">Cashflow-Zusammensetzung*</div><img src="'+imgCF+'" style="width:100%;max-height:165px;object-fit:contain;display:block"></div>':'')
+    + (imgEK?'<div style="border:1px solid #C9C2B5;padding:8px"><div style="font-size:8pt;font-weight:700;color:#1F2A24;text-align:center;margin-bottom:6px">Eigenkapital-Aufbau*</div><img src="'+imgEK+'" style="width:100%;max-height:165px;object-fit:contain;display:block"></div>':'')
+    + (imgCF?'<div style="border:1px solid #C9C2B5;padding:8px"><div style="font-size:8pt;font-weight:700;color:#1F2A24;text-align:center;margin-bottom:6px">Cashflow-Zusammensetzung*</div><img src="'+imgCF+'" style="width:100%;max-height:165px;object-fit:contain;display:block"></div>':'')
     + '</div>'
-    + '<div style="font-size:7pt;color:#888075;margin-top:8px">* Erwartete Werte basierend auf Ihren Annahmen | Alle Werte in \u20ac</div>'
+    + '<div style="font-size:7pt;color:#6B6A60;margin-top:8px">* Erwartete Werte basierend auf Ihren Annahmen | Alle Werte in \u20ac</div>'
     + footer() + '</div>';
 
   // ── Seite 3: Cashflow + AfA
   var cfRows = d.years.slice(0,10).map(function(y,i) {
-    var bg = i%2 ? 'background:#f2ede4' : '';
+    var bg = i%2 ? 'background:#F1ECE2' : '';
     return '<tr style="'+bg+'">'
-      + '<td style="padding:3.5px 6px;border-bottom:1px solid #e4ddd0;font-weight:600;font-size:7.5pt">'+(( o.afa_start||2026)+i)+'</td>'
-      + td(fmt(y.rentEff)) + td(fmt(y.totalInt),'#c0392b') + td(fmt(y.totalTl))
-      + td(fmt(y.netCfB), '#141c2a')
-      + td(fmt(y.taxEff), y.taxEff>=0?'#2e7d52':'#c0392b')
-      + td(fmt(y.netCfA), '#141c2a')
-      + td(fmt(y.equity), y.equity>=0?'#2e7d52':'#c0392b')
+      + '<td style="padding:3.5px 6px;border-bottom:1px solid #E7E0D2;font-weight:600;font-size:7.5pt">'+(( o.afa_start||2026)+i)+'</td>'
+      + td(fmt(y.rentEff)) + td(fmt(y.totalInt),'#8C5A4A') + td(fmt(y.totalTl))
+      + td(fmt(y.netCfB), '#1F2A24')
+      + td(fmt(y.taxEff), y.taxEff>=0?'#5E7E63':'#8C5A4A')
+      + td(fmt(y.netCfA), '#1F2A24')
+      + td(fmt(y.equity), y.equity>=0?'#5E7E63':'#8C5A4A')
       + '</tr>';
   }).join('');
 
   var afaRows = d.years.slice(0,10).map(function(y,i) {
-    var bg = i%2 ? 'background:#f2ede4' : '';
+    var bg = i%2 ? 'background:#F1ECE2' : '';
     return '<tr style="'+bg+'">'
-      + '<td style="padding:3.5px 6px;border-bottom:1px solid #e4ddd0;font-weight:600;font-size:7.5pt">'+((o.afa_start||2026)+i)+'</td>'
+      + '<td style="padding:3.5px 6px;border-bottom:1px solid #E7E0D2;font-weight:600;font-size:7.5pt">'+((o.afa_start||2026)+i)+'</td>'
       + td(fmt(d.afaArr[i])) + td(fmt(d.furAfA))
-      + td(fmt(y.einkuenfte), y.einkuenfte>=0?'#c0392b':'#2e7d52')
-      + td(fmt(y.taxEff), y.taxEff>=0?'#2e7d52':'#c0392b')
-      + td(fmt(y.netCfA/12,2), '#141c2a')
+      + td(fmt(y.einkuenfte), y.einkuenfte>=0?'#8C5A4A':'#5E7E63')
+      + td(fmt(y.taxEff), y.taxEff>=0?'#5E7E63':'#8C5A4A')
+      + td(fmt(y.netCfA/12,2), '#1F2A24')
       + '</tr>';
   }).join('');
 
   var pg3 = '<div style="' + S.page + '">' + ph()
-    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:8px">Kalkulation \u2013 Cashflow (10 Jahre)</div>'
+    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:8px">Kalkulation \u2013 Cashflow (10 Jahre)</div>'
     + '<table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr>'
     + th('Jahr') + th('Miete',true) + th('Zinsen',true) + th('Tilgung',true) + th('CF v.St.',true) + th('Steuereff.',true) + th('CF n.St.',true) + th('Eigenkapital',true)
     + '</tr></thead><tbody>' + cfRows + '</tbody></table>'
-    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:8px">AfA &amp; Steuerliche Auswirkung</div>'
+    + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:8px">AfA &amp; Steuerliche Auswirkung</div>'
     + '<table style="width:100%;border-collapse:collapse"><thead><tr>'
     + th('Jahr') + th('AfA Geb\u00e4ude',true) + th('AfA M\u00f6bel',true) + th('Steuerl. Ergebnis',true) + th('Steuerersparnis(+)',true) + th('CF n.St. p.M.',true)
     + '</tr></thead><tbody>' + afaRows + '</tbody></table>'
@@ -8027,7 +8034,7 @@ async function printCalc() {
   for (var pi = 0; pi < photoImgs.length; pi += 4) {
     var chunk = photoImgs.slice(pi, pi+4);
     photoPages += '<div style="' + S.page + '">' + ph()
-      + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888075;border-bottom:1px solid #ccc6b8;padding-bottom:3px;margin-bottom:12px">Objektfotos</div>'
+      + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:12px">Objektfotos</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
       + chunk.map(function(src){return '<img src="'+src+'" style="width:100%;height:185px;object-fit:cover;display:block">';}).join('')
       + '</div>' + footer() + '</div>';
