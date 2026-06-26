@@ -1429,6 +1429,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
                   <input id="c-equity" type="number" value="0" oninput="runCalc()" style="flex:1">
                   <select id="c-ekPct" onchange="applyCalcEkPct()" title="Schnellberechnung NKK+%" style="flex:0 0 90px;font-size:10px;padding:5px 4px;border:1px solid var(--g300);background:var(--g100);font-family:var(--font-body)">
                     <option value="">NKK+%</option>
+                    <option value="0">NKK+0%</option>
                     <option value="5">NKK+5%</option>
                     <option value="10">NKK+10%</option>
                     <option value="15">NKK+15%</option>
@@ -6686,8 +6687,9 @@ async function openCalcForObjectDirect(id) {
 
 function applyCalcEkPct() {
   if (!calcObj) return;
-  const pct = parseFloat(document.getElementById('c-ekPct').value);
-  if (!pct) return;
+  const sel = document.getElementById('c-ekPct');
+  if (sel.value === '') return;
+  const pct = parseFloat(sel.value) || 0;
   const o = calcObj;
   const priceUnit  = o.price_unit || 0;
   const priceFurni = o.price_furniture || 0;
