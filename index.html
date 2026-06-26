@@ -4180,11 +4180,19 @@ async function applyResStage(id, newStage, fromDrag){
   if (!r) return;
   if (fromDrag && resStageOf(r)===newStage) return;
   var patch = { pipeline_stage:newStage, stage_updated_at:new Date().toISOString() };
-  if (newStage==='hard' && r.status==='pending'){ patch.status='approved'; patch.approved_at=new Date().toISOString(); }
-  if (newStage==='notarized'){ patch.status='notarized'; patch.notarized_at=new Date().toISOString(); }
+  var objStatus = null; // Objekt-Status mitführen
+  if (newStage==='notarized'){
+    patch.status='notarized'; patch.notarized_at=new Date().toISOString(); objStatus='sold';
+  } else if (newStage==='dropped'){
+    patch.status='rejected'; objStatus='available'; // Abgesprungen → Objekt wieder freigeben
+  } else {
+    // aktive Phasen (soft/hard/kve_submitted/notary_scheduled): Objekt reservieren
+    if (newStage!=='soft' && r.status==='pending'){ patch.status='approved'; patch.approved_at=new Date().toISOString(); }
+    objStatus='reserved';
+  }
   var resp = await sb.from('reservations').update(patch).eq('id', id);
   if (resp.error){ notify('Fehler: '+resp.error.message, 'error'); return; }
-  if (newStage==='notarized' && r.object_id){ await sb.from('objects').update({status:'sold'}).eq('id', r.object_id); }
+  if (objStatus && r.object_id){ await sb.from('objects').update({status:objStatus}).eq('id', r.object_id); }
   Object.assign(r, patch);
   renderResKanban();
   notify('✓ Phase aktualisiert', 'success');
@@ -4240,7 +4248,7 @@ async function openResDetail(id) {
   let calcInfo = '—';
   if (r.calculation_id) {
     const { data: calc } = await sb.from('calculations').select('buyer_name,cf_nach_steuer,brutto_rendite,created_at').eq('id', r.calculation_id).single();
-    if (calc) calcInfo = `${calc.buyer_name} · CF n.St. ${fmt(calc.cf_nach_steuer/12,2)}/Mo · Rendite ${(calc.brutto_rendite||0).toFixed(2)}%`;
+    if (calc) calcInfo = `${calc.buyer_name} · CF n.St. ${fmt(calc.cf_nach_steuer,2)}/Mo · Rendite ${(calc.brutto_rendite||0).toFixed(2)}%`;
   }
 
   document.getElementById('resDetailBody').innerHTML = `
@@ -6816,8 +6824,11 @@ function runCalc() {
   const gesamtkosten  = totalPriceEff + totalNKK; // NKK=0 wenn mitfinanziert, KP bereits erhöht
   const effGesamtkosten = gesamtkosten - kfwBonus;
 
-  const kfwUsed   = Math.min(kfwAmt, gesamtkosten);
-  const loanBase  = Math.max(0, gesamtkosten-equityIn-kfwUsed);
+  // Darlehen/KfW finanzieren den Kaufpreis (+ Möbel/Stellplatz). Die Kaufnebenkosten werden nur dann
+  // mitfinanziert, wenn "NKK mitfinanzieren" aktiv ist – dann stecken sie bereits in totalPriceEff.
+  // Sonst zahlt der Käufer die NKK zusätzlich aus Eigenkapital (kleineres Darlehen → höherer Cashflow).
+  const kfwUsed   = Math.min(kfwAmt, totalPriceEff);
+  const loanBase  = Math.max(0, totalPriceEff-equityIn-kfwUsed);
   const anfK = gbPV;
 
   const landPct   = (o.land_share||15)/100;
@@ -6839,19 +6850,20 @@ function runCalc() {
 
   const years = [];
   let loanBal = loanBase, kfwBal = kfwUsed, rentCur = coldRent*12, propVal = totalPriceEff;
-  // Tilgungszuschuss sofort beim Auszahlen anwenden (reduziert Zinsschuld ab Jahr 1)
-  if (kfwBonus > 0) kfwBal = Math.max(0, kfwBal - kfwBonus);
   const laufend = hausgeld*12;
 
-  // Echte Annuität: Jahresrate konstant (Jahr 1 = angezeigte Rate), Tilgung steigt mit sinkenden Zinsen
+  // Echte Annuität: konstante Jahresrate auf die VOLLE Darlehenssumme – identisch zur angezeigten Kreditrate.
+  // Der KfW-Tilgungszuschuss senkt NICHT die laufende Rate (sonst stimmt der Cashflow nicht mit der Rate
+  // überein), sondern wird einmalig als Sondertilgung verrechnet (reduziert Restschuld / erhöht EK).
   const annuityL = loanBase * (loanR + repayR);
-  const annuityK = kfwBal * (kfwR + kfwRep);
+  const annuityK = kfwUsed * (kfwR + kfwRep);
 
   for (let i = 0; i < 20; i++) {
     if (i > 0) rentCur *= (1+rgR);
     const rentEff = rentCur*(1-vacR);
     const int1 = loanBal*loanR; const tl1 = Math.min(Math.max(0, annuityL - int1), loanBal); loanBal -= tl1;
     const intK = kfwBal*kfwR; const tlK = Math.min(Math.max(0, annuityK - intK), kfwBal); kfwBal -= tlK;
+    if (i === 0 && kfwBonus > 0) kfwBal = Math.max(0, kfwBal - kfwBonus); // Tilgungszuschuss = einmalige Sondertilgung (kein Effekt auf die Rate)
     const totalInt = int1+intK, totalTl = tl1+tlK, totalDS = totalInt+totalTl;
     const afaG = (afaArr[i]||0)+furAfA;
     const erh  = (i < erhYears) ? erhPerYear : 0; // Erhaltungsaufwand für die ersten N Jahre
@@ -6872,7 +6884,9 @@ function runCalc() {
   const cf1M     = years[0].netCfB/12;
   const cf1MSt   = years[0].netCfA/12;
   const ekIn     = equityIn; // Eingesetztes EK – 0 bleibt 0 (kein Fallback auf Gesamtkosten)
-  const cfArr    = [-(ekIn > 0 ? ekIn : gesamtkosten - kfwUsed)];
+  // Tatsächlich eingesetztes Kapital für die EK-Verzinsung: bei "nicht mitfinanziert" zahlt der Käufer die NKK zusätzlich aus EK
+  const cashInvested = ekIn + (nkkInKP ? 0 : totalNKK);
+  const cfArr    = [-(cashInvested > 0 ? cashInvested : totalPriceEff - kfwUsed)];
   for (let i=0;i<9;i++) cfArr.push(years[i].netCfA);
   cfArr.push(years[9].netCfA+(years[9].propVal-years[9].totalLoan));
   const irr = calcIRR(cfArr);
@@ -7039,18 +7053,19 @@ function runCalc() {
     <th style="${thS};text-align:right">Miete</th>
     <th style="${thS};text-align:right">Zinsen</th>
     <th style="${thS};text-align:right">Tilgung</th>
+    <th style="${thS};text-align:right">Lfd. Kosten</th>
     <th style="${thS};text-align:right">CF v.St.</th>
     <th style="${thS};text-align:right">Steuereff.</th>
     <th style="${thS};text-align:right">CF n.St.</th>
     <th style="${thS};text-align:right">EK</th>
   </tr></thead><tbody>`;
-  let sR=0,sI=0,sT=0,sCB=0,sSt=0,sCA=0;
+  let sR=0,sI=0,sT=0,sLfd=0,sCB=0,sSt=0,sCA=0;
   years.slice(0,10).forEach((y,i)=>{
-    sR+=y.rentEff;sI+=y.totalInt;sT+=y.totalTl;sCB+=y.netCfB;sSt+=y.taxEff;sCA+=y.netCfA;
+    sR+=y.rentEff;sI+=y.totalInt;sT+=y.totalTl;sLfd+=laufend;sCB+=y.netCfB;sSt+=y.taxEff;sCA+=y.netCfA;
     const bg=i%2?'background:#f2ede4':'';
     const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #e4ddd0;text-align:right${c?';color:'+c:''}">${v}</td>`;
     cfH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #e4ddd0;font-weight:600">${(o.afa_start||2026)+i}</td>
-      ${td(fmt(y.rentEff))}${td(fmt(y.totalInt),'var(--neg)')}${td(fmt(y.totalTl))}
+      ${td(fmt(y.rentEff))}${td(fmt(y.totalInt),'var(--neg)')}${td(fmt(y.totalTl))}${td(laufend>0?'−'+fmt(laufend):fmt(0),'var(--neg)')}
       ${td(fmt(y.netCfB),'var(--navy)')}
       ${td(fmt(y.taxEff),y.taxEff>=0?'var(--pos)':'var(--neg)')}
       ${td(fmt(y.netCfA),'var(--navy)')}
@@ -7059,7 +7074,7 @@ function runCalc() {
   cfH+=`<tr style="background:var(--navy);color:white;border-top:2px solid var(--gold)">
     <td style="padding:4px 7px;font-weight:700">Summe</td>
     <td style="padding:4px 7px;text-align:right">${fmt(sR)}</td><td style="padding:4px 7px;text-align:right">${fmt(sI)}</td>
-    <td style="padding:4px 7px;text-align:right">${fmt(sT)}</td><td style="padding:4px 7px;text-align:right">${fmt(sCB)}</td>
+    <td style="padding:4px 7px;text-align:right">${fmt(sT)}</td><td style="padding:4px 7px;text-align:right">${sLfd>0?'\u2212'+fmt(sLfd):fmt(0)}</td><td style="padding:4px 7px;text-align:right">${fmt(sCB)}</td>
     <td style="padding:4px 7px;text-align:right">${fmt(sSt)}</td><td style="padding:4px 7px;text-align:right">${fmt(sCA)}</td><td style="padding:4px 7px;text-align:right">\u2014</td>
   </tr></tbody>`;
   document.getElementById('cr-cfTable').innerHTML = cfH;
@@ -7188,7 +7203,7 @@ async function openReservationModal(id) {
     calcs.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
-      opt.textContent = c.buyer_name + ' · ' + fmtDate(c.created_at) + ' · CF n.St. ' + fmt(c.cf_nach_steuer/12, 2) + '/Mo';
+      opt.textContent = c.buyer_name + ' · ' + fmtDate(c.created_at) + ' · CF n.St. ' + fmt(c.cf_nach_steuer, 2) + '/Mo';
       calcSel.appendChild(opt);
     });
   }
@@ -7996,11 +8011,13 @@ async function printCalc() {
     + footer(false) + '</div>';
 
   // ── Seite 3: Cashflow + AfA
+  var laufendPa = ((o.hausgeld||0)+(o.instandhaltung||0))*12;
   var cfRows = d.years.slice(0,10).map(function(y,i) {
     var bg = i%2 ? 'background:#F1ECE2' : '';
     return '<tr style="'+bg+'">'
       + '<td style="padding:3.5px 6px;border-bottom:1px solid #E7E0D2;font-weight:600;font-size:7.5pt">'+(( o.afa_start||2026)+i)+'</td>'
       + td(fmt(y.rentEff)) + td(fmt(y.totalInt),'#8C5A4A') + td(fmt(y.totalTl))
+      + td(laufendPa>0?'−'+fmt(laufendPa):fmt(0),'#8C5A4A')
       + td(fmt(y.netCfB), '#1F2A24')
       + td(fmt(y.taxEff), y.taxEff>=0?'#5E7E63':'#8C5A4A')
       + td(fmt(y.netCfA), '#1F2A24')
@@ -8022,7 +8039,7 @@ async function printCalc() {
   var pg3 = '<div style="' + S.page + '">' + ph()
     + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:8px">Kalkulation \u2013 Cashflow (10 Jahre)</div>'
     + '<table style="width:100%;border-collapse:collapse;margin-bottom:14px"><thead><tr>'
-    + th('Jahr') + th('Miete',true) + th('Zinsen',true) + th('Tilgung',true) + th('CF v.St.',true) + th('Steuereff.',true) + th('CF n.St.',true) + th('Eigenkapital',true)
+    + th('Jahr') + th('Miete',true) + th('Zinsen',true) + th('Tilgung',true) + th('Lfd. Kosten',true) + th('CF v.St.',true) + th('Steuereff.',true) + th('CF n.St.',true) + th('Eigenkapital',true)
     + '</tr></thead><tbody>' + cfRows + '</tbody></table>'
     + '<div style="font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:8px">AfA &amp; Steuerliche Auswirkung</div>'
     + '<table style="width:100%;border-collapse:collapse"><thead><tr>'
@@ -8105,14 +8122,14 @@ async function updateLeadStatusInline(leadId, newStatus, isAdmin, sel) {
   }
 
   const payload = { status: newStatus };
-  if (newStatus === 'lost') payload.loss_reason = lossReason;
+  payload.loss_reason = (newStatus === 'lost') ? lossReason : null;
 
   const { error } = await sb.from('leads').update(payload).eq('id', leadId);
   if (error) { showNotif('Fehler: ' + error.message, 'error'); sel.value = lead.status; return; }
 
   // Update local cache
   lead.status = newStatus;
-  if (newStatus === 'lost') lead.loss_reason = lossReason;
+  lead.loss_reason = (newStatus === 'lost') ? lossReason : null;
 
   // Update select styling
   sel.className = `lead-inline-status ${LEAD_STATUS_CLASS[newStatus]||''}`;
@@ -8535,12 +8552,12 @@ async function onKanbanDrop(event, newStatus, isAdmin) {
   }
 
   const payload = { status: newStatus };
-  if (newStatus === 'lost') payload.loss_reason = lossReason;
+  payload.loss_reason = (newStatus === 'lost') ? lossReason : null;
 
   const { error } = await sb.from('leads').update(payload).eq('id', leadId);
   if (error) { showNotif('Fehler: ' + error.message, 'error'); return; }
   lead.status = newStatus;
-  if (newStatus === 'lost') lead.loss_reason = lossReason;
+  lead.loss_reason = (newStatus === 'lost') ? lossReason : null;
   renderKanbanBoard(isAdmin);
   renderLeadsTable(isAdmin);
   renderLeadStats(isAdmin);
@@ -8811,6 +8828,8 @@ async function saveLead() {
   };
   if (status === 'lost') {
     payload.loss_reason = document.getElementById('lead-loss-reason').value || null;
+  } else {
+    payload.loss_reason = null; // Verlustgrund entfernen, wenn Lead nicht mehr "verloren"
   }
   // Admin-Kommentar nur speichern wenn Admin
   if (currentProfile && currentProfile.role === 'admin') {
