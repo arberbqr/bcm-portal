@@ -138,6 +138,8 @@ body{font-family:var(--font-body);background:var(--paper);color:var(--ink);font-
 .app-nav-btn.active{color:var(--accent-soft);border-bottom-color:var(--accent)}
 .app-nav-btn:hover:not(.active){color:rgba(255,255,255,.75)}
 .app-header-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.nav-mobile-only{display:none}
+@media(min-width:769px){#hamburger-btn{display:none!important}}
 .app-user{font-size:12px;color:rgba(255,255,255,.5)}
 .app-user strong{color:white;display:block;font-size:13px}
 .btn-sm{padding:6px 14px;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;font-family:var(--font-mono);transition:all .15s}
@@ -360,6 +362,18 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   #tr-stats{grid-template-columns:1fr!important}
   #compare-toolbar{width:calc(100% - 32px);left:16px;transform:none;bottom:16px}
   .calc-modal .modal-body > div{grid-template-columns:1fr!important;gap:12px}
+  /* Inline-Grids, die sonst (Inline-Style) mehrspaltig bleiben → auf Mobile stacken */
+  #dashboardKPIs{grid-template-columns:repeat(2,1fr)!important}
+  #adminObjStats{grid-template-columns:repeat(2,1fr)!important}
+  .cr-kpi6{grid-template-columns:repeat(2,1fr)!important}
+  .cr-wealth4{grid-template-columns:repeat(2,1fr)!important}
+  /* Header: Account-Aktionen wandern ins ☰-Menü, Hamburger rechts */
+  .app-header-right{display:none!important}
+  #hamburger-btn{margin-left:auto!important}
+  .nav-mobile-only{display:flex!important;flex-direction:column;border-top:1px solid rgba(255,255,255,.15);margin-top:4px}
+  /* Kalkulator-Tabs & breite Tabellen horizontal scrollbar */
+  .ctc{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .kanban-board{grid-auto-columns:minmax(150px,75vw)}
 }
 
 /* ── WIEDERVORLAGE BANNER ── */
@@ -1551,7 +1565,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           <div id="cr-objExtras" style="display:none;background:rgba(26,39,68,.06);border:1px solid var(--g200);padding:8px 14px;display:flex;gap:16px;font-size:11px;color:var(--g700)"></div>
 
           <!-- KPI Row -->
-          <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--g300);border:1px solid var(--g300)">
+          <div class="cr-kpi6" style="display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--g300);border:1px solid var(--g300)">
             <div class="ck"><div class="ck-l">Bruttorendite</div><div class="ck-v" id="cr-brutto">—</div><div class="ck-s" id="cr-brutto-sub">Kaltmiete ÷ KP</div></div>
             <div class="ck"><div class="ck-l">Nettorendite</div><div class="ck-v" id="cr-netto">—</div><div class="ck-s" id="cr-netto-sub">inkl. NKK − Zuschuss</div></div>
             <div class="ck"><div class="ck-l">CF p.M. v.St.</div><div class="ck-v" id="cr-cf">—</div><div class="ck-s">erste 12 Monate</div></div>
@@ -1575,7 +1589,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           </div>
 
           <!-- Wealth Bar -->
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--g200)">
+          <div class="cr-wealth4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--g200)">
             <div class="wm"><div class="wm-l">Eingesetztes EK</div><div class="wm-v" id="cr-ek-input">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-ek-input-sub">—</div></div>
             <div class="wm"><div class="wm-l">EK nach 10 Jahren</div><div class="wm-v" id="cr-ek10">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-wzuwachs-sub">—</div></div>
             <div class="wm"><div class="wm-l">Immobilienwert 10J.</div><div class="wm-v" id="cr-wert10">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-wert10-sub">—</div></div>
@@ -2987,6 +3001,10 @@ function setupAppShell() {
       <button class="app-nav-btn" data-view="admin-performance" onclick="loadView('admin-performance');closeMobileNav()">VP Performance</button>
       <button class="app-nav-btn" data-view="admin-notartermine" onclick="loadView('admin-notartermine');closeMobileNav()">Notartermine</button>
       <button class="app-nav-btn" onclick="openAdminKve();closeMobileNav()">KVE Anfragen</button>
+      <div class="nav-mobile-only">
+        <button class="app-nav-btn" onclick="togglePresentMode();closeMobileNav()">⛶ Präsentation</button>
+        <button class="app-nav-btn" onclick="doLogout()">Abmelden</button>
+      </div>
     `;
   } else {
     nav.innerHTML = `
@@ -2996,6 +3014,12 @@ function setupAppShell() {
       <button class="app-nav-btn" data-view="vp-calcs" onclick="loadView('vp-calcs');closeMobileNav()">Meine Berechnungen</button>
       <button class="app-nav-btn" data-view="vp-selbstauskunft" onclick="loadView('vp-selbstauskunft');closeMobileNav()" style="color:var(--accent-soft)">Selbstauskunft</button>
       ${currentProfile.faq_enabled ? '<button class="app-nav-btn" data-view="vp-faq" onclick="loadView(\'vp-faq\');closeMobileNav()">Handbuch</button>' : ''}
+      <div class="nav-mobile-only">
+        <button class="app-nav-btn" onclick="openProfilModal();closeMobileNav()">⚙ Profil</button>
+        <button class="app-nav-btn" onclick="togglePresentMode();closeMobileNav()">⛶ Präsentation</button>
+        <button class="app-nav-btn" onclick="showOnboarding();closeMobileNav()">? Tour starten</button>
+        <button class="app-nav-btn" onclick="doLogout()">Abmelden</button>
+      </div>
     `;
   }
 
