@@ -1589,11 +1589,12 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           </div>
 
           <!-- Wealth Bar -->
-          <div class="cr-wealth4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--g200)">
+          <div class="cr-wealth4" style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--g200)">
             <div class="wm"><div class="wm-l">Eingesetztes EK</div><div class="wm-v" id="cr-ek-input">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-ek-input-sub">—</div></div>
             <div class="wm"><div class="wm-l">EK nach 10 Jahren</div><div class="wm-v" id="cr-ek10">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-wzuwachs-sub">—</div></div>
             <div class="wm"><div class="wm-l">Immobilienwert 10J.</div><div class="wm-v" id="cr-wert10">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px" id="cr-wert10-sub">—</div></div>
             <div class="wm"><div class="wm-l">Steuerersparnis 10J.</div><div class="wm-v" id="cr-steuers">—</div></div>
+            <div class="wm" style="background:rgba(160,122,71,.14)"><div class="wm-l">Gesamtvermögen n. 10 J.</div><div class="wm-v" id="cr-gesamtverm">—</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px">EK + kum. CF n.St.</div></div>
           </div>
 
           <!-- Erhaltungsaufwand Steuercashback Highlight -->
@@ -7025,6 +7026,7 @@ function runCalc() {
   const w10El = document.getElementById('cr-wert10-sub'); if(w10El) w10El.textContent = vgR>0?'bei '+fmtP(vgR*100)+' p.a.':'ohne Wertsteigerung';
   document.getElementById('cr-steuers').textContent = fmt(steuerErsparnis10);
   document.getElementById('cr-cumcf') && (document.getElementById('cr-cumcf').textContent = fmt(cumCfA10));
+  document.getElementById('cr-gesamtverm') && (document.getElementById('cr-gesamtverm').textContent = fmt(ekNach10 + cumCfA10));
 
   // Steuercashback aus Erhaltungsaufwand anzeigen
   const erhCashbackEl = document.getElementById('cr-erh-cashback');
@@ -8003,8 +8005,8 @@ async function printCalc() {
     + (d.monRateKfw > 0 ? '<span style="font-size:7.5pt;opacity:.7;margin-left:8px">Kredit ' + fmt(d.monRate1,2) + ' + KfW ' + fmt(d.monRateKfw,2) + '</span>' : '')
     + '</div></div>'
     // Wealth
-    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px">'
-    + [['EK nach 10 Jahren',fmt(d.ekNach10)],['Immobilienwert 10J.',fmt(d.wert10)],['Steuerersparnis 10J.',fmt(d.steuerErsparnis10)],['Kum. CF n.St. 10J.',fmt(d.cumCfA10)]]
+    + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px">'
+    + [['EK nach 10 Jahren',fmt(d.ekNach10)],['Immobilienwert 10J.',fmt(d.wert10)],['Steuerersparnis 10J.',fmt(d.steuerErsparnis10)],['Kum. CF n.St. 10J.',fmt(d.cumCfA10)],['Gesamtvermögen n. 10 J.',fmt((d.ekNach10||0)+(d.cumCfA10||0))]]
       .map(function(x){return '<div style="'+S.navy+';padding:8px 10px"><div style="font-size:6pt;opacity:.5;text-transform:uppercase;letter-spacing:.08em;font-weight:600">'+x[0]+'</div><div style="font-size:11pt;font-weight:700;'+S.gold+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
     + '</div>'
     // Details
