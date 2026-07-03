@@ -6904,7 +6904,7 @@ function runCalc() {
     const werb = i===0 ? -anfK : 0;
     const einkuenfte = rentEff+werb-afaG-erh-totalInt-laufend;
     const taxEff = einkuenfte < 0 ? Math.abs(einkuenfte)*taxR : -(einkuenfte*taxR);
-    const netCfB = rentEff-totalDS-laufend;
+    const netCfB = rentEff-totalDS-laufend-erh; // Erhaltungsaufwand ist echter Mittelabfluss → auch im CF vor Steuer
     const netCfA = netCfB+taxEff;
     propVal *= (1+vgR);
     years.push({rentEff,int1,tl1,intK,tlK,totalInt,totalTl,totalDS,
@@ -7095,11 +7095,11 @@ function runCalc() {
   </tr></thead><tbody>`;
   let sR=0,sI=0,sT=0,sLfd=0,sCB=0,sSt=0,sCA=0;
   years.slice(0,10).forEach((y,i)=>{
-    sR+=y.rentEff;sI+=y.totalInt;sT+=y.totalTl;sLfd+=laufend;sCB+=y.netCfB;sSt+=y.taxEff;sCA+=y.netCfA;
+    sR+=y.rentEff;sI+=y.totalInt;sT+=y.totalTl;sLfd+=laufend+(y.erh||0);sCB+=y.netCfB;sSt+=y.taxEff;sCA+=y.netCfA;
     const bg=i%2?'background:#f2ede4':'';
     const td=(v,c='')=>`<td style="padding:4px 7px;border-bottom:1px solid #e4ddd0;text-align:right${c?';color:'+c:''}">${v}</td>`;
     cfH+=`<tr style="${bg}"><td style="padding:4px 7px;border-bottom:1px solid #e4ddd0;font-weight:600">${(o.afa_start||2026)+i}</td>
-      ${td(fmt(y.rentEff))}${td(fmt(y.totalInt),'var(--neg)')}${td(fmt(y.totalTl))}${td(laufend>0?'−'+fmt(laufend):fmt(0),'var(--neg)')}
+      ${td(fmt(y.rentEff))}${td(fmt(y.totalInt),'var(--neg)')}${td(fmt(y.totalTl))}${td((laufend+(y.erh||0))>0?'−'+fmt(laufend+(y.erh||0)):fmt(0),'var(--neg)')}
       ${td(fmt(y.netCfB),'var(--navy)')}
       ${td(fmt(y.taxEff),y.taxEff>=0?'var(--pos)':'var(--neg)')}
       ${td(fmt(y.netCfA),'var(--navy)')}
@@ -8051,7 +8051,7 @@ async function printCalc() {
     return '<tr style="'+bg+'">'
       + '<td style="padding:3.5px 6px;border-bottom:1px solid #E7E0D2;font-weight:600;font-size:7.5pt">'+(( o.afa_start||2026)+i)+'</td>'
       + td(fmt(y.rentEff)) + td(fmt(y.totalInt),'#8C5A4A') + td(fmt(y.totalTl))
-      + td(laufendPa>0?'−'+fmt(laufendPa):fmt(0),'#8C5A4A')
+      + td((laufendPa+(y.erh||0))>0?'−'+fmt(laufendPa+(y.erh||0)):fmt(0),'#8C5A4A')
       + td(fmt(y.netCfB), '#1F2A24')
       + td(fmt(y.taxEff), y.taxEff>=0?'#5E7E63':'#8C5A4A')
       + td(fmt(y.netCfA), '#1F2A24')
