@@ -3689,6 +3689,12 @@ async function saveObject() {
   // Bilder hochladen falls vorhanden
   const objId = editId || (await sb.from('objects').select('id').eq('name', obj.name).order('created_at',{ascending:false}).limit(1).single())?.data?.id;
 
+  // Titelbild-Cache an aktuelle Bildreihenfolge angleichen (damit Umsortieren das Titelbild wirklich ändert)
+  if (objId && Array.isArray(obj.image_order) && obj.image_order.length) {
+    const { data: tud } = sb.storage.from('object-images').getPublicUrl(objId + '/' + obj.image_order[0]);
+    if (tud && tud.publicUrl) await sb.from('objects').update({ thumbnail_url: tud.publicUrl }).eq('id', objId);
+  }
+
   // Zugangseinschränkungen speichern
   if (objId) {
     const isRestricted = document.getElementById('of-restrict').checked;
