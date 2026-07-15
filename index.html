@@ -1239,6 +1239,12 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
           </div>
         </div>
 
+        <div class="form-section">Video</div>
+        <div class="form-fld full"><label>Video-Link (YouTube, Vimeo oder direkte MP4-URL)</label>
+          <input id="of-video-url" type="text" placeholder="z.B. https://vimeo.com/123456789 oder https://.../objektvideo.mp4">
+          <div style="font-size:11px;color:var(--g500);margin-top:4px">Wird in den Objektdetails als eigener Tab „🎬 Video" angezeigt.</div>
+        </div>
+
         <div class="form-section">Fotos & Dokumente</div>
         <div class="form-fld full">
           <label>Ordnerstruktur als ZIP oder einzelne Dateien</label>
@@ -3563,6 +3569,7 @@ function fillObjForm(o) {
   clearObjForm();
   const set = (id, val) => { const el = document.getElementById('of-'+id); if(el && val!==null && val!==undefined) el.value = val; };
   set('name', o.name); set('asset', o.asset_class); set('addr', o.address); set('desc', o.description);
+  set('video-url', o.video_url);
   set('price', o.price_unit); set('furniture', o.price_furniture); set('area', o.area); set('rooms', o.rooms);
   set('floor', o.floor); set('year', o.build_year); set('rent', o.cold_rent); set('hausgeld', o.hausgeld);
   set('instand', o.instandhaltung); set('loanr', o.loan_rate); set('repayr', o.repay_rate);
@@ -3601,6 +3608,16 @@ function fillObjForm(o) {
   }
 }
 
+function videoEmbedHtml(url) {
+  if (!url) return '';
+  var u = String(url).trim();
+  var yt = u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+  if (yt) return '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000"><iframe src="https://www.youtube.com/embed/'+yt[1]+'" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" allowfullscreen></iframe></div>';
+  var vm = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vm) return '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000"><iframe src="https://player.vimeo.com/video/'+vm[1]+'" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allow="autoplay;fullscreen;picture-in-picture" allowfullscreen></iframe></div>';
+  return '<video src="'+u+'" controls playsinline preload="metadata" style="width:100%;max-height:70vh;background:#000;display:block"></video>';
+}
+
 function toggleOfKfw() { document.getElementById('of-kfw-section').style.display = document.getElementById('of-kfw').checked ? 'grid' : 'none'; }
 function toggleOfParking() { document.getElementById('of-parking-section').style.display = document.getElementById('of-parking').checked ? 'grid' : 'none'; }
 
@@ -3611,6 +3628,7 @@ async function saveObject() {
 
   const obj = {
     name: gs('name'), asset_class: gs('asset'), address: gs('addr'), description: gs('desc'),
+    video_url: gs('video-url') || null,
     status: gs('status'), branding: gs('branding'), published: gs('published') === 'true',
     price_unit: g('price'), price_furniture: g('furniture'), area: g('area'), rooms: g('rooms'),
     floor: g('floor')||null, build_year: g('year')||null, condition: gs('condition'),
@@ -5393,6 +5411,7 @@ async function vpObjDetail(id) {
       ${o.location_info ? '<button class="det-tab" onclick="showDetTab(\'det-standort\',this)">📍 Standort</button>' : ''}
       <button class="det-tab" onclick="showDetTab('det-imgs',this)">Fotos ${imgUrls.length?'<span style=\'background:var(--navy);color:white;border-radius:10px;padding:0 6px;font-size:10px;margin-left:4px\'>'+imgUrls.length+'</span>':''}</button>
       <button class="det-tab" onclick="showDetTab('det-docs',this)">Dokumente ${allDocs?.length?'<span style=\'background:var(--gold);color:var(--navy);border-radius:10px;padding:0 6px;font-size:10px;margin-left:4px\'>'+allDocs.length+'</span>':''}</button>
+      ${o.video_url ? '<button class="det-tab" onclick="showDetTab(\'det-video\',this)">🎬 Video</button>' : ''}
       <button class="det-tab" onclick="showDetTab('det-steuer',this)">Steuer</button>
     </div>
 
@@ -5450,6 +5469,9 @@ async function vpObjDetail(id) {
         </div>`).join('')
       : '<div style="text-align:center;padding:32px;color:var(--g500)">Noch keine Dokumente verfügbar</div>'}
     </div>
+
+    <!-- Video Tab -->
+    ${o.video_url ? `<div id="det-video" class="det-tab-pane" style="padding:12px">${videoEmbedHtml(o.video_url)}</div>` : ''}
 
     <!-- Steuerrechner Tab -->
     <div id="det-steuer" class="det-tab-pane" style="padding:16px">
