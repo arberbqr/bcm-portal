@@ -1094,7 +1094,6 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
         <div class="form-fld"><label>Branding</label>
           <select id="of-branding">
             <option value="bcm">Vestora Capital</option>
-            <option value="dwi">Deutsche Wert Invest</option>
           </select>
         </div>
         <div class="form-fld"><label>Veröffentlicht</label>
@@ -6973,7 +6972,7 @@ function runCalc() {
   if(disclaimerEl) {
     const brand = (currentProfile && currentProfile.role === 'vp' && currentProfile.company_name)
       ? currentProfile.company_name
-      : (calcObj.branding === 'dwi' ? 'Deutsche Wert Invest' : 'Vestora Capital');
+      : 'Vestora Capital';
     disclaimerEl.textContent = 'Die aufgeführten Informationen dienen ausschließlich Informationszwecken. Zukünftige Wert- und Mietsteigerungen sind nicht garantiert. \u00a9 ' + brand;
   }
 
@@ -7954,8 +7953,8 @@ async function printCalc() {
   // VP-Branding: eigenes Logo/Name wenn vorhanden, sonst Objekt-Branding
   const vpCompany = (currentProfile && currentProfile.role === 'vp' && currentProfile.company_name) ? currentProfile.company_name : null;
   const vpLogo    = (currentProfile && currentProfile.role === 'vp' && currentProfile.company_logo) ? currentProfile.company_logo : null;
-  const branding  = vpCompany || (o.branding === 'dwi' ? 'Deutsche Wert Invest' : 'Vestora Capital');
-  const logoTxt   = vpLogo ? null : (o.branding === 'dwi' ? 'DW' : 'V');
+  const branding  = vpCompany || 'Vestora Capital';
+  const logoTxt   = vpLogo ? null : 'V';
   const recipient = document.getElementById('c-recipient') ? document.getElementById('c-recipient').value : '';
   const disc = 'Unverbindliche Beispielrechnung – kein Angebot. Diese Modellrechnung dient ausschließlich der unverbindlichen Information und stellt keine Anlage-, Steuer- oder Rechtsberatung dar; sie ersetzt nicht die individuelle Beratung durch Steuerberater, Rechtsanwalt oder Finanzierungsberater. Alle Werte beruhen auf den eingegebenen Annahmen (u. a. Zins, Tilgung, Miet- und Wertentwicklung, Leerstand, persönlicher Steuersatz) und können von der tatsächlichen Entwicklung abweichen. Steuerliche Auswirkungen hängen von den persönlichen Verhältnissen ab (vereinfachte Berechnung mit angenommenem Grenzsteuersatz, ohne Kirchensteuer/Soli, sofern nicht angegeben) und sind nicht zugesichert. Zukünftige Wert- und Mietsteigerungen sowie Mieteinnahmen sind nicht garantiert. Finanzierungskonditionen sind freibleibend und vorbehaltlich der Bank-/Bonitätsprüfung. Maßgeblich sind allein die notariellen Kaufvertrags- und Objektunterlagen. Für Richtigkeit und Vollständigkeit wird keine Gewähr übernommen. Stand: ' + new Date().toLocaleDateString('de-DE') + '. \u00a9 ' + branding;
 
@@ -7977,8 +7976,8 @@ async function printCalc() {
         + '<div style="font-size:7pt;color:#A07A47;letter-spacing:.1em;text-transform:uppercase">Investmentkalkulation</div></div>';
     } else {
       // Echte Wortmarke: Vestora (mit Messing-Punkt) bzw. Deutsche Wert Invest
-      var markName = (o.branding === 'dwi') ? 'Deutsche Wert Invest' : 'Vestora';
-      var dot = (o.branding === 'dwi') ? '' : '<span style="display:inline-block;width:5px;height:5px;border-radius:50%!important;background:#A07A47;vertical-align:.55em;margin-left:2px"></span>';
+      var markName = 'Vestora';
+      var dot = '<span style="display:inline-block;width:5px;height:5px;border-radius:50%!important;background:#A07A47;vertical-align:.55em;margin-left:2px"></span>';
       leftHtml = '<div><div style="font-family:\'Instrument Serif\',serif;font-style:italic;font-size:20pt;line-height:1;color:#1F2A24">' + markName + dot + '</div>'
         + '<div style="font-size:7pt;color:#A07A47;letter-spacing:.12em;text-transform:uppercase;margin-top:2px">Investmentkalkulation</div></div>';
     }
