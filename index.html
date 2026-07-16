@@ -3018,7 +3018,7 @@ function setupAppShell() {
       <button class="app-nav-btn" data-view="vp-reservations" onclick="loadView('vp-reservations');closeMobileNav()">Meine Reservierungen</button>
       <button class="app-nav-btn" data-view="vp-leads" onclick="loadView('vp-leads');closeMobileNav()">Leads</button>
       <button class="app-nav-btn" data-view="vp-calcs" onclick="loadView('vp-calcs');closeMobileNav()">Meine Berechnungen</button>
-      <button class="app-nav-btn" data-view="vp-selbstauskunft" onclick="loadView('vp-selbstauskunft');closeMobileNav()" style="color:var(--accent-soft)">Selbstauskunft</button>
+      <button class="app-nav-btn" data-view="vp-selbstauskunft" onclick="loadView('vp-selbstauskunft');closeMobileNav()">Selbstauskunft</button>
       ${currentProfile.faq_enabled ? '<button class="app-nav-btn" data-view="vp-faq" onclick="loadView(\'vp-faq\');closeMobileNav()">Handbuch</button>' : ''}
       <div class="nav-mobile-only">
         <button class="app-nav-btn" onclick="openProfilModal();closeMobileNav()">⚙ Profil</button>
@@ -5199,7 +5199,7 @@ function renderProjectCards(units, grid) {
       + '<div style="margin:0 16px;border-top:1px solid var(--g200);padding:10px 0;display:flex;justify-content:space-between;align-items:flex-start">'
       + '<div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g500);margin-bottom:2px">Kaufpreis</div>'
       + '<div style="font-size:12px;font-weight:700;color:var(--navy)">' + pRange + '</div></div>'
-      + '<div style="text-align:right"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g500);margin-bottom:2px">Wohnflaeche</div>'
+      + '<div style="text-align:right"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g500);margin-bottom:2px">Wohnfläche</div>'
       + '<div style="font-size:12px;font-weight:700;color:var(--navy)">' + aRange + '</div></div>'
       + '</div>'
       // Tags
@@ -6259,7 +6259,7 @@ async function exportExposePDF() {
     {l:'Kaufpreis gesamt',  v:fE(totalKP),          s:o.asset_class||'Kapitalanlage'},
     {l:o.parking_active?'Gesamtmiete':'Kaltmiete', v:fE(monRent)+'/Mo', s:fE(annRent)+'/Jahr'},
     {l:'Bruttorendite',     v:fP(brutto),            s:'p.a.', pos:true},
-    {l:'Wohnflaeche',       v:(o.area||'?')+' m\xb2', s:(o.rooms||'?')+' Zimmer'}
+    {l:'Wohnfläche',       v:(o.area||'?')+' m\xb2', s:(o.rooms||'?')+' Zimmer'}
   ];
   boxes.forEach((b,i)=>{
     const bx=M+i*bw;
@@ -9810,7 +9810,11 @@ async function loadDashboard() {
         expiringEl.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine ablaufenden Reservierungen</td></tr>';
       }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('Dashboard – Ablaufende Reservierungen:', e);
+    const expiringEl = document.getElementById('dashExpiringRes');
+    if (expiringEl) expiringEl.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--gone)">Daten konnten nicht geladen werden</td></tr>';
+  }
 
   // Letzte Aktivitäten
   try {
@@ -9829,7 +9833,11 @@ async function loadDashboard() {
         <td style="font-size:11px">${a.vp||'—'}</td>
       </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--muted)">Keine Aktivitäten</td></tr>';
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('Dashboard – Letzte Aktivitäten:', e);
+    const actEl = document.getElementById('dashActivities');
+    if (actEl) actEl.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--gone)">Daten konnten nicht geladen werden</td></tr>';
+  }
 
   // VP Aktivität
   try {
@@ -9851,7 +9859,11 @@ async function loadDashboard() {
           <div style="font-size:12px;color:var(--muted);width:30px;text-align:right">${cnt}</div>
         </div>`).join('') : '<p style="color:var(--muted);font-size:13px">Keine Aktivitäten in den letzten 7 Tagen.</p>';
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('Dashboard – VP-Aktivität:', e);
+    const vpEl = document.getElementById('dashVPActivity');
+    if (vpEl) vpEl.innerHTML = '<p style="color:var(--gone);font-size:13px">Daten konnten nicht geladen werden</p>';
+  }
 }
 
 // ══════════════════════════════════════════════════════
