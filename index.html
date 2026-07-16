@@ -374,6 +374,20 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
   /* Kalkulator-Tabs & breite Tabellen horizontal scrollbar */
   .ctc{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .kanban-board{grid-auto-columns:minmax(150px,75vw)}
+  /* Filter-Leiste: alle Zeilen stacken */
+  #vp-filter-row1,#vp-filter-row2{grid-template-columns:1fr!important}
+  #vp-filter-row2>div:first-child{width:100%}
+  #vp-filter-row2>div:nth-child(2){flex-wrap:wrap;gap:10px}
+  #vp-filter-row2>button{width:100%}
+  /* Objekt-Kachel KPIs: 4→2 Spalten */
+  .obj-card-kpis{grid-template-columns:1fr 1fr!important}
+  /* Detailansicht: KPI-Leiste 3→2 Spalten */
+  #det-kpi-bar{grid-template-columns:1fr 1fr!important}
+  /* Fotos-Tab: Bilder vollständig anzeigen (kein fester Clip) */
+  #det-imgs img{height:auto!important;max-width:100%!important;object-fit:contain!important;background:var(--paper-2)}
+  #det-imgs a{display:block}
+  /* Det-Tab Buttons nicht umbrechen */
+  .det-tab{white-space:nowrap;flex-shrink:0}
 }
 
 /* ── WIEDERVORLAGE BANNER ── */
@@ -664,7 +678,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
 
       <!-- Filter Panel -->
       <div style="background:white;border:1px solid var(--g200);padding:20px 22px;margin-bottom:18px">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div id="vp-filter-row1" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px">
           <div>
             <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:5px">Stadt</div>
             <select id="vp-f-city" style="width:100%;padding:8px 10px;border:1px solid var(--g300);font-size:12px;background:white;font-family:var(--font-body);outline:none">
@@ -700,7 +714,7 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
             </div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+        <div id="vp-filter-row2" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
           <div>
             <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:5px">Suchbegriff</div>
             <input type="text" id="vp-search" placeholder="Objektname, Adresse..." style="width:100%;padding:8px 10px;border:1px solid var(--g300);font-size:12px;outline:none;font-family:var(--font-body);box-sizing:border-box">
@@ -717,11 +731,6 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
             </label>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
-            <button id="vp-comm-btn" onclick="toggleVPCommission()" title="Provision ein/ausblenden"
-              style="padding:8px 10px;border:1px solid var(--g300);background:white;color:var(--g500);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:11px;font-family:var(--font-body)">
-              <svg id="vp-comm-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              Provision
-            </button>
             <div style="display:flex;gap:0px;border:1px solid var(--g300)">
               <button id="vp-view-grid" onclick="setVPView('grid')" title="Projektansicht" style="padding:7px 10px;background:var(--navy);color:white;border:none;cursor:pointer;font-size:13px">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -3331,11 +3340,6 @@ function objCard(o, isAdmin) {
         <div><div class="obj-kpi-lbl">Bruttorendite</div><div class="obj-kpi-val" style="color:var(--pos)">${isComingSoon ? '—' : fmtP(brutto)}</div></div>
         <div><div class="obj-kpi-lbl">AfA p.a.</div><div class="obj-kpi-val">${isComingSoon ? '—' : (o.deg_afa > 0 ? fmtP(o.deg_afa) + '<span style="font-size:9px;color:var(--g500);font-weight:400"> deg.</span>' : fmtP(o.lin_afa||2) + '<span style="font-size:9px;color:var(--g500);font-weight:400"> lin.</span>')}</div></div>
       </div>
-      ${!isAdmin && vpShowCommission && currentProfile && currentProfile.commission_pct && !currentProfile.hide_commission && !isComingSoon ? `
-      <div style="background:rgba(46,125,82,.08);border-top:2px solid rgba(46,125,82,.2);padding:7px 14px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pos)">Provision ${currentProfile.commission_pct}%</span>
-        <span style="font-size:14px;font-weight:700;color:var(--pos)">${fmt((priceUnit+parkPrice)*currentProfile.commission_pct/100)}</span>
-      </div>` : ''}
       ${isComingSoon && !isAdmin ? '<div style="text-align:center;padding:8px 0 2px;font-size:11px;color:var(--g500);font-weight:600;letter-spacing:.05em;text-transform:uppercase">Demnächst verfügbar</div>' : ''}
       ${!isAdmin && !isComingSoon ? `<div class="compare-check-wrap"><input type="checkbox" class="compare-cb" id="compare-${o.id}" style="width:13px;height:13px;accent-color:var(--brand)" onclick="event.stopPropagation();toggleObjCompare('${o.id}',this)"><label for="compare-${o.id}" style="font-size:11px;color:var(--muted);cursor:pointer;user-select:none" onclick="event.stopPropagation()">Zum Vergleich hinzufügen</label></div>` : ''}
       ${isAdmin ? `<div style="border-top:1px solid var(--g200);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;background:var(--g100)">
@@ -5002,21 +5006,6 @@ async function saveProfil() {
 // ══════════════════════════════════════════════════════
 // VP: OBJECTS
 // ══════════════════════════════════════════════════════
-let vpShowCommission = true;
-
-function toggleVPCommission() {
-  vpShowCommission = !vpShowCommission;
-  const btn = document.getElementById('vp-comm-btn');
-  if (btn) {
-    btn.style.color = vpShowCommission ? 'var(--navy)' : 'var(--g400)';
-    btn.style.borderColor = vpShowCommission ? 'var(--navy)' : 'var(--g300)';
-    const icon = document.getElementById('vp-comm-icon');
-    if (icon) icon.innerHTML = vpShowCommission
-      ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
-      : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
-  }
-  filterVPObjects();
-}
 
 let vpAllObjects = [];
 let vpCurrentView = 'grid';
@@ -5025,15 +5014,6 @@ let vpCurrentProject = null; // null = project cards view, string = drilled-in p
 async function loadVPObjects() {
   const name = currentProfile.full_name ? currentProfile.full_name.split(' ')[0] : 'Willkommen';
   document.getElementById('vp-greeting').textContent = 'Guten Tag, ' + name + ' \u2013 verfügbare Objekte';
-
-  // Provision-Button komplett ausblenden wenn hide_commission gesetzt
-  const commBtn = document.getElementById('vp-comm-btn');
-  if (currentProfile && currentProfile.hide_commission) {
-    vpShowCommission = false;
-    if (commBtn) commBtn.style.display = 'none';
-  } else {
-    if (commBtn) commBtn.style.display = '';
-  }
 
   const { data, error } = await sb.from('objects')
     .select('*').eq('published', true).order('name', { ascending: true });
@@ -5339,7 +5319,6 @@ function renderGrouped(data, grid, isAdmin) {
 
 function renderVPList(data, grid) {
   grid.style.display = 'block';
-  const showComm = vpShowCommission && currentProfile && currentProfile.commission_pct && !currentProfile.hide_commission;
   grid.innerHTML = '<div style="background:white;border:1px solid var(--g200)">'
     + '<table style="width:100%;border-collapse:collapse"><thead><tr>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:left;font-size:11px">Einheit</th>'
@@ -5347,7 +5326,6 @@ function renderVPList(data, grid) {
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Kaufpreis</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Kaltmiete</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:right;font-size:11px">Rendite</th>'
-    + (showComm ? '<th style="background:#2e7d52;color:white;padding:8px 12px;text-align:right;font-size:11px">Provision (' + currentProfile.commission_pct + '%)</th>' : '')
     + '<th style="background:var(--navy);color:white;padding:8px 12px;text-align:center;font-size:11px">Status</th>'
     + '<th style="background:var(--navy);color:white;padding:8px 4px"></th>'
     + '</tr></thead><tbody>'
@@ -5357,7 +5335,6 @@ function renderVPList(data, grid) {
         var tp = priceBase + (o.price_furniture||0);
         var annRent = ((o.cold_rent||0) + (o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0))*12;
         var rend = (!isCS && tp>0) ? (annRent/tp*100).toFixed(2)+'%' : '—';
-        var prov = showComm && !isCS ? fmt(priceBase * currentProfile.commission_pct / 100) : '—';
         var bg = i%2 ? 'background:#f2ede4' : '';
         var opacity = isCS ? 'opacity:.5;' : '';
         return '<tr style="'+bg+';cursor:'+(isCS?'default':'pointer')+';'+opacity+'" '
@@ -5368,7 +5345,6 @@ function renderVPList(data, grid) {
           + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--navy)">€\u00a0'+tp.toLocaleString('de-DE')+'</td>'
           + '<td style="padding:8px 12px;text-align:right;font-size:13px">€\u00a0'+(o.cold_rent||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+'/Mo</td>'
           + '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:var(--pos)">'+rend+'</td>'
-          + (showComm ? '<td style="padding:8px 12px;text-align:right;font-size:13px;font-weight:700;color:#2e7d52">'+prov+'</td>' : '')
           + '<td style="padding:8px 12px;text-align:center">'+statusBadge(o.status)+'</td>'
           + '<td style="padding:8px 6px"><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();openCalcForObject(\''+o.id+'\')">Kalkulator</button></td>'
           + '</tr>';
@@ -5412,7 +5388,7 @@ async function vpObjDetail(id) {
 
   document.getElementById('objDetailBody').innerHTML = `
     <!-- Tabs -->
-    <div style="display:flex;border-bottom:2px solid var(--g200);margin-bottom:0;background:white;position:sticky;top:0;z-index:10">
+    <div style="display:flex;border-bottom:2px solid var(--g200);margin-bottom:0;background:white;position:sticky;top:0;z-index:10;overflow-x:auto;-webkit-overflow-scrolling:touch">
       <button class="det-tab active" onclick="showDetTab('det-info',this)">Überblick</button>
       ${o.location_info ? '<button class="det-tab" onclick="showDetTab(\'det-standort\',this)">📍 Standort</button>' : ''}
       <button class="det-tab" onclick="showDetTab('det-imgs',this)">Fotos ${imgUrls.length?'<span style=\'background:var(--navy);color:white;border-radius:10px;padding:0 6px;font-size:10px;margin-left:4px\'>'+imgUrls.length+'</span>':''}</button>
@@ -5423,7 +5399,7 @@ async function vpObjDetail(id) {
 
     <!-- Überblick Tab -->
     <div id="det-info" class="det-tab-pane active" style="padding:16px">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--g300);margin-bottom:16px">
+      <div id="det-kpi-bar" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--g300);margin-bottom:16px">
         <div style="background:var(--navy);padding:12px 14px">
           <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Kaufpreis</div>
           <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--gold2);margin-top:4px">${fmt(totalKP)}</div>
