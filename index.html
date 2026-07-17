@@ -3933,7 +3933,7 @@ async function loadCardImage(objId, imageOrder, thumbnailUrl, thumbPos, isPlan) 
   const setImg = (url) => {
     const unpubEl = container.querySelector('[style*="NICHT VERÖFFENTLICHT"]');
     const img = document.createElement('img');
-    img.style.cssText = 'width:100%;height:100%;display:block;object-position:' + (thumbPos||'center') + ';object-fit:' + (isPlan ? 'contain' : 'cover') + (isPlan ? ';background:#f4f1ea' : '');
+    img.style.cssText = 'width:100%;height:100%;display:block;object-position:' + (isPlan ? 'center' : (thumbPos||'center')) + ';object-fit:' + (isPlan ? 'contain' : 'cover') + (isPlan ? ';background:#f4f1ea' : '');
     img.onload = () => {
       img.classList.add('img-loaded');
       container.classList.add('img-ready');
