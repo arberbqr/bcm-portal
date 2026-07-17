@@ -3926,6 +3926,28 @@ function imgR(url, w, q, h, mode){
     + (h ? '&height=' + h + '&resize=' + (mode||'cover') : '');
 }
 
+let lbUrls=[], lbIdx=0;
+function lbEnsure(){
+  let el=document.getElementById('lightbox'); if(el) return el;
+  el=document.createElement('div'); el.id='lightbox';
+  el.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(10,12,16,.93);display:none;align-items:center;justify-content:center';
+  el.innerHTML='<div id="lb-close" style="position:absolute;top:16px;right:26px;color:#fff;font-size:36px;cursor:pointer;line-height:1">&times;</div>'
+    +'<div id="lb-prev" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#fff;font-size:46px;cursor:pointer;user-select:none;padding:12px">&lsaquo;</div>'
+    +'<div id="lb-next" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#fff;font-size:46px;cursor:pointer;user-select:none;padding:12px">&rsaquo;</div>'
+    +'<img id="lb-img" style="max-width:92vw;max-height:92vh;object-fit:contain;box-shadow:0 10px 44px rgba(0,0,0,.55)">'
+    +'<div id="lb-count" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px"></div>';
+  document.body.appendChild(el);
+  el.addEventListener('click',e=>{ if(e.target===el||e.target.id==='lb-close') lbClose(); });
+  el.querySelector('#lb-prev').onclick=e=>{e.stopPropagation();lbStep(-1);};
+  el.querySelector('#lb-next').onclick=e=>{e.stopPropagation();lbStep(1);};
+  return el;
+}
+function lbOpen(i){ lbUrls=window.lbUrls||[]; if(!lbUrls.length) return; lbIdx=i||0; const el=lbEnsure(); el.style.display='flex'; lbRender(); document.addEventListener('keydown',lbKey); }
+function lbRender(){ document.getElementById('lb-img').src=imgR(lbUrls[lbIdx],1600); document.getElementById('lb-count').textContent=(lbIdx+1)+' / '+lbUrls.length; }
+function lbStep(d){ lbIdx=(lbIdx+d+lbUrls.length)%lbUrls.length; lbRender(); }
+function lbClose(){ const el=document.getElementById('lightbox'); if(el) el.style.display='none'; document.removeEventListener('keydown',lbKey); }
+function lbKey(e){ if(e.key==='Escape') lbClose(); else if(e.key==='ArrowRight') lbStep(1); else if(e.key==='ArrowLeft') lbStep(-1); }
+
 async function loadCardImage(objId, imageOrder, thumbnailUrl, thumbPos, isPlan) {
   const container = document.getElementById('img-' + objId);
   if (!container) return;
@@ -5385,6 +5407,7 @@ async function vpObjDetail(id) {
   const annRent = ((o.cold_rent||0) + (o.parking_active?(o.parking_rent||0)*(o.parking_count||1):0))*12;
   const brutto = totalKP > 0 ? (annRent/totalKP*100) : 0;
   const imgUrls = (imgFiles||[]).map(f => sb.storage.from('object-images').getPublicUrl(o.id+'/'+f.name).data.publicUrl);
+  window.lbUrls = imgUrls;
 
   document.getElementById('objDetailBody').innerHTML = `
     <!-- Tabs -->
@@ -5435,7 +5458,7 @@ async function vpObjDetail(id) {
     <div id="det-imgs" class="det-tab-pane" style="padding:12px">
       ${imgUrls.length ? `
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">
-          ${imgUrls.map(u => `<a href="${u}" target="_blank"><img src="${imgR(u,900)}" loading="lazy" style="width:100%;height:120px;object-fit:cover;display:block;border:1px solid var(--g200)"></a>`).join('')}
+          ${imgUrls.map((u,i) => `<img src="${imgR(u,900)}" loading="lazy" onclick="lbOpen(${i})" style="width:100%;height:120px;object-fit:cover;display:block;border:1px solid var(--g200);cursor:zoom-in">`).join('')}
         </div>
         <div style="font-size:11px;color:var(--g500);margin-top:10px">${imgUrls.length} Foto${imgUrls.length!==1?'s':''} · Klicken zum Vergrößern</div>
       ` : '<div style="text-align:center;padding:32px;color:var(--g500)">Noch keine Fotos hochgeladen</div>'}
