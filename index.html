@@ -5279,7 +5279,7 @@ function renderGrouped(data, grid, isAdmin) {
   // Nach Adresse gruppieren, innerhalb jeder Gruppe nach Name sortieren
   const groups = {};
   data.forEach(o => {
-    const key = o.address || 'Sonstige';
+    const key = (o.project_name && o.project_name.trim()) ? o.project_name.trim() : (o.address || 'Sonstige');
     if (!groups[key]) groups[key] = [];
     groups[key].push(o);
   });
