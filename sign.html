@@ -122,8 +122,10 @@ async function load() {
   resData = r;
 
   // Token-Ablauf prüfen
+  // Die 72h-Soft-Frist (expires_at) gilt nur für die interne Prüfung vor
+  // der Genehmigung. Ist die Reservierung genehmigt, zählt hard_expires_at.
   const now = new Date();
-  if (r.expires_at && new Date(r.expires_at) < now) {
+  if (r.status !== 'approved' && r.expires_at && new Date(r.expires_at) < now) {
     document.getElementById('main').innerHTML = '<div class="error-box">Dieser Link ist abgelaufen. Bitte kontaktieren Sie Ihren Ansprechpartner für einen neuen Link.</div>';
     return;
   }

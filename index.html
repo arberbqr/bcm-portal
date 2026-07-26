@@ -4722,6 +4722,9 @@ async function updateRes(id, status, rejectionReason) {
   if (status === 'approved') {
     updates.approved_at = new Date().toISOString();
     updates.hard_expires_at = new Date(Date.now() + 21*24*60*60*1000).toISOString();
+    // Soft-Frist (72h) an die Hard-Frist angleichen, damit der Signatur-Link
+    // nach der Genehmigung nicht fälschlich als "abgelaufen" gilt.
+    updates.expires_at = updates.hard_expires_at;
   }
   if (status === 'notarized') {
     updates.notarized_at = new Date().toISOString();
