@@ -6676,6 +6676,11 @@ async function openCalcForObjectDirect(id) {
   // Erhaltungsaufwand: nur anzeigen wenn beim Objekt hinterlegt
   const cErhSection = document.getElementById('c-erh-section');
   const cErhActive = document.getElementById('c-erh-active');
+  // Betrag beim Objektwechsel leeren, sonst bleibt der Wert der zuvor
+  // geöffneten Wohnung stehen (toggleErhaltung füllt nur, wenn leer) →
+  // wirkte so, als sei der Erhaltungsaufwand bei jeder Wohnung gleich.
+  const cErhAmount = document.getElementById('c-erh-amount');
+  if (cErhAmount) cErhAmount.value = '';
   if (cErhSection) {
     if (o.erh_aufwand) {
       cErhSection.style.display = 'block';
