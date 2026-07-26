@@ -2579,7 +2579,7 @@ const SUPABASE_KEY_KEY = 'dwi_sb_key';
 // Supabase Credentials (fest eingetragen)
 const SUPABASE_URL = 'https://lnwikmhtaqkqsjrngrlg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxud2lrbWh0YXFrcXNqcm5ncmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjAxNDMsImV4cCI6MjA4OTMzNjE0M30.BqTG6vtVvjQFKiiT5_quCn9RFw2TdIMwpi5LqFlC8O0';
-const PORTAL_BASE_URL = 'https://portal.beqiribau.de';
+const PORTAL_BASE_URL = 'https://portal.vestora-capital.de';
 
 function initSupabase(url, key) {
   sb = supabase.createClient(url, key);
@@ -2623,7 +2623,7 @@ async function detectVPDomain() {
   const hostname = window.location.hostname;
   // BCM-eigene Domains und lokale Entwicklung: kein VP-Branding
   const bcmDomains = [
-    'portal.beqiribau.de', 'vertriebsportal.beqiribau.de',
+    'portal.vestora-capital.de', 'portal.beqiribau.de', 'vertriebsportal.beqiribau.de',
     'arberbqr.github.io', 'localhost', '127.0.0.1'
   ];
   if (
@@ -4475,7 +4475,7 @@ async function sendAgreement(resId) {
   }
   const baseUrl = vpSignDomain
     ? 'https://' + vpSignDomain
-    : window.location.origin + window.location.pathname.replace('index.html','').replace(/\/$/, '');
+    : PORTAL_BASE_URL;
   const signingUrl = baseUrl + '/sign.html?token=' + full.signing_token;
 
   // Link in Zwischenablage kopieren
@@ -4551,7 +4551,7 @@ async function createAndSendProtocol() {
   if (currentProfile?.partner_domain) vpProto = currentProfile.partner_domain;
   const baseUrl = vpProto
     ? 'https://' + vpProto
-    : window.location.origin + window.location.pathname.replace('index.html','').replace(/\/$/, '');
+    : PORTAL_BASE_URL;
   const protocolUrl = baseUrl + '/sign.html?protocol=' + proto.signing_token;
 
   // Save protocol_token to lead if protocol was started from a lead
@@ -8963,7 +8963,7 @@ async function downloadProtocolPdf(pdfPath) {
 }
 
 async function copyProtocolLink(token) {
-  let baseUrl = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/$/, '');
+  let baseUrl = PORTAL_BASE_URL;
   if (currentProfile?.partner_domain) baseUrl = 'https://' + currentProfile.partner_domain;
   const url = baseUrl + '/sign.html?protocol=' + token;
   try {
