@@ -4215,6 +4215,18 @@ function resStageOf(r){
   if (r.status==='approved') return 'hard';
   return 'soft';
 }
+// Prüft, ob eine Einheit bereits durch eine ANDERE genehmigte/beurkundete
+// Reservierung belegt ist (verhindert Doppelbelegung).
+async function reservationBlockingUnit(objectId, exceptId){
+  if (!objectId) return null;
+  const { data } = await sb.from('reservations')
+    .select('id,buyer_name,status')
+    .eq('object_id', objectId)
+    .in('status', ['approved','notarized'])
+    .neq('id', exceptId)
+    .limit(1);
+  return (data && data.length) ? data[0] : null;
+}
 function resNotes(r){ return Array.isArray(r.crm_notes) ? r.crm_notes : []; }
 function resDaysSince(d){ return d ? Math.floor((Date.now()-new Date(d).getTime())/86400000) : null; }
 
@@ -4264,6 +4276,15 @@ async function applyResStage(id, newStage, fromDrag){
   var r = currentReservations.find(function(x){ return x.id===id; });
   if (!r) return;
   if (fromDrag && resStageOf(r)===newStage) return;
+  // Doppelbelegung verhindern: in aktive/gewonnene Phasen nur, wenn Einheit frei ist
+  if (newStage!=='soft' && newStage!=='dropped'){
+    var blk = await reservationBlockingUnit(r.object_id, id);
+    if (blk){
+      notify('Einheit bereits vergeben an ' + (blk.buyer_name||'—') + ' (' + (blk.status==='notarized'?'beurkundet':'genehmigt') + '). Bitte dort zuerst ablehnen/zurücksetzen.', 'error', 7000);
+      renderResKanban();
+      return;
+    }
+  }
   var patch = { pipeline_stage:newStage, stage_updated_at:new Date().toISOString() };
   var objStatus = null; // Objekt-Status mitführen
   if (newStage==='notarized'){
@@ -4719,6 +4740,15 @@ async function rejectRes(id) {
 }
 
 async function updateRes(id, status, rejectionReason) {
+  // Doppelbelegung verhindern: pro Einheit nur eine genehmigte/beurkundete Reservierung
+  if (status === 'approved') {
+    const { data: curRes } = await sb.from('reservations').select('object_id').eq('id', id).single();
+    const blocker = await reservationBlockingUnit(curRes && curRes.object_id, id);
+    if (blocker) {
+      notify('Diese Einheit ist bereits vergeben an ' + (blocker.buyer_name || '—') + ' (' + (blocker.status==='notarized'?'beurkundet':'genehmigt') + '). Bitte diese Reservierung zuerst ablehnen oder zurücksetzen.', 'error', 7000);
+      return;
+    }
+  }
   const updates = { status };
   if (status === 'approved') {
     updates.approved_at = new Date().toISOString();
