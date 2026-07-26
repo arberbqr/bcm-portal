@@ -4185,12 +4185,12 @@ async function loadReservations() {
     return `<tr style="${isExpiring ? 'background:#fff3cd;' : ''}">
     <td>${fmtDate(r.created_at)}</td>
     <td><strong>${r.objects?.name||'—'}</strong><div style="font-size:11px;color:var(--g500)">${r.objects?.address||''}</div></td>
-    <td>${r.buyer_name}${isExpiring ? ' <span style="background:#dc3545;color:white;padding:2px 6px;font-size:9px;font-weight:700">⏱ BALD ABGELAUFEN</span>' : ''}</td>
+    <td>${r.buyer_name}${r.signed_at ? ' <span style="background:var(--pos);color:white;padding:2px 6px;font-size:9px;font-weight:700">✓ UNTERSCHRIEBEN</span>' : ''}${isExpiring ? ' <span style="background:#dc3545;color:white;padding:2px 6px;font-size:9px;font-weight:700">⏱ BALD ABGELAUFEN</span>' : ''}</td>
     <td>${r.vp_name||r.vp_email||'—'}</td>
     <td class="r">${fmt(r.equity)}</td>
     <td>${statusBadge(r.status)}</td>
     <td style="font-size:11px;${isExpiring?'color:#dc3545;font-weight:700':''}">${fmtDateTime(r.expires_at)}</td>
-    <td><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="openResDetail('${r.id}')">Details</button></td>
+    <td><button class="btn-sm btn-navy" style="font-size:10px;padding:4px 10px" onclick="openResDetail('${r.id}')">Details</button>${r.pdf_path ? `<button class="btn-sm btn-pos" style="font-size:10px;padding:4px 8px;margin-left:4px" onclick="downloadResPdf('${r.pdf_path}')">📄 PDF</button>` : ''}</td>
   </tr>`;
   }).join('');
 }
@@ -4243,6 +4243,7 @@ function renderResKanban(){
         + ' ondragend="event.currentTarget.classList.remove(\'dragging\')"'
         + ' onclick="openResDetail(\''+r.id+'\')">'
         + '<div class="kanban-card-name">'+resEsc(r.buyer_name||'—')+'</div>'
+        + (r.signed_at ? '<div style="display:inline-block;background:var(--pos);color:white;font-size:8px;font-weight:700;letter-spacing:.05em;padding:1px 5px;margin-top:2px">✓ UNTERSCHRIEBEN</div>' : '')
         + '<div class="kanban-card-obj">📦 '+resEsc(r.objects&&r.objects.name||'—')+'</div>'
         + '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+resEsc(r.vp_name||r.vp_email||'—')+(r.equity?' · EK '+fmt(r.equity):'')+'</div>'
         + '<div class="kanban-card-foot">'+foot+'<span style="font-size:9px;color:'+(nc?'var(--accent)':'var(--stone)')+'">💬 '+nc+'</span></div>'
