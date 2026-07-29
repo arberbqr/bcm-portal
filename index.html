@@ -8038,6 +8038,10 @@ async function printCalc() {
   const d = calcData;
   const o = d.o;
 
+  // Erhaltungsaufwand: absetzbarer Betrag pro Jahr + jährlicher Steuercashback (Betrag × Grenzsteuersatz)
+  const _erhPerYear   = d.erhAmount > 0 ? Math.round(d.erhAmount / (d.erhYears || 1)) : 0;
+  const _erhCashbackY = _erhPerYear > 0 ? Math.round(_erhPerYear * (d.taxR || 0)) : 0;
+
   // Objektfotos – bereits als Base64 vorgeladen
   let photoImgs = (calcObj && calcObj._photoBase64 && calcObj._photoBase64.length)
     ? calcObj._photoBase64
@@ -8134,6 +8138,13 @@ async function printCalc() {
     + [['EK nach 10 Jahren',fmt(d.ekNach10)],['Immobilienwert 10J.',fmt(d.wert10)],['Steuerersparnis 10J.',fmt(d.steuerErsparnis10)],['Kum. CF n.St. 10J.',fmt(d.cumCfA10)],['Gesamtvermögen n. 10 J.',fmt((d.ekNach10||0)+(d.cumCfA10||0))]]
       .map(function(x){return '<div style="'+S.navy+';padding:8px 10px"><div style="font-size:6pt;opacity:.5;text-transform:uppercase;letter-spacing:.08em;font-weight:600">'+x[0]+'</div><div style="font-size:11pt;font-weight:700;'+S.gold+';margin-top:2px">'+x[1]+'</div></div>';}).join('')
     + '</div>'
+    // Erhaltungsaufwand · Steuervorteil (eigene Position mit jährlichem Steuercashback)
+    + (d.erhAmount>0 ? '<div style="background:#F1ECE2;border:1px solid #C9C2B5;border-left:3px solid #5E7E63;padding:8px 12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">'
+        + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6B6A60">Erhaltungsaufwand · Steuervorteil</div>'
+        + '<div style="font-size:8pt;color:#4a4540;margin-top:2px">' + fmt(d.erhAmount) + ' über ' + d.erhYears + ' Jahr' + (d.erhYears>1?'e':'') + ' · je ' + fmt(_erhPerYear) + '/J. voll absetzbar (§ 9 EStG)</div></div>'
+        + '<div style="text-align:right"><div style="font-size:6.5pt;color:#6B6A60;text-transform:uppercase;letter-spacing:.06em">Steuercashback</div>'
+        + '<div style="font-family:\'Instrument Serif\',serif;font-size:15pt;color:#5E7E63;font-weight:400">+' + fmt(_erhCashbackY) + '/J.</div></div>'
+        + '</div>' : '')
     // Details
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
     + '<div><div style="font-size:7pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6B6A60;border-bottom:1px solid #C9C2B5;padding-bottom:3px;margin-bottom:7px">Kaufpreisdetails</div>'
@@ -8157,7 +8168,7 @@ async function printCalc() {
     + r2('Jahresmiete', fmt(d.coldRent*12))
     + r2('Wertsteigerung p.a.', d.vgR>0?fmtP(d.vgR*100):'0% (deaktiviert)')
     + r2('Grenzsteuersatz', fmtP(d.taxR*100))
-    + (d.erhAmount>0?r2('Erhaltungsaufwand',fmt(d.erhAmount)+' ü '+d.erhYears+'J.'):'')
+    + (d.erhAmount>0?r2('Erhaltungsaufwand',fmt(d.erhAmount)+' über '+d.erhYears+' J.'):'')
     + '</div></div>' + footer(false) + '</div>';
 
   // ── Seite 2: Diagramme
