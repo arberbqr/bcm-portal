@@ -5344,7 +5344,7 @@ function vpProjectDrilldown(projectKey) {
   const units = vpAllObjects.filter(o => {
     const key = (o.project_name && o.project_name.trim()) ? o.project_name.trim() : (o.address || 'Sonstige');
     return key === projectKey;
-  });
+  }).sort((a,b) => (a.name||'').localeCompare(b.name||'','de',{numeric:true}));
 
   const countEl = document.getElementById('vp-count');
   if (countEl) countEl.textContent = units.length + ' Einheit' + (units.length !== 1 ? 'en' : '') + ' in diesem Projekt';
@@ -5357,7 +5357,7 @@ function vpProjectDrilldown(projectKey) {
     grid.style.display = 'block';
     grid.style.gridTemplateColumns = '';
     grid.innerHTML = '<div class="obj-grid" id="vpDrillGrid">'
-      + units.sort((a,b) => (a.name||'').localeCompare(b.name||'','de')).map(o => objCard(o, false)).join('')
+      + units.sort((a,b) => (a.name||'').localeCompare(b.name||'','de',{numeric:true})).map(o => objCard(o, false)).join('')
       + '</div>';
     units.forEach(o => loadCardImage(o.id, o.image_order, o.unit_thumb_url || o.thumbnail_url, o.thumb_pos, (o.cover_is_plan != null ? !!o.cover_is_plan : !!o.unit_thumb_url)));
   }
@@ -5403,7 +5403,7 @@ function renderGrouped(data, grid, isAdmin) {
 
   grid.style.display = 'block';
   grid.innerHTML = keys.map(key => {
-    const objs = groups[key].sort((a,b) => (a.name||'').localeCompare(b.name||'','de'));
+    const objs = groups[key].sort((a,b) => (a.name||'').localeCompare(b.name||'','de',{numeric:true}));
     const stats = getProjectStats(objs);
     const draftCount = objs.filter(o => o.status === 'draft').length;
     const unpubCount = objs.filter(o => !o.published).length;
