@@ -1272,10 +1272,15 @@ input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--br
             <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:6px" id="objUploadSummary"></div>
             <div id="objFileItems" style="max-height:160px;overflow-y:auto;border:1px solid var(--g200)"></div>
           </div>
-          <!-- Bestehende Dokumente -->
+          <!-- Bestehende Dokumente (alt) -->
           <div id="objExistingDocs" style="display:none;margin-top:14px">
             <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:6px">Hochgeladene Dokumente</div>
             <div id="objDocList" style="border:1px solid var(--g200)"></div>
+          </div>
+          <!-- Dokumente nach Kategorie (documents_v2): hochladen & löschen -->
+          <div id="objDocsCategorySection" style="display:none;margin-top:14px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);margin-bottom:6px">Dokumente verwalten (nach Kategorie)</div>
+            <div id="objDocsContent"></div>
           </div>
         </div>
       </div>
@@ -3492,7 +3497,18 @@ async function editObject(id) {
   document.getElementById('objModalTitle').textContent = 'Objekt bearbeiten';
   document.getElementById('objModal').dataset.editId = id;
   await loadExistingImages(id);
+  // Titelbild-Auswahl aus unit_thumb_url ableiten (falls es auf ein hochgeladenes Bild zeigt)
+  coverThumbName = null; coverIsPlan = (data.cover_is_plan === true); coverDirty = false;
+  if (data.unit_thumb_url) {
+    const base = data.unit_thumb_url.split('?')[0].split('/').pop();
+    if (existingImages.some(im => im.path.split('/').pop() === base)) coverThumbName = base;
+  }
+  renderImgPreviews();
   await loadExistingDocs(id);
+  // Kategorie-Dokumentverwaltung (documents_v2) einblenden – hochladen & löschen pro Einheit
+  const docCatSec = document.getElementById('objDocsCategorySection');
+  if (docCatSec) docCatSec.style.display = 'block';
+  await loadCategorizedDocs(id);
   // Zugangseinschränkungen laden
   const { data: accessRows } = await sb.from('object_vp_access').select('vp_id').eq('object_id', id);
   const accessIds = (accessRows || []).map(r => r.vp_id);
@@ -3529,6 +3545,7 @@ function toggleOfRestrict() {
 }
 
 function clearObjForm() {
+  coverThumbName = null; coverIsPlan = false; coverDirty = false;
   const fields = ['name','asset','addr','desc','price','furniture','area','rooms','floor','year','rent','hausgeld','instand','loanr','repayr','kfwamt','kfwr','kfwrep','kfwbonus','land','degafa','linafa','afast','taxr','vg','rg','vac','parkprice','parkrent','parkcount'];
   fields.forEach(f => { const el = document.getElementById('of-'+f); if(el) el.value = el.type==='number'?'0':''; });
   document.getElementById('of-asset').value = 'Eigentumswohnung';
@@ -3557,6 +3574,10 @@ function clearObjForm() {
   document.getElementById('of-restrict-section').style.display = 'none';
   document.getElementById('objExistingDocs').style.display = 'none';
   document.getElementById('objDocList').innerHTML = '';
+  const _docCatSec = document.getElementById('objDocsCategorySection');
+  if (_docCatSec) _docCatSec.style.display = 'none';
+  const _docCatContent = document.getElementById('objDocsContent');
+  if (_docCatContent) _docCatContent.innerHTML = '';
   // Standort & Verwaltung leeren
   ['macro-city','macro-pop','macro-vacancy','macro-economy','micro-char','micro-transport',
    'micro-shopping','micro-schools','micro-notes','mgmt-company','mgmt-concept','mgmt-occ','mgmt-notes','pitch'
@@ -3698,6 +3719,19 @@ async function saveObject() {
     if (tud && tud.publicUrl) await sb.from('objects').update({ thumbnail_url: tud.publicUrl }).eq('id', objId);
   }
 
+  // Explizit gewähltes Titelbild speichern (nur wenn der Nutzer die Auswahl angefasst hat)
+  if (objId && coverDirty) {
+    if (coverThumbName) {
+      const { data: cu } = sb.storage.from('object-images').getPublicUrl(objId + '/' + coverThumbName);
+      const coverUrl = cu && cu.publicUrl ? cu.publicUrl + '?v=' + Date.now() : null;
+      await sb.from('objects').update({ unit_thumb_url: coverUrl, cover_is_plan: !!coverIsPlan }).eq('id', objId);
+    } else {
+      // Auswahl entfernt → zurück zum ersten Bild (Foto-/Beschnitt-Modus)
+      await sb.from('objects').update({ unit_thumb_url: null, cover_is_plan: null }).eq('id', objId);
+    }
+    coverDirty = false;
+  }
+
   // Zugangseinschränkungen speichern
   if (objId) {
     const isRestricted = document.getElementById('of-restrict').checked;
@@ -3761,6 +3795,18 @@ async function saveObject() {
 // ── FILE UPLOAD (ZIP + einzelne Bilder/Dokumente) ──
 let pendingObjFiles = [];
 let existingImages  = [];
+// Titelbild-Auswahl (Objekt-Editor)
+let coverThumbName = null;   // Dateiname des als Titelbild markierten Bildes
+let coverIsPlan    = false;  // true = Grundriss/Plan (ganzes Bild), false = Foto (Beschnitt)
+let coverDirty     = false;  // nur speichern, wenn der Nutzer die Auswahl angefasst hat
+
+function setCoverImage(name) {
+  if (coverThumbName === name) { coverThumbName = null; }
+  else { coverThumbName = name; if (coverIsPlan === null) coverIsPlan = false; }
+  coverDirty = true;
+  renderImgPreviews();
+}
+function toggleCoverPlan(on) { coverIsPlan = !!on; coverDirty = true; }
 
 function sanitizeFilename(name) {
   var parts = name.split('.');
@@ -3803,10 +3849,18 @@ function renderImgPreviews() {
   preview.style.display = 'block';
 
   var imgCount = existingImages.filter(i=>i.isImg!==false).length;
-  if(summary) summary.innerHTML = 
+  if(summary) summary.innerHTML =
     '<span style="color:var(--navy);font-weight:700">' + existingImages.length + ' vorhandene Dateien</span>'
     + (pendingObjFiles.length ? ' · <span style="color:var(--pos)">' + pendingObjFiles.length + ' neu hinzugefügt</span>' : '')
-    + (existingImages.length > 1 ? ' · <span style="color:var(--g500);font-size:10px">↕ Ziehen zum Sortieren</span>' : '');
+    + (existingImages.length > 1 ? ' · <span style="color:var(--g500);font-size:10px">↕ Ziehen zum Sortieren · ☆ = Titelbild</span>' : '')
+    + (coverThumbName
+        ? '<div style="margin-top:8px;padding:8px 10px;background:#fffaf0;border:1px solid var(--gold2);border-radius:6px;font-size:11px;color:var(--navy)">'
+          + '★ Titelbild: <strong>' + coverThumbName + '</strong>'
+          + '<label style="display:inline-flex;align-items:center;gap:6px;margin-left:12px;cursor:pointer">'
+          + '<input type="checkbox" ' + (coverIsPlan ? 'checked' : '') + ' onchange="toggleCoverPlan(this.checked)" style="width:13px;height:13px;accent-color:var(--navy)">'
+          + 'Als Grundriss/Plan anzeigen (ganzes Bild, kein Beschnitt)</label>'
+          + '</div>'
+        : '');
 
   if (!items) return;
 
@@ -3814,13 +3868,18 @@ function renderImgPreviews() {
   var existHtml = existingImages.map(function(img, i) {
     var name = img.path.split('/').pop();
     var isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+    var isCover = isImg && coverThumbName === name;
+    var nameEsc = name.replace(/'/g, "\\'");
     return '<div class="img-sort-item" draggable="true" data-idx="' + i + '" '
-      + 'style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--g200);font-size:11px;cursor:grab;background:white">'
+      + 'style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--g200);font-size:11px;cursor:grab;background:' + (isCover ? '#fffaf0' : 'white') + (isCover ? ';box-shadow:inset 3px 0 0 var(--gold)' : '') + '">'
       + '<span style="color:var(--g400);font-size:16px;cursor:grab">☰</span>'
       + (isImg
           ? '<img src="' + img.url + '" style="width:44px;height:33px;object-fit:cover;border:1px solid var(--g200);flex-shrink:0">'
           : '<span style="font-size:20px;flex-shrink:0">' + fileEmoji(name.split('.').pop()) + '</span>')
       + '<div style="flex:1;min-width:0;font-size:10px;color:var(--g500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</div>'
+      + (isImg
+          ? '<button type="button" onclick="setCoverImage(\'' + nameEsc + '\')" title="Als Titelbild festlegen" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 4px;flex-shrink:0;color:' + (isCover ? 'var(--gold)' : 'var(--g300)') + '">' + (isCover ? '★' : '☆') + '</button>'
+          : '')
       + '<span style="font-size:9px;background:#e8f5e9;color:var(--pos);padding:1px 6px;flex-shrink:0">#' + (i+1) + '</span>'
       + '<button onclick="removeExistingImg(' + i + ').then(renderImgPreviews)" style="background:none;border:none;color:var(--neg);cursor:pointer;font-size:16px;padding:0 4px;flex-shrink:0">×</button>'
       + '</div>';
@@ -5300,7 +5359,7 @@ function vpProjectDrilldown(projectKey) {
     grid.innerHTML = '<div class="obj-grid" id="vpDrillGrid">'
       + units.sort((a,b) => (a.name||'').localeCompare(b.name||'','de')).map(o => objCard(o, false)).join('')
       + '</div>';
-    units.forEach(o => loadCardImage(o.id, o.image_order, o.unit_thumb_url || o.thumbnail_url, o.thumb_pos, !!o.unit_thumb_url));
+    units.forEach(o => loadCardImage(o.id, o.image_order, o.unit_thumb_url || o.thumbnail_url, o.thumb_pos, (o.cover_is_plan != null ? !!o.cover_is_plan : !!o.unit_thumb_url)));
   }
 }
 
@@ -5369,7 +5428,7 @@ function renderGrouped(data, grid, isAdmin) {
       + '</div>';
   }).join('');
 
-  data.forEach(o => loadCardImage(o.id, o.image_order, o.unit_thumb_url || o.thumbnail_url, o.thumb_pos, !!o.unit_thumb_url));
+  data.forEach(o => loadCardImage(o.id, o.image_order, o.unit_thumb_url || o.thumbnail_url, o.thumb_pos, (o.cover_is_plan != null ? !!o.cover_is_plan : !!o.unit_thumb_url)));
 }
 
 
