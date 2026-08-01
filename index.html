@@ -5488,6 +5488,17 @@ async function vpObjDetail(id) {
       }));
     }
   }
+  // documents_v2 (neues System: Grundriss/Teilungserklärung/Exposé …) ebenfalls einblenden
+  let v2Docs = [];
+  try { v2Docs = Array.isArray(o.documents_v2) ? o.documents_v2 : (o.documents_v2 ? JSON.parse(o.documents_v2) : []); } catch(e) { v2Docs = []; }
+  if (v2Docs.length) {
+    allDocs = allDocs.concat(v2Docs.map(d => ({
+      name: d.name || d.category || 'Dokument',
+      doc_type: d.category || 'Dokument',
+      file_type: ((d.url || d.name || '').split('?')[0].split('.').pop() || '').toUpperCase().slice(0,4),
+      url: d.url
+    })));
+  }
   const { data: imgFiles } = await sb.storage.from('object-images').list(o.id, { limit: 30 });
 
   currentObjId = id;
@@ -5559,12 +5570,15 @@ async function vpObjDetail(id) {
 
     <!-- Dokumente Tab -->
     <div id="det-docs" class="det-tab-pane" style="padding:12px">
-      ${allDocs?.length ? allDocs.map(d => `
+      ${allDocs?.length ? allDocs.map(d => {
+          const dlName = (d.name||'').replace(/'/g,"\\'");
+          const onclick = d.url ? `window.open('${d.url}','_blank')` : `downloadDoc('${d.file_path}','${dlName}')`;
+          return `
         <div class="doc-item">
           <div class="doc-icon">${docIcon(d.doc_type)}</div>
           <div><div class="doc-name">${d.name}</div><div class="doc-meta">${d.doc_type} · ${d.file_type||''}</div></div>
-          <button class="btn-sm btn-gold doc-dl" onclick="downloadDoc('${d.file_path}','${d.name}')">↓ Download</button>
-        </div>`).join('')
+          <button class="btn-sm btn-gold doc-dl" onclick="${onclick}">↓ Download</button>
+        </div>`;}).join('')
       : '<div style="text-align:center;padding:32px;color:var(--g500)">Noch keine Dokumente verfügbar</div>'}
     </div>
 
