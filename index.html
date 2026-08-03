@@ -4349,7 +4349,10 @@ async function applyResStage(id, newStage, fromDrag){
   if (newStage==='notarized'){
     patch.status='notarized'; patch.notarized_at=new Date().toISOString(); objStatus='sold';
   } else if (newStage==='dropped'){
-    patch.status='rejected'; objStatus='available'; // Abgesprungen → Objekt wieder freigeben
+    patch.status='rejected';
+    // Nicht blind auf "verfügbar" zurücksetzen: eine andere genehmigte/
+    // beurkundete Reservierung könnte dieselbe Einheit noch belegen.
+    objStatus = (await reservationBlockingUnit(r.object_id, id)) ? 'reserved' : 'available';
   } else {
     // aktive Phasen (soft/hard/kve_submitted/notary_scheduled): Objekt reservieren
     if (newStage!=='soft' && r.status==='pending'){ patch.status='approved'; patch.approved_at=new Date().toISOString(); }
@@ -4357,7 +4360,10 @@ async function applyResStage(id, newStage, fromDrag){
   }
   var resp = await sb.from('reservations').update(patch).eq('id', id);
   if (resp.error){ notify('Fehler: '+resp.error.message, 'error'); return; }
-  if (objStatus && r.object_id){ await sb.from('objects').update({status:objStatus}).eq('id', r.object_id); }
+  if (objStatus && r.object_id){
+    var objResp = await sb.from('objects').update({status:objStatus}).eq('id', r.object_id);
+    if (objResp.error){ notify('Warnung: Objektstatus konnte nicht aktualisiert werden – '+objResp.error.message, 'error', 7000); }
+  }
   Object.assign(r, patch);
   renderResKanban();
   notify('✓ Phase aktualisiert', 'success');
@@ -4529,7 +4535,10 @@ async function deleteReservation(id) {
   if (r) {
     if (r.pdf_path) await sb.storage.from('reservation-pdfs').remove([r.pdf_path]);
     if (r.doc_path) await sb.storage.from('reservation-docs').remove([r.doc_path]);
-    await sb.from('objects').update({ status: 'available' }).eq('id', r.object_id);
+    // Nicht blind auf "verfügbar" zurücksetzen: eine andere genehmigte/
+    // beurkundete Reservierung könnte dieselbe Einheit noch belegen.
+    const stillBlocked = r.object_id ? await reservationBlockingUnit(r.object_id, id) : null;
+    await sb.from('objects').update({ status: stillBlocked ? 'reserved' : 'available' }).eq('id', r.object_id);
   }
   await sb.from('reservations').delete().eq('id', id);
   closeModal('resDetailModal');
@@ -4815,22 +4824,34 @@ async function updateRes(id, status, rejectionReason) {
     // Soft-Frist (72h) an die Hard-Frist angleichen, damit der Signatur-Link
     // nach der Genehmigung nicht fälschlich als "abgelaufen" gilt.
     updates.expires_at = updates.hard_expires_at;
+    // Pipeline-Stage MUSS mitgeführt werden, sonst bleibt die Kanban-Karte
+    // (die pipeline_stage priorisiert) fälschlich auf "Soft" stehen.
+    updates.pipeline_stage = 'hard';
   }
   if (status === 'notarized') {
     updates.notarized_at = new Date().toISOString();
+    updates.pipeline_stage = 'notarized';
   }
-  if (status === 'rejected' && rejectionReason) {
-    updates.rejection_reason = rejectionReason;
+  if (status === 'rejected') {
+    updates.pipeline_stage = 'dropped';
+    if (rejectionReason) updates.rejection_reason = rejectionReason;
   }
+  updates.stage_updated_at = new Date().toISOString();
   const { error } = await sb.from('reservations').update(updates).eq('id', id);
   if (error) { notify('Fehler: ' + error.message, 'error'); return; }
 
   // Objektstatus synchronisieren
   const { data: r } = await sb.from('reservations').select('object_id').eq('id', id).single();
-  if (r) {
-    const objStatus = status === 'approved' ? 'reserved' : status === 'notarized' ? 'sold' : 'available';
-    if (status !== 'rejected') await sb.from('objects').update({ status: objStatus }).eq('id', r.object_id);
-    else await sb.from('objects').update({ status: 'available' }).eq('id', r.object_id);
+  if (r && r.object_id) {
+    let objStatus = status === 'approved' ? 'reserved' : status === 'notarized' ? 'sold' : 'available';
+    if (status === 'rejected') {
+      // Nicht blind auf "verfügbar" zurücksetzen: eine andere genehmigte/
+      // beurkundete Reservierung könnte dieselbe Einheit noch belegen.
+      const stillBlocked = await reservationBlockingUnit(r.object_id, id);
+      objStatus = stillBlocked ? 'reserved' : 'available';
+    }
+    const { error: objErr } = await sb.from('objects').update({ status: objStatus }).eq('id', r.object_id);
+    if (objErr) notify('Warnung: Objektstatus konnte nicht aktualisiert werden – ' + objErr.message, 'error', 7000);
   }
 
   closeModal('resDetailModal');
