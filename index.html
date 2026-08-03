@@ -4271,7 +4271,8 @@ function resStageOf(r){
   if (s && RES_STAGES.some(function(x){return x.key===s;})) return s;
   if (r.status==='notarized') return 'notarized';
   if (r.status==='rejected' || r.status==='expired') return 'dropped';
-  if (r.status==='approved') return 'hard';
+  // Genehmigt, aber Hard-Reservierung erst nach Zahlungseingang der Gebühr.
+  if (r.status==='approved') return r.fee_paid ? 'hard' : 'soft';
   return 'soft';
 }
 // Prüft, ob eine Einheit bereits durch eine ANDERE genehmigte/beurkundete
@@ -4796,9 +4797,20 @@ async function downloadResPdf(path) {
 }
 
 async function markFeePaid(id) {
-  await sb.from('reservations').update({ fee_paid: true, fee_paid_at: new Date().toISOString() }).eq('id', id);
-  notify('Gebühr als bezahlt markiert!', 'success');
+  const { data: cur } = await sb.from('reservations').select('pipeline_stage').eq('id', id).single();
+  const patch = { fee_paid: true, fee_paid_at: new Date().toISOString() };
+  // Sprung auf "Hard-Reservierung" erfolgt erst jetzt, mit Zahlungseingang
+  // der Reservierungsgebühr — nicht bereits bei der reinen Genehmigung.
+  // Nur vorwärts bewegen: falls die Karte bereits weiter ist (kve_submitted
+  // etc.), nicht zurück auf "hard" setzen.
+  if (!cur || cur.pipeline_stage === 'soft') {
+    patch.pipeline_stage = 'hard';
+    patch.stage_updated_at = new Date().toISOString();
+  }
+  await sb.from('reservations').update(patch).eq('id', id);
+  notify('Gebühr als bezahlt markiert! Hard-Reservierung aktiv.', 'success');
   openResDetail(id);
+  loadReservations();
 }
 
 async function rejectRes(id) {
@@ -4824,19 +4836,20 @@ async function updateRes(id, status, rejectionReason) {
     // Soft-Frist (72h) an die Hard-Frist angleichen, damit der Signatur-Link
     // nach der Genehmigung nicht fälschlich als "abgelaufen" gilt.
     updates.expires_at = updates.hard_expires_at;
-    // Pipeline-Stage MUSS mitgeführt werden, sonst bleibt die Kanban-Karte
-    // (die pipeline_stage priorisiert) fälschlich auf "Soft" stehen.
-    updates.pipeline_stage = 'hard';
+    // Pipeline-Stage bleibt bewusst auf "Soft" — der Sprung auf "Hard-
+    // Reservierung" erfolgt erst, wenn die Reservierungsgebühr als bezahlt
+    // markiert wird (siehe markFeePaid()), nicht schon bei der Genehmigung.
   }
   if (status === 'notarized') {
     updates.notarized_at = new Date().toISOString();
     updates.pipeline_stage = 'notarized';
+    updates.stage_updated_at = new Date().toISOString();
   }
   if (status === 'rejected') {
     updates.pipeline_stage = 'dropped';
+    updates.stage_updated_at = new Date().toISOString();
     if (rejectionReason) updates.rejection_reason = rejectionReason;
   }
-  updates.stage_updated_at = new Date().toISOString();
   const { error } = await sb.from('reservations').update(updates).eq('id', id);
   if (error) { notify('Fehler: ' + error.message, 'error'); return; }
 
